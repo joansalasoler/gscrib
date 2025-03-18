@@ -16,8 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import vpype
 from vpype_mecode.builder.enums.base_enum import BaseEnum
+
+
+# Pixels to units
+
+CONVERSIONS_FACTORS = {
+    "in": 1.0 / 96.0,
+    "mm": 25.4 / 96.0,
+}
 
 
 class LengthUnits(BaseEnum):
@@ -27,7 +34,7 @@ class LengthUnits(BaseEnum):
     MILLIMETERS = "mm"
 
     def __init__(self, value):
-        self.scale_factor = 1.0 / vpype.convert_length(value)
+        self.scale_factor = CONVERSIONS_FACTORS[value]
 
     def scale(self, value_in_px: float) -> float:
         """Scale a value in pixels to this unit"""
