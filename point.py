@@ -21,6 +21,8 @@ import numpy as np
 
 
 class Point(NamedTuple):
+    """A point in a 3D space."""
+
     x: float = 0.0
     y: float = 0.0
     z: float = 0.0

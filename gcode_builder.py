@@ -247,8 +247,9 @@ class GBuilder(CoreGBuilder):
         params = { "x": x, "y": y, "z": z, **kwargs }
         statement = self._get_statement(mode, params)
 
+        axes = self._current_axes.replace(x, y, z)
         self._current_params.update(kwargs)
-        self._current_axes = Point(x, y, z)
+        self._current_axes = axes
         self.write(statement)
 
     @typechecked

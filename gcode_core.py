@@ -57,13 +57,13 @@ class CoreGBuilder(object):
 
     The current position of X, Y and Z axes is tracked by the `position`
     property. This property reflects the absolute position of all axes
-    after all transformations have been applied.
+    in the original coordinate system (without transforms).
 
-    Position tracking and transformations are limited to the X, Y, and Z
-    axes. While you can include additional axes or parameters in move
-    commands, only these three primary axes will be transformed and
-    tracked by the `position` property. All other parameters are stored
-    unchanged and can be retrieved using the `get_parameter()` method.
+    Transformations are limited to the X, Y, and Z axes. While you can
+    include additional axes or parameters in move commands, only these
+    three primary axes will transformed and tracked by the `position`
+    property. All other custom parameters provided to the move methods
+    can be retrieved using the `get_parameter()` method.
 
     This class constructor accepts the following configuration options:
 
@@ -168,7 +168,7 @@ class CoreGBuilder(object):
     @property
     def position(self) -> Point:
         """Get the current absolute positions of the axes."""
-        return self.transformer.reverse_transform(self._current_axes)
+        return self._current_axes
 
     @property
     def is_relative(self) -> bool:
@@ -214,9 +214,10 @@ class CoreGBuilder(object):
         >>> G92 [X<x>] [Y<y>] [Z<z>] [<axis><value> ...]
         """
 
+        axes = self._current_axes.replace(x, y, z)
         statement = self.formatter.format_command("G92", kwargs)
         self._current_params.update(kwargs)
-        self._current_axes = Point(x, y, z)
+        self._current_axes = axes
         self.write(statement)
 
     def push_matrix(self) -> None:
@@ -348,24 +349,30 @@ class CoreGBuilder(object):
         """
 
         current_axes = self._current_axes
-        is_relative = self.is_relative
 
-        point = (
+        # Compute target position in the original coordinate system
+
+        target_axes = (
             current_axes.replace(x, y, z)
-            if is_relative == False else
+            if not self.is_relative else
             current_axes + Point.create(x, y, z)
         )
 
-        axes = self.transformer.apply_transform(point)
-        axes = axes - current_axes if is_relative else axes
+        # Transform target coordinates and determine which axes need to
+        # move. An axis moves if it was explicitly requested or if the
+        # transformation matrix caused its position to change.
 
-        nx = self._get_coordinate_or_none(x, point.x, axes.x)
-        ny = self._get_coordinate_or_none(y, point.y, axes.y)
-        nz = self._get_coordinate_or_none(z, point.z, axes.z)
+        new_axes = self.transformer.apply_transform(target_axes)
+        old_axes = self.transformer.apply_transform(current_axes)
+        nx = self._get_coordinate_or_none(x, old_axes.x, new_axes.x)
+        ny = self._get_coordinate_or_none(y, old_axes.y, new_axes.y)
+        nz = self._get_coordinate_or_none(z, old_axes.z, new_axes.z)
+
+        # Write the move statement and update the internal state
 
         self._write_move(nx, ny, nz, rapid, kwargs)
         self._current_params.update(kwargs)
-        self._current_axes = axes
+        self._current_axes = target_axes
 
     @typechecked
     def rapid_absolute(self,
@@ -420,16 +427,23 @@ class CoreGBuilder(object):
         self._current_axes = axes
 
     @typechecked
-    def comment(self, message: str) -> None:
+    def comment(self, message: str, *args: Any) -> None:
         """Write a comment to the G-code output.
 
         Args:
             message (str): Text of the comment
+            *args: Additional values to include in the comment
 
-        >>> ; <message>
+        >>> ; <message> <args>
         """
 
-        comment = self.formatter.format_comment(message)
+        text = (
+            message
+            if len(args) == 0 else
+            f"{message} {' '.join((str(a) for a in args))}"
+        )
+
+        comment = self.formatter.format_comment(text)
         self.write(comment)
 
     @typechecked
@@ -497,24 +511,23 @@ class CoreGBuilder(object):
 
     @staticmethod
     def _get_coordinate_or_none(
-        request: float | None, origin: float,
-        transform: float) -> float | None:
+        request: float | None,
+        origin: float, target: float) -> float | None:
         """Determine if a coordinate needs to be updated.
 
         Args:
             request: The requested coordinate value or `None`
             origin: The original coordinate value
-            transform: The transformed coordinate value
+            target: The target coordinate value
 
         Returns:
             float or None: Transformed coordinate or `None`
         """
 
         explicit_request = request is not None
-        transform_changed = transform != origin
-        should_update = explicit_request or transform_changed
+        should_update = explicit_request or target != origin
 
-        return transform if should_update else None
+        return target if should_update else None
 
     def __enter__(self) -> 'CoreGBuilder':
         """Enter the context manager."""
