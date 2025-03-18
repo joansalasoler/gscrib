@@ -8,7 +8,7 @@ values into their corresponding G-Code instructions. The `GBuilder`
 class uses this mapping to generate valid G-Code output.
 """
 
-from .mappings import gcode_table
+from .gcode_mappings import gcode_table
 from .gcode_entry import GCodeEntry
 from .gcode_table import GCodeTable
 

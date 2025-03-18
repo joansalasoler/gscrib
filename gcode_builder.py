@@ -27,7 +27,7 @@ from vpype_mecode.enums import *
 from vpype_mecode.excepts import *
 
 from .gcode_state import GState
-from . import CoreGBuilder
+from .core_builder import CoreGBuilder
 
 
 class GBuilder(CoreGBuilder):
@@ -347,14 +347,14 @@ class GBuilder(CoreGBuilder):
         self.write(statement, requires_response=True)
 
     @typechecked
-    def tool_change(self, mode: RackMode, tool_number: int) -> None:
+    def tool_change(self, mode: ToolSwapMode, tool_number: int) -> None:
         """Execute a tool change operation.
 
         Performs a tool change sequence, ensuring proper safety
         conditions are met before proceeding.
 
         Args:
-            mode (RackMode): Tool change mode to execute
+            mode (ToolChangeMode): Tool change mode to execute
             tool_number (int): Tool number to select (must be positive)
 
         Raises:
@@ -365,10 +365,7 @@ class GBuilder(CoreGBuilder):
         >>> T<tool_number> M6
         """
 
-        if mode == RackMode.OFF:
-            raise ValueError("Not a valid rack mode.")
-
-        self._state.set_rack_mode(mode, tool_number)
+        self._state.set_tool_number(mode, tool_number)
         change_statement = self._get_statement(mode)
         tool_digits = 2 ** math.ceil(math.log2(len(str(tool_number))))
         statement = f"T{tool_number:0{tool_digits}} {change_statement}"

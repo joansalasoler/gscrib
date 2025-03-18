@@ -187,7 +187,7 @@ class Transformer:
         elif axis == 'z':
             reflection_matrix[0:2, 0:2] = reflection_2d
         else:
-            raise KeyError(f"Invalid reflection axis.")
+            raise KeyError(f"Invalid reflection axis: '{axis}'.")
 
         self.chain_transform(reflection_matrix)
 

@@ -20,7 +20,6 @@
 Built-in enums to G-Code mappings.
 """
 
-from vpype_mecode.enums import *
 from vpype_mecode.builder.enums import *
 from .gcode_table import GCodeEntry, GCodeTable
 
@@ -127,11 +126,11 @@ gcode_table = GCodeTable((
     # Tool Swap Modes
     # ------------------------------------------------------------------
 
-    GCodeEntry(RackMode.AUTOMATIC,
+    GCodeEntry(ToolSwapMode.AUTOMATIC,
         "M06", "Tool change, automatic"
     ),
 
-    GCodeEntry(RackMode.MANUAL,
+    GCodeEntry(ToolSwapMode.MANUAL,
         "M06", "Tool change, manual"
     ),
 
@@ -139,12 +138,12 @@ gcode_table = GCodeTable((
     # Coolant Control Modes
     # ------------------------------------------------------------------
 
-    GCodeEntry(CoolantMode.FLOOD,
-        "M08", "Turn on coolant, flood"
-    ),
-
     GCodeEntry(CoolantMode.MIST,
         "M07", "Turn on coolant, mist"
+    ),
+
+    GCodeEntry(CoolantMode.FLOOD,
+        "M08", "Turn on coolant, flood"
     ),
 
     GCodeEntry(CoolantMode.OFF,

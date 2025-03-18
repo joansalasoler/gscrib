@@ -13,8 +13,10 @@ uses this table to create the appropriate G-code statements.
 from .base_enum import BaseEnum
 from .modes import DirectWriteMode
 from .types import BedTemperature
+from .types import CoolantMode
 from .types import DistanceMode
 from .types import ExtrusionMode
+from .types import FanMode
 from .types import FeedMode
 from .types import HaltMode
 from .types import HotendTemperature
@@ -22,6 +24,7 @@ from .types import Plane
 from .types import PositioningMode
 from .types import PowerMode
 from .types import SpinMode
+from .types import ToolSwapMode
 from .units import LengthUnits
 from .units import TemperatureUnits
 from .units import TimeUnits
@@ -30,8 +33,10 @@ __all__ = [
     "BaseEnum",
     "DirectWriteMode",
     "BedTemperature",
+    "CoolantMode",
     "DistanceMode",
     "ExtrusionMode",
+    "FanMode",
     "FeedMode",
     "HaltMode",
     "HotendTemperature",
@@ -39,6 +44,7 @@ __all__ = [
     "PositioningMode",
     "PowerMode",
     "SpinMode",
+    "ToolSwapMode",
     "LengthUnits",
     "TemperatureUnits",
     "TimeUnits",

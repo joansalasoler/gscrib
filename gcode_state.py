@@ -42,7 +42,7 @@ class GState:
         self._current_extrusion_mode: ExtrusionMode = ExtrusionMode.ABSOLUTE
         self._current_coolant_mode: CoolantMode = CoolantMode.OFF
         self._current_feed_mode: FeedMode = FeedMode.UNITS_PER_MINUTE
-        self._current_rack_mode: RackMode = RackMode.OFF
+        self._current_tool_swap_mode: ToolSwapMode = ToolSwapMode.OFF
         self._current_halt_mode: HaltMode = HaltMode.OFF
         self._current_length_units: Optional[LengthUnits] = None
         self._current_plane: Optional[Plane] = None
@@ -105,9 +105,9 @@ class GState:
         return self._current_feed_mode
 
     @property
-    def current_rack_mode(self) -> RackMode:
-        """Get the current rack mode."""
-        return self._current_rack_mode
+    def current_tool_swap_mode(self) -> ToolSwapMode:
+        """Get the current tool swap mode."""
+        return self._current_tool_swap_mode
 
     @property
     def current_halt_mode(self) -> HaltMode:
@@ -249,18 +249,18 @@ class GState:
         self._current_power_mode = mode
 
     @typechecked
-    def set_rack_mode(self, mode: RackMode, tool_number: int) -> None:
-        """Set the current rack mode and tool number.
+    def set_tool_number(self, mode: ToolSwapMode, tool_number: int) -> None:
+        """Set the current tool number and swap mode.
 
         Args:
-            mode (RackMode): The rack mode to set.
+            mode (ToolChangeMode): The tool swap mode to set.
             tool_number (int): The tool number to select.
 
         Raises:
             ValueError: If tool_number is less than 1.
-            ToolStateError: If attempting to set the rack mode while
-                the tool is active.
-            CoolantStateError: If attempting to set the rack mode while
+            ToolStateError: If attempting to set the tool while the
+                tool is active.
+            CoolantStateError: If attempting to set the tool while
                 coolant is active.
         """
 
@@ -268,7 +268,7 @@ class GState:
         self._ensure_tool_is_inactive("Tool change with tool on.")
         self._ensure_coolant_is_inactive("Tool change with coolant on.")
         self._current_tool_number = tool_number
-        self._current_rack_mode = mode
+        self._current_tool_swap_mode = mode
 
     @typechecked
     def set_halt_mode(self, mode: HaltMode) -> None:
