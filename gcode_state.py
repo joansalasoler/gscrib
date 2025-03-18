@@ -20,8 +20,7 @@
 from typing import Optional
 from typeguard import typechecked
 
-from vpype_mecode.excepts import *
-from vpype_mecode.enums import *
+from vpype_mecode.builder.excepts import *
 from vpype_mecode.builder.enums import *
 
 
