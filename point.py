@@ -21,9 +21,9 @@ import numpy as np
 
 
 class Point(NamedTuple):
-    x: float
-    y: float
-    z: float
+    x: float = 0.0
+    y: float = 0.0
+    z: float = 0.0
 
     @classmethod
     def zero(cls) -> 'Point':
@@ -68,9 +68,9 @@ class Point(NamedTuple):
         """
 
         return Point(
-            x if x is not None else self.x,
-            y if y is not None else self.y,
-            z if z is not None else self.z
+            x if x is not None else self.x or 0,
+            y if y is not None else self.y or 0,
+            z if z is not None else self.z or 0
         )
 
     def __add__(self, other: 'Point') -> 'Point':

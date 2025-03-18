@@ -64,9 +64,9 @@ class GBuilder(CoreGBuilder):
         >>>     g.move(x=10.0, y=10.0, z=5.0)
     """
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, **kwargs) -> None:
         self._state: GState = GState()
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
     @property
     def state(self) -> GState:
@@ -455,7 +455,7 @@ class GBuilder(CoreGBuilder):
         self.comment(f"Emergency halt: {message}")
         self.halt_program(HaltMode.PAUSE)
 
-    def write(self, statement, requires_response=False):
+    def write(self, statement: str, requires_response: bool = False) -> None:
         """Write a G-code statement to all configured writers.
 
         Direct use of this method is discouraged as it bypasses all state

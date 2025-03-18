@@ -27,6 +27,7 @@ from collections import defaultdict
 from typing import Any, List, Dict
 from typeguard import typechecked
 
+from .config import GConfig
 from .enums import DistanceMode
 from .formatters import BaseFormatter, DefaultFormatter
 from .point import Point
@@ -64,11 +65,42 @@ class CoreGBuilder(object):
     tracked by the `position` property. All other parameters are stored
     unchanged and can be retrieved using the `get_parameter()` method.
 
+    This class constructor accepts the following configuration options:
+
+    - output (str | TextIO | BinaryIO ):
+        Path or file-like object where the generated G-Code will be
+        saved. If not specified defaults to `stdout`.
+    - print_lines (bool) [default: false]:
+        Always print lines to `stdout`, even if an output file is
+        specified.
+    - direct_write (str | DirectWrite) [default: 'off']:
+        Send G-code to machine ('off', 'socket' or 'serial').
+    - wait_for_response (bool) [default: false]:
+        Wait for acknowledgment after each command.
+    - host (str) [default: localhost]:
+        Hostname/IP for network connection when using socket mode.
+    - port (int) [default: 8000]:
+        Port number for network/serial communication.
+    - baudrate (int) [default: 250000]:
+        Baud rate for serial connection.
+    - decimal_places (str) [default: 5]:
+        Maximum number of decimal places in numeric output.
+    - comment_symbols (str) [default: ';']:
+        Characters used to mark comments in G-code.
+    - line_endings (str) [default: 'os']:
+        Line ending characters (use 'os' for system default).
+    - x_axis (str) [default: 'X']:
+        Custom label for X axis in G-code output.
+    - y_axis (str) [default: 'Y']:
+        Custom label for Y axis in G-code output.
+    - z_axis (str) [default: 'Z']:
+        Custom label for Z axis in G-code output.
+
     Example:
-        >>> with CoreGBuilder() as g:
-        ...     g.absolute()          # Set absolute positioning mode
-        ...     g.move(x=10, y=10)    # Linear move to (10, 10)
-        ...     g.rapid(z=5)          # Rapid move up to Z=5
+        >>> with CoreGBuilder(output="outfile.gcode") as g:
+        ...     g.absolute()        # Set absolute positioning mode
+        ...     g.move(x=10, y=10)  # Linear move to (10, 10)
+        ...     g.rapid(z=5)        # Rapid move up to Z=5
     """
 
     def __init__(self, **kwargs: Any) -> None:
@@ -78,50 +110,45 @@ class CoreGBuilder(object):
             **kwargs: Configuration parameters
         """
 
+        config: GConfig = GConfig(**kwargs)
+
         self._formatter = DefaultFormatter()
         self._transformer = Transformer()
         self._current_axes = Point.zero()
         self._current_params = defaultdict()
         self._distance_mode = DistanceMode.ABSOLUTE
         self._writers: List[BaseWriter] = []
-        self._initialize_formatter(kwargs)
-        self._initialize_writers(kwargs)
+        self._initialize_formatter(config)
+        self._initialize_writers(config)
 
-    def _initialize_formatter(self, config: Dict[str, Any]) -> None:
+    def _initialize_formatter(self, config: GConfig) -> None:
         """Initialize the G-code formatter."""
 
-        self._formatter.set_decimal_places(config.get("decimal_places", 5))
-        self._formatter.set_comment_symbols(config.get("comment_symbols", ";"))
-        self._formatter.set_line_endings(config.get("line_endings", "os"))
-        self._formatter.set_axis_label("x", config.get("x_axis", "X"))
-        self._formatter.set_axis_label("y", config.get("y_axis", "Y"))
-        self._formatter.set_axis_label("z", config.get("z_axis", "Z"))
+        self._formatter.set_decimal_places(config.decimal_places)
+        self._formatter.set_comment_symbols(config.comment_symbols)
+        self._formatter.set_line_endings(config.line_endings)
+        self._formatter.set_axis_label("x", config.x_axis)
+        self._formatter.set_axis_label("y", config.y_axis)
+        self._formatter.set_axis_label("z", config.z_axis)
 
-    def _initialize_writers(self, config: Dict[str, Any]) -> None:
+    def _initialize_writers(self, config: GConfig) -> None:
         """Initialize output writers."""
 
-        output = config.get("output", None)
-        print_lines = config.get("print_lines", False)
-        direct_write_mode = config.get("direct_write_mode", "off")
-        host = config.get("host", "localhost")
-        port = config.get("port", 8000)
-        baudrate = config.get("baudrate", 250000)
-        wait_for_response = config.get("wait_for_response", True)
-
-        if print_lines is True:
+        if config.print_lines is True:
             writer = FileWriter(sys.stdout.buffer)
             self._writers.append(writer)
 
-        if output is not None:
-            writer = FileWriter(output)
+        if config.output is not None:
+            writer = FileWriter(config.output)
             self._writers.append(writer)
 
-        if direct_write_mode == "socket":
-            writer = SocketWriter(host, port, wait_for_response)
+        if config.direct_write == "socket":
+            wait = config.wait_for_response
+            writer = SocketWriter(config.host, config.port, wait)
             self._writers.append(writer)
 
-        if direct_write_mode == "serial":
-            writer = SerialWriter(port, baudrate)
+        if config.direct_write == "serial":
+            writer = SerialWriter(config.port, config.baudrate)
             self._writers.append(writer)
 
         if len(self._writers) == 0:

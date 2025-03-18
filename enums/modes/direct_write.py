@@ -19,7 +19,7 @@
 from vpype_mecode.builder.enums.base_enum import BaseEnum
 
 
-class DirectWriteMode(BaseEnum):
+class DirectWrite(BaseEnum):
     """Communication mode for direct machine control."""
 
     OFF = "off"

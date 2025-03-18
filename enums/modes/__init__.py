@@ -9,8 +9,8 @@ specific aspect of machine control that a user can combine to create
 complete G-code programs.
 """
 
-from .direct_write_mode import DirectWriteMode
+from .direct_write import DirectWrite
 
 __all__ = [
-    "DirectWriteMode",
+    "DirectWrite",
 ]
