@@ -20,7 +20,8 @@
 Built-in enums to G-Code mappings.
 """
 
-from vpype_mecode.builder.enums import *
+from vpype_mecode.builder.enums.types import *
+from vpype_mecode.builder.enums.units import *
 from .gcode_table import GCodeEntry, GCodeTable
 
 

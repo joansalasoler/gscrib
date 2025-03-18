@@ -30,10 +30,9 @@ from time import sleep, time
 import serial
 
 # for python 2/3 compatibility
-try:
-    reduce
-except NameError:
-    # In python 3, reduce is no longer imported by default.
+if hasattr(__builtins__, 'reduce'):
+    reduce = __builtins__.reduce
+else:
     from functools import reduce
 
 try:

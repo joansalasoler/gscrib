@@ -22,7 +22,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from .printer import Printer
+from vpype_mecode.builder.devices.printer import Printer
 from .base_writer import BaseWriter
 
 

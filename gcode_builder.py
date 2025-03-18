@@ -20,13 +20,12 @@ import math
 from typing import Any
 from typeguard import typechecked
 
-from vpype_mecode.builder.utils.point import Point
 from vpype_mecode.builder.codes import gcode_table
 from vpype_mecode.builder.enums import *
-from vpype_mecode.builder.excepts import *
 
+from .point import Point
 from .gcode_state import GState
-from .core_builder import CoreGBuilder
+from .gcode_core import CoreGBuilder
 
 
 class GBuilder(CoreGBuilder):

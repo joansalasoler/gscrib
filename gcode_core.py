@@ -28,8 +28,9 @@ from typing import Any, List, Dict
 from typeguard import typechecked
 
 from .enums import DistanceMode
-from .utils import Point, Transformer
 from .formatters import BaseFormatter, DefaultFormatter
+from .point import Point
+from .transformer import Transformer
 from .writers import BaseWriter, SocketWriter, SerialWriter, FileWriter
 
 
@@ -389,7 +390,7 @@ class CoreGBuilder(object):
             for writer in self._writers:
                 writer.write(line_bytes, requires_response)
         except Exception as e:
-            raise RuntimeError(f"Failed to write statement: {e}")
+            raise RuntimeError(f"Failed to write statement") from e
 
     @typechecked
     def teardown(self, wait: bool = True) -> None:
