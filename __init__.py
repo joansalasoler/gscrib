@@ -12,12 +12,14 @@ from . import formatters
 from . import writers
 from .gcode_builder import GBuilder
 from .gcode_core import CoreGBuilder
+from .gcode_state import GState
 from .point import Point
 from .transformer import Transformer
 
 __all__ = [
     "GBuilder",
     "CoreGBuilder",
+    "GState",
     "Point",
     "Transformer",
     "formatters",
