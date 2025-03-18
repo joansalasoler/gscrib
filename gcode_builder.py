@@ -36,7 +36,7 @@ class GBuilder(CoreGBuilder):
     and maintains internal state to prevent invalid operations and
     ensure proper sequencing of commands.
 
-    Features:
+    This class extends `CoreGBuilder` to provide among others:
 
     - Unit and coordinate system selection
     - Tool control (spindle, laser, etc.)
@@ -45,14 +45,23 @@ class GBuilder(CoreGBuilder):
     - Program flow control
     - Machine state tracking
 
+    The current machine state is tracked by the `state` manager. This
+    component maintains and validates the state of various machine
+    subsystems including:
+
+    - Tool state (on/off, power, rotation)
+    - Coolant state
+    - Temperature settings
+    - Units and coordinate systems
+    - Feed and distance modes
+
     Example:
-        >>> g = GBuilder(params)
-        >>> g.set_distance_mode(ABSOLUTE)
-        >>> g.set_feed_mode(UNITS_PER_MINUTE)
-        >>> g.select_units(MILLIMETERS)
-        >>> g.move_absolute(x=0.0, y=0.0)
-        >>> g.move(x=10.0, y=10.0, z=5.0)
-        >>> g.teardown()
+        >>> with CoreGBuilder() as g:
+        >>>     g.set_distance_mode(ABSOLUTE)
+        >>>     g.set_feed_mode(UNITS_PER_MINUTE)
+        >>>     g.select_units(MILLIMETERS)
+        >>>     g.move_absolute(x=0.0, y=0.0)
+        >>>     g.move(x=10.0, y=10.0, z=5.0)
     """
 
     def __init__(self, *args, **kwargs) -> None:
@@ -447,11 +456,25 @@ class GBuilder(CoreGBuilder):
         self.halt_program(HaltMode.PAUSE)
 
     def write(self, statement, requires_response=False):
-        """Write a G-code statement to the G-code output.
+        """Write a G-code statement to all configured writers.
+
+        Direct use of this method is discouraged as it bypasses all state
+        management. Using this method may lead to inconsistencies between
+        the internal state tracking and the actual machine state. Instead,
+        prefer using the dedicated methods like `move()` or `rapid()`,
+        which properly maintain state.
 
         Args:
-            statement (str): G-code statement to write
-            requires_response (bool): If a response is expected
+            statement: The G-code statement to write
+            requires_response: Whether to wait for a response
+
+        Raises:
+            RuntimeError: If writing fails
+
+        Example:
+            >>> g = CoreGBuilder()
+            >>> g.write("G1 X10 Y20") # Bypasses state tracking
+            >>> g.move(x=10, y=20) # Uses proper state management
         """
 
         self._state.set_halt_mode(HaltMode.OFF)

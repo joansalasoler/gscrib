@@ -34,8 +34,8 @@ class SerialWriter(BaseWriter):
     `Printer` object to manage the serial communication.
 
     Example:
-        >>> writer = SerialWriter('/dev/ttyUSB0', 115200)
-        >>> writer.write(b'G1 X10 Y10\n')
+        >>> writer = SerialWriter("/dev/ttyUSB0", 115200)
+        >>> writer.write(b"G1 X10 Y10\\n")
         >>> writer.disconnect()
     """
 

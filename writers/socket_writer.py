@@ -36,7 +36,7 @@ class SocketWriter(BaseWriter):
 
     Example:
         >>> writer = SocketWriter("localhost", 8000)
-        >>> writer.write(b"G1 X10 Y10\n")
+        >>> writer.write(b"G1 X10 Y10\\n")
         >>> writer.disconnect()
     """
 

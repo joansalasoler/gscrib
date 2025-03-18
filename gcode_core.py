@@ -35,7 +35,41 @@ from .writers import BaseWriter, SocketWriter, SerialWriter, FileWriter
 
 
 class CoreGBuilder(object):
-    """A class for handling G-code generation and transformation."""
+    """Core G-code generation functionality.
+
+    This class provides the fundamental building blocks for G-code
+    generation, including:
+
+    - G-code formatting and output writing
+    - Coordinate system transformations
+    - Position tracking and distance mode management
+    - Basic movement operations (linear and rapid moves)
+    - Multiple output methods (file, serial, network socket)
+
+    For general use, it is recommended to use the `GBuilder` class
+    instead, which extends `CoreGBuilder` with a more complete set of
+    G-code commands and additional state management capabilities.
+
+    The `teardown()` method must be called when done to properly close
+    connections and clean up resources. Using the class as a context
+    manager with 'with' automatically handles this.
+
+    The current position of X, Y and Z axes is tracked by the `position`
+    property. This property reflects the absolute position of all axes
+    after all transformations have been applied.
+
+    Position tracking and transformations are limited to the X, Y, and Z
+    axes. While you can include additional axes or parameters in move
+    commands, only these three primary axes will be transformed and
+    tracked by the `position` property. All other parameters are stored
+    unchanged and can be retrieved using the `get_parameter()` method.
+
+    Example:
+        >>> with CoreGBuilder() as g:
+        ...     g.absolute()          # Set absolute positioning mode
+        ...     g.move(x=10, y=10)    # Linear move to (10, 10)
+        ...     g.rapid(z=5)          # Rapid move up to Z=5
+    """
 
     def __init__(self, **kwargs: Any) -> None:
         """Initialize G-code generator with configuration.
@@ -375,12 +409,23 @@ class CoreGBuilder(object):
     def write(self, statement: str, requires_response: bool = False) -> None:
         """Write a G-code statement to all configured writers.
 
+        Direct use of this method is discouraged as it bypasses all state
+        management. Using this method may lead to inconsistencies between
+        the internal state tracking and the actual machine state. Instead,
+        prefer using the dedicated methods like `move()` or `rapid()`,
+        which properly maintain state.
+
         Args:
             statement: The G-code statement to write
             requires_response: Whether to wait for a response
 
         Raises:
             RuntimeError: If writing fails
+
+        Example:
+            >>> g = CoreGBuilder()
+            >>> g.write("G1 X10 Y20") # Bypasses state tracking
+            >>> g.move(x=10, y=20) # Uses proper state management
         """
 
         try:
