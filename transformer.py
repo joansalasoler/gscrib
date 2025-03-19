@@ -135,6 +135,9 @@ class Transformer:
         if not 1 <= len(scale) <= 3:
             raise ValueError("Scale accepts 1 to 3 parameters")
 
+        if any(factor == 0 for factor in scale):
+            raise ValueError("Scale cannot be zero")
+
         scale_vector = (*scale, *scale, *scale, 1.0)
 
         if len(scale) > 1:
@@ -165,31 +168,50 @@ class Transformer:
         self.chain_transform(rotation_matrix)
 
     @typechecked
-    def reflect(self, angle: float, axis: str = 'z') -> None:
-        """Apply a reflection transformation around a principal axis.
+    def reflect(self, normal: List[float]) -> None:
+        """Apply a reflection transformation across a plane.
+
+        The reflection matrix is calculated using the Householder
+        transformation: R = I - 2 * (n ⊗ n), where n is the normalized
+        normal vector and ⊗ is outer product
 
         Args:
-            angle: Reflection angle in radians.
-            axis: Principal axis ('x', 'y', or 'z').
-
-        Raises:
-            KeyError: If the axis is not 'x', 'y', or 'z'.
+            normal: Normal as a 3D vector (nx, ny, nz)
         """
 
-        axis = axis.lower()
-        reflection_matrix = np.eye(4)
-        reflection_2d = self._get_reflection_matrix_2d(angle)
+        if all(value == 0 for value in normal):
+            raise ValueError("Normal vector cannot be zero")
 
-        if axis == 'x':
-            reflection_matrix[1:3, 1:3] = reflection_2d
-        elif axis == 'y':
-            reflection_matrix[::2, ::2] = reflection_2d
-        elif axis == 'z':
-            reflection_matrix[0:2, 0:2] = reflection_2d
-        else:
-            raise KeyError(f"Invalid reflection axis: '{axis}'.")
+        normal_array = np.array(normal[:3], dtype=float)
+        normal_array = normal_array / np.linalg.norm(normal_array)
+
+        reflection_matrix = np.eye(4)
+        outer_product = np.outer(normal_array, normal_array)
+        reflection_matrix[:3, :3] = np.eye(3) - 2 * outer_product
 
         self.chain_transform(reflection_matrix)
+
+    @typechecked
+    def mirror(self, plane: str = "zx") -> None:
+        """Apply a mirror transformation across a plane.
+
+        Args:
+            plane: Mirror plane ("xy", "yz", or "zx").
+
+        Raises:
+            ValueError: If the plane is not "xy", "yz", or "zx".
+        """
+
+        normals = {
+            "xy": [0, 0, 1],
+            "yz": [1, 0, 0],
+            "zx": [0, 1, 0],
+        }
+
+        if plane not in normals:
+            raise ValueError(f"Invalid plane '{plane}'")
+
+        self.reflect(normals[plane])
 
     @typechecked
     def apply_transform(self, point: Point) -> Point:

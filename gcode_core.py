@@ -135,7 +135,7 @@ class CoreGBuilder(object):
         """Initialize output writers."""
 
         if config.print_lines is True:
-            writer = FileWriter(sys.stdout.buffer)
+            writer = FileWriter(self._get_stdout_file())
             self._writers.append(writer)
 
         if config.output is not None:
@@ -152,8 +152,16 @@ class CoreGBuilder(object):
             self._writers.append(writer)
 
         if len(self._writers) == 0:
-            writer = FileWriter(sys.stdout.buffer)
+            writer = FileWriter(self._get_stdout_file())
             self._writers.append(writer)
+
+    def _get_stdout_file(self) -> Any:
+        """Get binary or text stdout file."""
+
+        if hasattr(sys.stdout, 'buffer'):
+            return sys.stdout.buffer
+
+        return sys.stdout
 
     @property
     def transformer(self) -> Transformer:
@@ -269,15 +277,23 @@ class CoreGBuilder(object):
 
         self.transformer.scale(*scale)
 
-    def reflect(self, angle: float, axis: str = 'z') -> None:
+    def reflect(self, normal: List[float]) -> None:
         """Apply a reflection transformation.
 
         Args:
-            angle: Angle of the reflection in radians
-            axis: Axis of reflection (x, y, or z)
+            normal: Normal as a 3D vector (nx, ny, nz)
         """
 
-        self.transformer.reflect(angle, axis)
+        self.transformer.reflect(normal)
+
+    def mirror(self, plane: str = "zx") -> None:
+        """Apply a mirror transformation around a plane.
+
+        Args:
+            plane: Mirror plane ("xy", "yz", or "zx").
+        """
+
+        self.transformer.mirror(plane)
 
     def rename_axis(self, axis: str, label: str) -> None:
         """Rename an axis label in the G-code output.
