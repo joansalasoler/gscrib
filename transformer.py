@@ -27,6 +27,7 @@ from typing import List
 import numpy as np
 from typeguard import typechecked
 from scipy.spatial.transform import Rotation
+from scipy import linalg
 
 from .point import Point
 
@@ -83,7 +84,7 @@ class Transformer:
             raise IndexError("Cannot pop matrix: stack is empty")
 
         self._current_matrix = self._matrix_stack.pop()
-        self._inverse_matrix = np.linalg.inv(self._current_matrix)
+        self._inverse_matrix = linalg.inv(self._current_matrix)
 
     @typechecked
     def chain_transform(self, transform_matrix: np.ndarray) -> None:
@@ -100,7 +101,7 @@ class Transformer:
             raise ValueError("Transform matrix must be 4x4")
 
         self._current_matrix = transform_matrix @ self._current_matrix
-        self._inverse_matrix = np.linalg.inv(self._current_matrix)
+        self._inverse_matrix = linalg.inv(self._current_matrix)
 
     @typechecked
     def translate(self, x: float, y: float, z: float = 0.0) -> None:
@@ -182,12 +183,11 @@ class Transformer:
         if all(value == 0 for value in normal):
             raise ValueError("Normal vector cannot be zero")
 
-        normal_array = np.array(normal[:3], dtype=float)
-        normal_array = normal_array / np.linalg.norm(normal_array)
+        n = np.array(normal[:3])
+        n = n / linalg.norm(n)
 
         reflection_matrix = np.eye(4)
-        outer_product = np.outer(normal_array, normal_array)
-        reflection_matrix[:3, :3] = np.eye(3) - 2 * outer_product
+        reflection_matrix[:3, :3] = np.eye(3) - 2 * np.outer(n, n)
 
         self.chain_transform(reflection_matrix)
 

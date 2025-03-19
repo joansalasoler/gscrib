@@ -223,7 +223,9 @@ class CoreGBuilder(object):
         """
 
         axes = self._current_axes.replace(x, y, z)
-        statement = self.formatter.format_command("G92", kwargs)
+        params = { "x": x, "y": y, "z": z, **kwargs }
+        statement = self.formatter.format_command("G92", params)
+
         self._current_params.update(kwargs)
         self._current_axes = axes
         self.write(statement)
