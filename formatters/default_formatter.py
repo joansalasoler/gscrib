@@ -119,10 +119,26 @@ class DefaultFormatter(BaseFormatter):
 
         Returns:
             Formatted number string
+
+        Raises:
+            ValueError: If value is not finite
+            TypeError: If value is a complex number
+            typeguard.TypeCheckError: If value is not a number
         """
 
+        if number == 0:
+            return "0"
+
+        if not np.isfinite(float(number)):
+            raise ValueError("Number cannot be infinite or NaN")
+
         return np.format_float_positional(
-            number, precision=self._decimal_places, trim="-"
+            number,
+            precision=self._decimal_places,
+            unique=True,
+            fractional=True,
+            sign=False,
+            trim="-"
         )
 
     @typechecked

@@ -27,7 +27,7 @@ class BaseWriter(ABC):
     """
 
     @abstractmethod
-    def connect(self) -> None:
+    def connect(self) -> "BaseWriter":
         """Establish connection or open resource for writing"""
 
     @abstractmethod

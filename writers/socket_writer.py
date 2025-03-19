@@ -55,15 +55,18 @@ class SocketWriter(BaseWriter):
         self._host = host
         self._port = port
 
-    def connect(self) -> None:
+    def connect(self) -> "SocketWriter":
         """Establish a TCP socket connection to the remote machine.
 
         Raises:
             socket.error: If the connection cannot be established.
         """
 
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._socket.connect((self._host, self._port))
+        if self._socket is None:
+            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._socket.connect((self._host, self._port))
+
+        return self
 
     def disconnect(self, wait: bool = True) -> None:
         """Close the socket connection if it is open."""
@@ -107,3 +110,9 @@ class SocketWriter(BaseWriter):
             return response[1:-1]
 
         return None
+
+    def __enter__(self) -> "SocketWriter":
+        return self.connect()
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.disconnect()

@@ -51,7 +51,7 @@ class SerialWriter(BaseWriter):
         self._baudrate = baudrate
         self._port = port
 
-    def connect(self) -> None:
+    def connect(self) -> "SerialWriter":
         """Establish the serial connection to the device.
 
         Creates a `Printer` object with the configured port and baudrate,
@@ -61,9 +61,12 @@ class SerialWriter(BaseWriter):
             SerialException: If the connection cannot be established.
         """
 
-        self._printer = Printer(self._port, self._baudrate)
-        self._printer.connect()
-        self._printer.start()
+        if self._printer is None:
+            self._printer = Printer(self._port, self._baudrate)
+            self._printer.connect()
+            self._printer.start()
+
+        return self
 
     def disconnect(self, wait: bool = True) -> None:
         """Close the serial connection if it exists.
@@ -96,13 +99,19 @@ class SerialWriter(BaseWriter):
             SerialException: If there are communication errors.
         """
 
-        statement_str = statement.decode("utf-8")
-
         if self._printer is None:
             self.connect()
+
+        statement_str = statement.decode("utf-8")
 
         if requires_response:
             return self._printer.get_response(statement_str)
 
         self._printer.sendline(statement_str)
         return None
+
+    def __enter__(self) -> "SerialWriter":
+        return self.connect()
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.disconnect()

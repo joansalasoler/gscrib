@@ -42,16 +42,25 @@ class FileWriter(BaseWriter):
                 or a file-like object to write the G-code to.
         """
 
+        self._is_terminal = False
         self._output = output
         self._file = None
 
-    def connect(self) -> None:
+    def connect(self) -> "FileWriter":
         """Establish the connection to the output file."""
 
+        if self._file is not None:
+            return self
+
         self._file = self._output
+        self._is_terminal = False
 
         if isinstance(self._output, str):
             self._file = open(self._output, "wb+")
+        elif hasattr(self._output, "isatty"):
+            self._is_terminal = self._file.isatty()
+
+        return self
 
     def disconnect(self, wait: bool = True) -> None:
         """Close the file if it was opened by this writer."""
@@ -60,24 +69,39 @@ class FileWriter(BaseWriter):
 
         if should_close and self._file is not None:
             self._file.close()
-            self._file = None
+
+        self._file = None
 
     def write(self, statement: bytes, requires_response: bool = False) -> None:
         """Write a G-code statement to the file.
 
         Args:
             statement (bytes): The G-code statement to write.
+            requires_response (bool): Ignored
+
+        Raises:
+            OSError: If an error occurred while writing to the file.
+            TypeCheckError: If statement is not bytes-like
         """
 
         if self._file is None:
             self.connect()
 
         if hasattr(self._file, 'encoding'):
-            statement = statement.decode("utf-8")
+            statement_str = statement.decode("utf-8")
+            self._file.write(statement_str)
+        else:
+            self._file.write(statement)
 
-        self._file.write(statement)
+        # Flush only if writing to a terminal
 
-        if hasattr(self._file, 'flush'):
+        if self._is_terminal:
             self._file.flush()
 
         return None
+
+    def __enter__(self) -> "FileWriter":
+        return self.connect()
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.disconnect()
