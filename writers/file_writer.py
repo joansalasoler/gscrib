@@ -34,6 +34,12 @@ class FileWriter(BaseWriter):
         >>> writer.disconnect()
     """
 
+    __slots__ = (
+        "_file",
+        "_is_terminal",
+        "_output"
+    )
+
     def __init__(self, output: Union[str, TextIO, BinaryIO]):
         """Initialize the file writer.
 

@@ -32,6 +32,23 @@ class GState:
     states while enforcing validation rules.
     """
 
+    __slots__ = (
+        "_current_tool_number",
+        "_current_tool_power",
+        "_current_spin_mode",
+        "_current_power_mode",
+        "_current_distance_mode",
+        "_current_extrusion_mode",
+        "_current_coolant_mode",
+        "_current_feed_mode",
+        "_current_tool_swap_mode",
+        "_current_halt_mode",
+        "_current_length_units",
+        "_current_plane",
+        "_is_coolant_active",
+        "_is_tool_active",
+    )
+
     def __init__(self) -> None:
         self._current_tool_number: int = 0
         self._current_tool_power: float = 0

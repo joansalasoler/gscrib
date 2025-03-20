@@ -50,6 +50,12 @@ class Transformer:
         ...     matrix.scale(2.0)
     """
 
+    __slots__ = (
+        '_current_matrix',
+        '_inverse_matrix',
+        '_matrix_stack'
+    )
+
     def __init__(self) -> None:
         """Initialize with identity matrix."""
 

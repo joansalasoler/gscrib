@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from array import array
 from numbers import Number
 
 import numpy as np
@@ -29,11 +30,18 @@ DEFAULT_DECIMAL_PLACES = 5
 DEFAULT_COMMENT_SYMBOLS = ";"
 COMMENT_OPENINGS = ("(", "[", "{", "<", '"', "'", "/*")
 COMMENT_ENDINGS = (")", "]", "}", ">", '"', "'", "*/")
-VALID_AXES = ( 'x', 'y', 'z' )
+VALID_AXES = ( "x", "y", "z" )
 
 
 class DefaultFormatter(BaseFormatter):
     """Formats G-code output."""
+
+    __slots__ = (
+        "_labels",
+        "_line_endings",
+        "_decimal_places",
+        "_comment_template"
+    )
 
     def __init__(self):
         """Initialize with default settings."""
@@ -179,12 +187,11 @@ class DefaultFormatter(BaseFormatter):
             Formatted command statement string
         """
 
-        statement = f"{command.strip()}"
-
         if isinstance(params, dict) and len(params) > 0:
-            statement += f" {self.format_parameters(params)}"
+            formatted_params = self.format_parameters(params)
+            return f"{command} {formatted_params}"
 
-        return statement
+        return command
 
     @typechecked
     def format_parameters(self, params: dict) -> str:
@@ -197,25 +204,30 @@ class DefaultFormatter(BaseFormatter):
             Formatted parameters string
         """
 
-        args = []
+        space = " "
+        buffer = array('u')
 
         # Handle XYZ axis parameters
 
         for axis in (a for a in VALID_AXES if a in params):
-            if isinstance(params[axis], Number):
-                label = self._labels[axis]
-                value = self.format_number(params[axis])
-                args.append(f"{label}{value}")
+            param = params[axis]
+
+            if isinstance(param, Number):
+                buffer.extend(space)
+                buffer.extend(self._labels[axis])
+                buffer.extend(self.format_number(param))
 
         # Handle other parameters
 
         for label in (a for a in params if a not in VALID_AXES):
-            value = params[label]
-            is_number = isinstance(value, Number)
-            value = self.format_number(value) if is_number else value
-            args.append(f"{label}{value}")
+            param = params[label]
+            is_number = isinstance(param, Number)
+            value = self.format_number(param) if is_number else str(param)
+            buffer.extend(space)
+            buffer.extend(label)
+            buffer.extend(value)
 
-        return " ".join(args)
+        return buffer.tounicode()[1:]
 
     @typechecked
     def _to_comment_template(self, open_symbols: str) -> str:

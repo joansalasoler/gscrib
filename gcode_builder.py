@@ -64,6 +64,10 @@ class GBuilder(CoreGBuilder):
         >>>     g.move(x=10.0, y=10.0, z=5.0)
     """
 
+    __slots__ = (
+        "_state",
+    )
+
     def __init__(self, **kwargs) -> None:
         self._state: GState = GState()
         super().__init__(**kwargs)
