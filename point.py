@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from math import inf
 from typing import NamedTuple
 import numpy as np
 
@@ -28,8 +29,13 @@ class Point(NamedTuple):
     z: float = 0.0
 
     @classmethod
+    def unknown(cls) -> 'Point':
+        """Create a point with unknown coordinates"""
+        return cls(-inf, -inf, -inf)
+
+    @classmethod
     def zero(cls) -> 'Point':
-        """Create a point at origin (0,0,0)"""
+        """Create a point at origin (0, 0, 0)"""
         return cls(0.0, 0.0, 0.0)
 
     @classmethod
@@ -43,7 +49,8 @@ class Point(NamedTuple):
 
     @classmethod
     def create(cls,
-        x: float | None = None, y: float | None = None,
+        x: float | None = None,
+        y: float | None = None,
         z: float | None = None) -> 'Point':
         """Create a point converting `None` values to zero.
 
@@ -56,9 +63,10 @@ class Point(NamedTuple):
         return cls(x or 0, y or 0, z or 0)
 
     def replace(self,
-        x: float | None = None, y: float | None = None,
+        x: float | None = None,
+        y: float | None = None,
         z: float | None = None) -> 'Point':
-        """Create a new point replacing the only specified coordinates.
+        """Create a new point replacing only the specified coordinates.
 
         Args:
             x: New X position or `None` to keep the current
@@ -73,6 +81,15 @@ class Point(NamedTuple):
             x if x is not None else self.x or 0,
             y if y is not None else self.y or 0,
             z if z is not None else self.z or 0
+        )
+
+    def resolve(self) -> 'Point':
+        """Create a new point replacing -inf values with zeros."""
+
+        return Point(
+            0 if self.x == -inf else self.x,
+            0 if self.y == -inf else self.y,
+            0 if self.z == -inf else self.z
         )
 
     def __add__(self, other: 'Point') -> 'Point':

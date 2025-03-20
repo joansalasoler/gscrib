@@ -24,6 +24,7 @@
 
 import sys
 from collections import defaultdict
+from math import inf
 from typing import Any, List, Dict
 from typeguard import typechecked
 
@@ -114,7 +115,7 @@ class CoreGBuilder(object):
 
         self._formatter = DefaultFormatter()
         self._transformer = Transformer()
-        self._current_axes = Point.zero()
+        self._current_axes = Point.unknown()
         self._current_params = defaultdict()
         self._distance_mode = DistanceMode.ABSOLUTE
         self._writers: List[BaseWriter] = []
@@ -222,12 +223,12 @@ class CoreGBuilder(object):
         >>> G92 [X<x>] [Y<y>] [Z<z>] [<axis><value> ...]
         """
 
-        axes = self._current_axes.replace(x, y, z)
+        target_axes = self._current_axes.replace(x, y, z)
         params = { "x": x, "y": y, "z": z, **kwargs }
         statement = self.formatter.format_command("G92", params)
 
         self._current_params.update(kwargs)
-        self._current_axes = axes
+        self._current_axes = target_axes
         self.write(statement)
 
     def push_matrix(self) -> None:
@@ -366,9 +367,13 @@ class CoreGBuilder(object):
         >>> G1 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
         """
 
-        current_axes = self._current_axes
+        # Beware that axes are initialized with float("-inf") to
+        # indicate their current position is unknown. If that is the
+        # case, this will convert -inf coordinates to zero.
 
-        # Compute target position in the original coordinate system
+        current_axes = self._current_axes.resolve()
+
+        # Compute target position in the original coordinate system.
 
         target_axes = (
             current_axes.replace(x, y, z)

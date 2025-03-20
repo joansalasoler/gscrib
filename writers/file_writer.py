@@ -42,7 +42,6 @@ class FileWriter(BaseWriter):
                 or a file-like object to write the G-code to.
         """
 
-        self._last_statement = None
         self._is_terminal = False
         self._output = output
         self._file = None
@@ -88,11 +87,6 @@ class FileWriter(BaseWriter):
         if self._file is None:
             self.connect()
 
-        # It is safe to remove duplicates when writing to a file
-
-        if statement == self._last_statement:
-            return
-
         # We may not be in binary mode if the user provided an open
         # file, so we may need to convert bytes to strings
 
@@ -101,8 +95,6 @@ class FileWriter(BaseWriter):
             self._file.write(statement_str)
         else:
             self._file.write(statement)
-
-        self._last_statement = statement
 
         # Flush only if writing to a terminal
 
