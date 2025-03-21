@@ -3,12 +3,6 @@
 # G-Code generator for Vpype.
 # Copyright (C) 2025 Joan Sala <contact@joansala.com>
 #
-# This file contains code originally written by Jack Minardi, which is
-# licensed under the MIT License. See the LICENSE-MIT file in this
-# project's root directory for the full text of the original license.
-#
-# Modifications made by Joan Sala are licensed under the GNU GPL.
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -22,17 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import socket
-
+from vpype_mecode.builder.enums import DirectWrite
+from .printrun_writer import PrintrunWriter
 from .base_writer import BaseWriter
 
 
 class SocketWriter(BaseWriter):
-    """Writer that sends commands through a TCP/IP socket connection.
+    """Writer that sends commands through a network socket connection.
 
-    This class implements a G-code writer that connects to a remote machine
-    or device via a TCP socket connection and sends G-code commands. It
-    can optionally wait for responses from the device.
+    This class implements a G-code writer that connects to a device
+    through a TCP/IP socket and sends G-code commands to it.
 
     Example:
         >>> writer = SocketWriter("localhost", 8000)
@@ -40,76 +33,89 @@ class SocketWriter(BaseWriter):
         >>> writer.disconnect()
     """
 
-    def __init__(self, host: str, port: int, wait_for_response: bool = True):
+    def __init__(self, host: str, port: int):
         """Initialize the socket writer.
 
         Args:
             host (str): The hostname or IP address of the remote machine.
             port (int): The TCP port number to connect to.
-            wait_for_response (bool, optional): Whether to wait for
-                responses from the device after each command.
         """
 
-        self._socket = None
-        self._wait_for_response = wait_for_response
-        self._host = host
-        self._port = port
+        if not host:
+            raise ValueError("Host must be specified")
 
-    def connect(self) -> "SocketWriter":
-        """Establish a TCP socket connection to the remote machine.
+        if not isinstance(port, int) or port <= 0 or port > 65535:
+            raise ValueError("Port number is not valid.")
 
-        Raises:
-            socket.error: If the connection cannot be established.
-        """
+        self._writer_delegate = PrintrunWriter(
+            mode=DirectWrite.SOCKET,
+            host=host,
+            port=str(port),
+            baudrate=0
+        )
 
-        if self._socket is None:
-            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.connect((self._host, self._port))
+    @property
+    def is_connected(self) -> bool:
+        """Check if device is currently connected."""
+        return self._writer_delegate.is_connected
 
-        return self
+    @property
+    def is_printing(self) -> bool:
+        """Check if the device is currently printing."""
+        return self._writer_delegate.is_printing
 
-    def disconnect(self, wait: bool = True) -> None:
-        """Close the socket connection if it is open."""
-
-        if self._socket is not None:
-            self._socket.close()
-            self._socket = None
-
-    def write(self,
-        statement: bytes, requires_response: bool = False) -> str | None:
-        """Send a G-code statement through the socket connection.
-
-        Automatically establishes the connection if not already connected.
-        If configured to wait for responses, reads and validates the
-        response from the device.
+    def set_timeout(self, timeout: float) -> None:
+        """Set the timeout for waiting for device operations.
 
         Args:
-            statement (bytes): The G-code statement to send.
-
-        Returns:
-            Optional[str]: If wait_for_response is True, returns the
-                response from the device with
-
-        Raises:
-            RuntimeError: If the response is not valid
-            socket.error: If there are communication errors.
+            timeout (float): Timeout in seconds.
         """
 
-        if self._socket is None:
-            self.connect()
+        self._writer_delegate.set_timeout(timeout)
 
-        self._socket.send(statement)
+    def connect(self) -> "SocketWriter":
+        """Establish the socket connection to the device.
 
-        if self._wait_for_response:
-            response = self._socket.recv(8192)
-            response = response.decode("utf-8")
+        Creates a `printcore` object with the configured host and
+        port, and waits for the connection to be established.
 
-            if response[0] != "%":
-                raise RuntimeError(response)
+        Returns:
+            SocketWriter: Self for method chaining
 
-            return response[1:-1]
+        Raises:
+            DeviceConnectionError: If connection cannot be established
+            DeviceTimeoutError: If connection times out
+        """
 
-        return None
+        return self._writer_delegate.connect()
+
+    def disconnect(self, wait: bool = True) -> None:
+        """Close the socket connection if it exists.
+
+        Args:
+            wait: If True, waits for pending operations to complete
+
+        Raises:
+            DeviceTimeoutError: If waiting times out
+        """
+
+        self._writer_delegate.disconnect()
+
+    def write(self, statement: bytes, wait: bool = False) -> str | None:
+        """Send a G-code statement through the socket connection.
+
+        Args:
+            statement (bytes): The G-code statement to send
+            wait (bool): Whether to wait for response
+
+        Returns:
+            Optional[str]: Response from the device if wait is True
+
+        Raises:
+            DeviceConnectionError: If connection cannot be established
+        """
+
+        return self._writer_delegate.write(statement, wait)
 
     def __enter__(self) -> "SocketWriter":
         return self.connect()

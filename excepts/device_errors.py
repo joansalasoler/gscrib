@@ -16,25 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from abc import ABC, abstractmethod
+
+class DeviceError(Exception):
+    """Base exception for device-related errors."""
 
 
-class BaseWriter(ABC):
-    """Base class for all the G-code writing implementations.
+class DeviceTimeoutError(DeviceError):
+    """Raised when a device operation times out."""
 
-    This class defines the interface for writing G-code commands to various
-    outputs, such as files, serial connections, or network sockets.
-    """
 
-    @abstractmethod
-    def connect(self) -> "BaseWriter":
-        """Establish connection or open resource for writing"""
-
-    @abstractmethod
-    def disconnect(self, wait: bool = True) -> None:
-        """Close connection or resource"""
-
-    @abstractmethod
-    def write(self,
-        statement: bytes, wait: bool = False) -> str | None:
-        """Write G-code statement and optionally get response"""
+class DeviceConnectionError(DeviceError):
+    """Raised when a device connection fails."""

@@ -22,11 +22,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import sys, logging
 from collections import defaultdict
-from math import inf
 from typing import Any, List, Dict
 from typeguard import typechecked
+
+from vpype_mecode.builder.excepts import DeviceError
 
 from .config import GConfig
 from .enums import DistanceMode
@@ -76,8 +77,6 @@ class CoreGBuilder(object):
         specified.
     - direct_write (str | DirectWrite) [default: 'off']:
         Send G-code to machine ('off', 'socket' or 'serial').
-    - wait_for_response (bool) [default: false]:
-        Wait for acknowledgment after each command.
     - host (str) [default: localhost]:
         Hostname/IP for network connection when using socket mode.
     - port (int) [default: 8000]:
@@ -113,6 +112,7 @@ class CoreGBuilder(object):
 
         config: GConfig = GConfig(**kwargs)
 
+        self._logger = logging.getLogger(__name__)
         self._formatter = DefaultFormatter()
         self._transformer = Transformer()
         self._current_axes = Point.unknown()
@@ -144,8 +144,7 @@ class CoreGBuilder(object):
             self._writers.append(writer)
 
         if config.direct_write == "socket":
-            wait = config.wait_for_response
-            writer = SocketWriter(config.host, config.port, wait)
+            writer = SocketWriter(config.host, config.port)
             self._writers.append(writer)
 
         if config.direct_write == "serial":
@@ -198,6 +197,8 @@ class CoreGBuilder(object):
         >>> G90|G91
         """
 
+        self._logger.debug(f"Setting distance mode to: {mode}")
+
         self._distance_mode = mode
         command = "G91" if mode == DistanceMode.RELATIVE else "G90"
         statement = self._formatter.format_command(command)
@@ -223,6 +224,9 @@ class CoreGBuilder(object):
         >>> G92 [X<x>] [Y<y>] [Z<z>] [<axis><value> ...]
         """
 
+        self._logger.debug(f"Set axis (x:{x}, y:{y}, z:{z})")
+        self._logger.debug(f"Set axis params: {kwargs}")
+
         target_axes = self._current_axes.replace(x, y, z)
         params = { "x": x, "y": y, "z": z, **kwargs }
         statement = self.formatter.format_command("G92", params)
@@ -230,6 +234,8 @@ class CoreGBuilder(object):
         self._current_params.update(kwargs)
         self._current_axes = target_axes
         self.write(statement)
+
+        self._logger.debug(f"New position: {target_axes}")
 
     def push_matrix(self) -> None:
         """Push the current transformation matrix onto the stack.
@@ -367,6 +373,10 @@ class CoreGBuilder(object):
         >>> G1 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
         """
 
+        self._logger.debug(f"Absolute move ({x}, {y}, {z})")
+        self._logger.debug(f"Move params: rapid:{rapid}), {kwargs}")
+        self._logger.debug(f"Current position: {self._current_axes}")
+
         # Beware that axes are initialized with float("-inf") to
         # indicate their current position is unknown. If that is the
         # case, this will convert -inf coordinates to zero.
@@ -396,6 +406,8 @@ class CoreGBuilder(object):
         self._write_move(nx, ny, nz, rapid, kwargs)
         self._current_params.update(kwargs)
         self._current_axes = target_axes
+
+        self._logger.debug(f"New position: {target_axes}")
 
     @typechecked
     def rapid_absolute(self,
@@ -439,7 +451,11 @@ class CoreGBuilder(object):
         >>> G1 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
         """
 
-        axes = self._current_axes.replace(x, y, z)
+        self._logger.debug(f"Absolute move ({x}, {y}, {z})")
+        self._logger.debug(f"Move params: rapid:{rapid}), {kwargs}")
+        self._logger.debug(f"Current position: {self._current_axes}")
+
+        target_axes = self._current_axes.replace(x, y, z)
         was_relative = self.is_relative
 
         if was_relative: self.absolute()
@@ -447,7 +463,9 @@ class CoreGBuilder(object):
         if was_relative: self.relative()
 
         self._current_params.update(kwargs)
-        self._current_axes = axes
+        self._current_axes = target_axes
+
+        self._logger.debug(f"New position: {target_axes}")
 
     @typechecked
     def comment(self, message: str, *args: Any) -> None:
@@ -484,7 +502,7 @@ class CoreGBuilder(object):
             requires_response: Whether to wait for a response
 
         Raises:
-            RuntimeError: If writing fails
+            DeviceError: If writing fails
 
         Example:
             >>> g = CoreGBuilder()
@@ -492,14 +510,17 @@ class CoreGBuilder(object):
             >>> g.move(x=10, y=20) # Uses proper state management
         """
 
+        self._logger.debug(f"Write statement: {statement}")
+
         try:
             line = self.formatter.format_line(statement)
             line_bytes = bytes(line, "utf-8")
 
             for writer in self._writers:
+                self._logger.debug(f"Write to {writer}")
                 writer.write(line_bytes, requires_response)
         except Exception as e:
-            raise RuntimeError(f"Failed to write statement") from e
+            raise DeviceError("Failed to write statement") from e
 
     @typechecked
     def teardown(self, wait: bool = True) -> None:
@@ -508,6 +529,8 @@ class CoreGBuilder(object):
         Args:
             wait (bool): Waits for pending operations to complete
         """
+
+        self._logger.info(f"Teardown writers")
 
         for writer in self._writers:
             writer.disconnect(wait)

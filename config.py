@@ -37,7 +37,6 @@ class GConfig():
     host: str = field(default="localhost")
     port: int = field(default=8000)
     baudrate: int = field(default=250000)
-    wait_for_response: bool = field(default=False)
 
     # Axis naming settings
     x_axis: str = field(default="X")
