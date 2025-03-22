@@ -27,3 +27,7 @@ class DeviceTimeoutError(DeviceError):
 
 class DeviceConnectionError(DeviceError):
     """Raised when a device connection fails."""
+
+
+class DeviceWriteError(DeviceError):
+    """Raised when a sending data to a device fails."""

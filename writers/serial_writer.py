@@ -101,21 +101,17 @@ class SerialWriter(BaseWriter):
 
         self._writer_delegate.disconnect()
 
-    def write(self, statement: bytes, wait: bool = False) -> str | None:
+    def write(self, statement: bytes) -> None:
         """Send a G-code statement through the serial connection.
 
         Args:
             statement (bytes): The G-code statement to send
-            wait (bool): Whether to wait for response
-
-        Returns:
-            Optional[str]: Response from the device if wait is True
 
         Raises:
             DeviceConnectionError: If connection cannot be established
         """
 
-        return self._writer_delegate.write(statement, wait)
+        self._writer_delegate.write(statement)
 
     def __enter__(self) -> "SerialWriter":
         return self.connect()

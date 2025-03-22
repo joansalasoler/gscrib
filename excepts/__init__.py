@@ -13,6 +13,7 @@ from .gcode_errors import CoolantStateError
 from .device_errors import DeviceError
 from .device_errors import DeviceTimeoutError
 from .device_errors import DeviceConnectionError
+from .device_errors import DeviceWriteError
 
 __all__ = [
     "GCodeError",
@@ -21,4 +22,5 @@ __all__ = [
     "DeviceError",
     "DeviceTimeoutError",
     "DeviceConnectionError",
+    "DeviceWriteError",
 ]

@@ -247,14 +247,20 @@ class GBuilder(CoreGBuilder):
         >>> G92 [X<x>] [Y<y>] [Z<z>] [<axis><value> ...]
         """
 
+        self._logger.debug("Set axis: (%s, %s, %s)", x, y, z)
+        self._logger.debug("Set axis params: %s", kwargs)
+        self._logger.debug("Current position: %s", self._current_axes)
+
         mode = PositioningMode.OFFSET
         params = { "x": x, "y": y, "z": z, **kwargs }
         statement = self._get_statement(mode, params)
 
-        axes = self._current_axes.replace(x, y, z)
+        target_axes = self._current_axes.replace(x, y, z)
         self._current_params.update(kwargs)
-        self._current_axes = axes
+        self._current_axes = target_axes
         self.write(statement)
+
+        self._logger.debug("New position: %s", target_axes)
 
     @typechecked
     def sleep(self, units: TimeUnits, seconds: float) -> None:
@@ -305,7 +311,7 @@ class GBuilder(CoreGBuilder):
         params = self.formatter.format_parameters({ "S": speed })
         mode_statement = self._get_statement(mode)
         statement = f"{params} {mode_statement}"
-        self.write(statement, requires_response=True)
+        self.write(statement)
 
     def tool_off(self) -> None:
         """Deactivate the current tool.
@@ -315,7 +321,7 @@ class GBuilder(CoreGBuilder):
 
         self._state.set_spin_mode(SpinMode.OFF)
         statement = self._get_statement(SpinMode.OFF)
-        self.write(statement, requires_response=True)
+        self.write(statement)
 
     @typechecked
     def power_on(self, mode: PowerMode, power: float) -> None:
@@ -346,7 +352,7 @@ class GBuilder(CoreGBuilder):
         params = self.formatter.format_parameters({ "S": power })
         mode_statement = self._get_statement(mode)
         statement = f"{params} {mode_statement}"
-        self.write(statement, requires_response=True)
+        self.write(statement)
 
     def power_off(self) -> None:
         """Power off the current tool.
@@ -356,7 +362,7 @@ class GBuilder(CoreGBuilder):
 
         self._state.set_power_mode(PowerMode.OFF)
         statement = self._get_statement(PowerMode.OFF)
-        self.write(statement, requires_response=True)
+        self.write(statement)
 
     @typechecked
     def tool_change(self, mode: ToolSwapMode, tool_number: int) -> None:
@@ -381,7 +387,7 @@ class GBuilder(CoreGBuilder):
         change_statement = self._get_statement(mode)
         tool_digits = 2 ** math.ceil(math.log2(len(str(tool_number))))
         statement = f"T{tool_number:0{tool_digits}} {change_statement}"
-        self.write(statement, requires_response=True)
+        self.write(statement)
 
     @typechecked
     def coolant_on(self, mode: CoolantMode) -> None:
@@ -401,7 +407,7 @@ class GBuilder(CoreGBuilder):
 
         self._state.set_coolant_mode(mode)
         statement = self._get_statement(mode)
-        self.write(statement, requires_response=True)
+        self.write(statement)
 
     def coolant_off(self) -> None:
         """Deactivate coolant system.
@@ -411,7 +417,7 @@ class GBuilder(CoreGBuilder):
 
         self._state.set_coolant_mode(CoolantMode.OFF)
         statement = self._get_statement(CoolantMode.OFF)
-        self.write(statement, requires_response=True)
+        self.write(statement)
 
     @typechecked
     def halt_program(self, mode: HaltMode, **kwargs) -> None:
@@ -433,7 +439,7 @@ class GBuilder(CoreGBuilder):
 
         self._state.set_halt_mode(mode)
         statement = self._get_statement(mode, kwargs)
-        self.write(statement, requires_response=True)
+        self.write(statement)
 
     @typechecked
     def emergency_halt(self, message: str) -> None:
@@ -460,7 +466,7 @@ class GBuilder(CoreGBuilder):
         self.comment(f"Emergency halt: {message}")
         self.halt_program(HaltMode.PAUSE)
 
-    def write(self, statement: str, requires_response: bool = False) -> None:
+    def write(self, statement: str) -> None:
         """Write a G-code statement to all configured writers.
 
         Direct use of this method is discouraged as it bypasses all state
@@ -471,10 +477,9 @@ class GBuilder(CoreGBuilder):
 
         Args:
             statement: The G-code statement to write
-            requires_response: Whether to wait for a response
 
         Raises:
-            RuntimeError: If writing fails
+            DeviceError: If writing fails
 
         Example:
             >>> g = CoreGBuilder()
@@ -483,7 +488,7 @@ class GBuilder(CoreGBuilder):
         """
 
         self._state.set_halt_mode(HaltMode.OFF)
-        super().write(statement, requires_response)
+        super().write(statement)
 
     def _get_statement(self, value: BaseEnum, params: dict = {}) -> str:
         """Generate a G-code statement from the codes table."""

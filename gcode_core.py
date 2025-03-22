@@ -197,7 +197,7 @@ class CoreGBuilder(object):
         >>> G90|G91
         """
 
-        self._logger.debug(f"Setting distance mode to: {mode}")
+        self._logger.debug("Setting distance mode to: %s", mode)
 
         self._distance_mode = mode
         command = "G91" if mode == DistanceMode.RELATIVE else "G90"
@@ -224,8 +224,9 @@ class CoreGBuilder(object):
         >>> G92 [X<x>] [Y<y>] [Z<z>] [<axis><value> ...]
         """
 
-        self._logger.debug(f"Set axis (x:{x}, y:{y}, z:{z})")
-        self._logger.debug(f"Set axis params: {kwargs}")
+        self._logger.debug("Set axis: (%s, %s, %s)", x, y, z)
+        self._logger.debug("Set axis params: %s", kwargs)
+        self._logger.debug("Current position: %s", self._current_axes)
 
         target_axes = self._current_axes.replace(x, y, z)
         params = { "x": x, "y": y, "z": z, **kwargs }
@@ -235,7 +236,7 @@ class CoreGBuilder(object):
         self._current_axes = target_axes
         self.write(statement)
 
-        self._logger.debug(f"New position: {target_axes}")
+        self._logger.debug("New position: %s", target_axes)
 
     def push_matrix(self) -> None:
         """Push the current transformation matrix onto the stack.
@@ -373,9 +374,9 @@ class CoreGBuilder(object):
         >>> G1 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
         """
 
-        self._logger.debug(f"Absolute move ({x}, {y}, {z})")
-        self._logger.debug(f"Move params: rapid:{rapid}), {kwargs}")
-        self._logger.debug(f"Current position: {self._current_axes}")
+        self._logger.debug("Move: (%s, %s, %s)", x, y, z)
+        self._logger.debug("Move params: rapid=%s, %s", rapid, kwargs)
+        self._logger.debug("Current position: %s", self._current_axes)
 
         # Beware that axes are initialized with float("-inf") to
         # indicate their current position is unknown. If that is the
@@ -407,7 +408,7 @@ class CoreGBuilder(object):
         self._current_params.update(kwargs)
         self._current_axes = target_axes
 
-        self._logger.debug(f"New position: {target_axes}")
+        self._logger.debug("New position: %s", target_axes)
 
     @typechecked
     def rapid_absolute(self,
@@ -451,9 +452,9 @@ class CoreGBuilder(object):
         >>> G1 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
         """
 
-        self._logger.debug(f"Absolute move ({x}, {y}, {z})")
-        self._logger.debug(f"Move params: rapid:{rapid}), {kwargs}")
-        self._logger.debug(f"Current position: {self._current_axes}")
+        self._logger.debug("Move absolute: (%s, %s, %s)", x, y, z)
+        self._logger.debug("Move params: rapid=%s, %s", rapid, kwargs)
+        self._logger.debug("Current position: %s", self._current_axes)
 
         target_axes = self._current_axes.replace(x, y, z)
         was_relative = self.is_relative
@@ -465,7 +466,7 @@ class CoreGBuilder(object):
         self._current_params.update(kwargs)
         self._current_axes = target_axes
 
-        self._logger.debug(f"New position: {target_axes}")
+        self._logger.debug("New position: %s", target_axes)
 
     @typechecked
     def comment(self, message: str, *args: Any) -> None:
@@ -488,7 +489,7 @@ class CoreGBuilder(object):
         self.write(comment)
 
     @typechecked
-    def write(self, statement: str, requires_response: bool = False) -> None:
+    def write(self, statement: str) -> None:
         """Write a G-code statement to all configured writers.
 
         Direct use of this method is discouraged as it bypasses all state
@@ -499,7 +500,6 @@ class CoreGBuilder(object):
 
         Args:
             statement: The G-code statement to write
-            requires_response: Whether to wait for a response
 
         Raises:
             DeviceError: If writing fails
@@ -510,16 +510,17 @@ class CoreGBuilder(object):
             >>> g.move(x=10, y=20) # Uses proper state management
         """
 
-        self._logger.debug(f"Write statement: {statement}")
+        self._logger.debug("Write statement: %s", statement)
 
         try:
             line = self.formatter.format_line(statement)
             line_bytes = bytes(line, "utf-8")
 
             for writer in self._writers:
-                self._logger.debug(f"Write to {writer}")
-                writer.write(line_bytes, requires_response)
+                self._logger.debug("Write to %s", writer)
+                writer.write(line_bytes)
         except Exception as e:
+            self._logger.exception("Failed to write statement: %s", e)
             raise DeviceError("Failed to write statement") from e
 
     @typechecked
@@ -530,7 +531,7 @@ class CoreGBuilder(object):
             wait (bool): Waits for pending operations to complete
         """
 
-        self._logger.info(f"Teardown writers")
+        self._logger.info("Teardown writers")
 
         for writer in self._writers:
             writer.disconnect(wait)

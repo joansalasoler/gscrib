@@ -35,6 +35,5 @@ class BaseWriter(ABC):
         """Close connection or resource"""
 
     @abstractmethod
-    def write(self,
-        statement: bytes, wait: bool = False) -> str | None:
-        """Write G-code statement and optionally get response"""
+    def write(self, statement: bytes) -> None:
+        """Write G-code statement"""

@@ -78,12 +78,11 @@ class FileWriter(BaseWriter):
 
         self._file = None
 
-    def write(self, statement: bytes, wait: bool = False) -> None:
+    def write(self, statement: bytes) -> None:
         """Write a G-code statement to the file.
 
         Args:
             statement (bytes): The G-code statement to write.
-            wait (bool): Ignored
 
         Raises:
             OSError: If an error occurred while writing to the file.
@@ -106,8 +105,6 @@ class FileWriter(BaseWriter):
 
         if self._is_terminal:
             self._file.flush()
-
-        return None
 
     def __enter__(self) -> "FileWriter":
         return self.connect()
