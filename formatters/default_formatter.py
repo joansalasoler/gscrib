@@ -30,7 +30,7 @@ DEFAULT_DECIMAL_PLACES = 5
 DEFAULT_COMMENT_SYMBOLS = ";"
 COMMENT_OPENINGS = ("(", "[", "{", "<", '"', "'", "/*")
 COMMENT_ENDINGS = (")", "]", "}", ">", '"', "'", "*/")
-VALID_AXES = ( "x", "y", "z" )
+VALID_AXES = ( "X", "Y", "Z" )
 
 
 class DefaultFormatter(BaseFormatter):
@@ -48,7 +48,7 @@ class DefaultFormatter(BaseFormatter):
 
         self._line_endings = os.linesep
         self._decimal_places = DEFAULT_DECIMAL_PLACES
-        self._labels = { a: a.upper() for a in VALID_AXES }
+        self._labels = { a: a for a in VALID_AXES }
         self.set_comment_symbols(DEFAULT_COMMENT_SYMBOLS)
 
     @typechecked
@@ -63,13 +63,13 @@ class DefaultFormatter(BaseFormatter):
             ValueError: If axis is invalid or label is empty
         """
 
-        if axis not in VALID_AXES:
+        if axis.upper() not in VALID_AXES:
             raise ValueError(f"Invalid axis: {axis}")
 
         if not label.strip():
             raise ValueError("Axis label cannot be empty")
 
-        self._labels[axis] = label.strip()
+        self._labels[axis.upper()] = label.strip().upper()
 
     @typechecked
     def set_comment_symbols(self, value: str) -> None:
@@ -206,11 +206,12 @@ class DefaultFormatter(BaseFormatter):
 
         space = " "
         buffer = array('u')
+        upper_params = { k.upper(): v for k, v in params.items() }
 
         # Handle XYZ axis parameters
 
-        for axis in (a for a in VALID_AXES if a in params):
-            param = params[axis]
+        for axis in (a for a in VALID_AXES if a in upper_params):
+            param = upper_params[axis]
 
             if isinstance(param, Number):
                 buffer.extend(space)
@@ -219,8 +220,8 @@ class DefaultFormatter(BaseFormatter):
 
         # Handle other parameters
 
-        for label in (a for a in params if a not in VALID_AXES):
-            param = params[label]
+        for label in (a for a in upper_params if a not in VALID_AXES):
+            param = upper_params[label]
             is_number = isinstance(param, Number)
             value = self.format_number(param) if is_number else str(param)
             buffer.extend(space)

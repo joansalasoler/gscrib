@@ -26,6 +26,7 @@ from vpype_mecode.builder.enums import *
 from .point import Point
 from .gcode_state import GState
 from .gcode_core import CoreGBuilder
+from .move_params import MoveParams
 
 
 class GBuilder(CoreGBuilder):
@@ -228,9 +229,7 @@ class GBuilder(CoreGBuilder):
         statement = self._get_statement(hotend_units, { "S": temp })
         self.write(statement)
 
-    def set_axis_position(self,
-        x: float | None = None, y: float | None = None,
-        z: float | None = None, **kwargs : Any) -> None:
+    def set_axis_position(self, point: Point | None = None, **kwargs) -> None:
         """Set the current position without moving the head.
 
         This command changes the machine's coordinate system by setting
@@ -239,6 +238,7 @@ class GBuilder(CoreGBuilder):
         reset axis positions.
 
         Args:
+            point (optional): New axis position as a point
             x (float, optional): New X-axis position value
             y (float, optional): New Y-axis position value
             z (float, optional): New Z-axis position value
@@ -247,20 +247,13 @@ class GBuilder(CoreGBuilder):
         >>> G92 [X<x>] [Y<y>] [Z<z>] [<axis><value> ...]
         """
 
-        self._logger.debug("Set axis: (%s, %s, %s)", x, y, z)
-        self._logger.debug("Set axis params: %s", kwargs)
-        self._logger.debug("Current position: %s", self._current_axes)
-
         mode = PositioningMode.OFFSET
-        params = { "x": x, "y": y, "z": z, **kwargs }
+        point, params = self._process_move_params(point, **kwargs)
+        target_axes = self._current_axes.replace(*point)
         statement = self._get_statement(mode, params)
 
-        target_axes = self._current_axes.replace(x, y, z)
-        self._current_params.update(kwargs)
-        self._current_axes = target_axes
+        self._update_axes(target_axes, params)
         self.write(statement)
-
-        self._logger.debug("New position: %s", target_axes)
 
     @typechecked
     def sleep(self, units: TimeUnits, seconds: float) -> None:

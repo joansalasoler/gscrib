@@ -16,22 +16,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from math import inf
 from typing import NamedTuple
 import numpy as np
+
+from .move_params import MoveParams
 
 
 class Point(NamedTuple):
     """A point in a 3D space."""
 
-    x: float = 0.0
-    y: float = 0.0
-    z: float = 0.0
+    x: float | None = None
+    y: float | None = None
+    z: float | None = None
 
     @classmethod
     def unknown(cls) -> 'Point':
         """Create a point with unknown coordinates"""
-        return cls(-inf, -inf, -inf)
+        return cls(None, None, None)
 
     @classmethod
     def zero(cls) -> 'Point':
@@ -41,11 +42,21 @@ class Point(NamedTuple):
     @classmethod
     def from_vector(cls, vector: np.ndarray) -> 'Point':
         """Create a Point from a 4D vector"""
-        return cls(*vector[:3])
+        return cls.create(*vector[:3])
 
     def to_vector(self) -> np.ndarray:
         """Convert point to a 4D vector"""
-        return np.array([self.x, self.y, self.z, 1.0])
+        return np.array([self.x or 0, self.y or 0, self.z or 0, 1.0])
+
+    @classmethod
+    def from_params(cls, params: MoveParams) -> 'Point':
+        """Create a point from a dictionary of move parameters."""
+
+        x = params.get('X', None)
+        y = params.get('Y', None)
+        z = params.get('Z', None)
+
+        return cls(x, y, z)
 
     @classmethod
     def create(cls,
@@ -78,19 +89,44 @@ class Point(NamedTuple):
         """
 
         return Point(
-            x if x is not None else self.x or 0,
-            y if y is not None else self.y or 0,
-            z if z is not None else self.z or 0
+            self.x if x is None else x,
+            self.y if y is None else y,
+            self.z if z is None else z
         )
 
     def resolve(self) -> 'Point':
-        """Create a new point replacing -inf values with zeros."""
+        """Create a new point replacing None values with zeros."""
 
         return Point(
-            0 if self.x == -inf else self.x,
-            0 if self.y == -inf else self.y,
-            0 if self.z == -inf else self.z
+            0 if self.x is None else self.x,
+            0 if self.y is None else self.y,
+            0 if self.z is None else self.z
         )
+
+    def combine(self, o: 'Point', t: 'Point', m: 'Point') -> 'Point':
+        """Update coordinates based on position changes.
+
+        Updates coordinates by comparing the current, reference, and
+        target points. Individual coordinates are updated to the values
+        from point 'm' following these rules:
+
+        - If the current coordinate is not `None`.
+        - If current is `None` but reference and target differ.
+
+        Args:
+            o: The reference position
+            t: The target point to update towards
+            m: Values to use when updating
+
+        Returns:
+            A new point with the coordinates combined
+        """
+
+        x = m.x if self.x is not None or o.x != t.x else None
+        y = m.y if self.y is not None or o.y != t.y else None
+        z = m.z if self.z is not None or o.z != t.z else None
+
+        return Point(x, y, z)
 
     def __add__(self, other: 'Point') -> 'Point':
         """Add two points.

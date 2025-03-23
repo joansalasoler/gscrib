@@ -23,8 +23,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys, logging
-from collections import defaultdict
-from typing import Any, List, Dict
+from contextlib import contextmanager
+from typing import Any, List, Tuple
 from typeguard import typechecked
 
 from vpype_mecode.builder.excepts import DeviceError
@@ -32,6 +32,7 @@ from vpype_mecode.builder.excepts import DeviceError
 from .config import GConfig
 from .enums import DistanceMode
 from .formatters import BaseFormatter, DefaultFormatter
+from .move_params import MoveParams
 from .point import Point
 from .transformer import Transformer
 from .writers import BaseWriter, SocketWriter, SerialWriter, FileWriter
@@ -65,7 +66,7 @@ class CoreGBuilder(object):
     include additional axes or parameters in move commands, only these
     three primary axes will transformed and tracked by the `position`
     property. All other custom parameters provided to the move methods
-    can be retrieved using the `get_parameter()` method.
+    can be retrieved using the `get_move_parameter()` method.
 
     This class constructor accepts the following configuration options:
 
@@ -116,7 +117,7 @@ class CoreGBuilder(object):
         self._formatter = DefaultFormatter()
         self._transformer = Transformer()
         self._current_axes = Point.unknown()
-        self._current_params = defaultdict()
+        self._current_params = MoveParams()
         self._distance_mode = DistanceMode.ABSOLUTE
         self._writers: List[BaseWriter] = []
         self._initialize_formatter(config)
@@ -183,8 +184,22 @@ class CoreGBuilder(object):
         """Check if the current positioning mode is relative."""
         return self._distance_mode == DistanceMode.RELATIVE
 
-    def get_parameter(self, name: str) -> Any:
-        """Get the current value of a parameter by name."""
+    def get_move_parameter(self, name: str) -> Any:
+        """Get the current value of a move parameter by name.
+
+        This method retrieves the last used value for a G-code movement
+        parameter. These parameters are stored during move operations and
+        include both standard G-code parameters (like F for feed rate)
+        and any custom parameters passed to move commands.
+
+        Args:
+            name: Name of the parameter (case-insensitive)
+
+        Returns:
+            Any: The parameter's value, or None if the parameter hasn't
+            been used in any previous move command.
+        """
+
         return self._current_params.get(name)
 
     @typechecked
@@ -205,9 +220,7 @@ class CoreGBuilder(object):
         self.write(statement)
 
     @typechecked
-    def set_axis_position(self,
-        x: float | None = None, y: float | None = None,
-        z: float | None = None, **kwargs : Any) -> None:
+    def set_axis_position(self, point: Point | None = None, **kwargs) -> None:
         """Set the current position without moving the head.
 
         This command changes the machine's coordinate system by setting
@@ -216,6 +229,7 @@ class CoreGBuilder(object):
         reset axis positions.
 
         Args:
+            point (optional): New axis position as a point
             x (float, optional): New X-axis position value
             y (float, optional): New Y-axis position value
             z (float, optional): New Z-axis position value
@@ -224,19 +238,12 @@ class CoreGBuilder(object):
         >>> G92 [X<x>] [Y<y>] [Z<z>] [<axis><value> ...]
         """
 
-        self._logger.debug("Set axis: (%s, %s, %s)", x, y, z)
-        self._logger.debug("Set axis params: %s", kwargs)
-        self._logger.debug("Current position: %s", self._current_axes)
-
-        target_axes = self._current_axes.replace(x, y, z)
-        params = { "x": x, "y": y, "z": z, **kwargs }
+        point, params = self._process_move_params(point, **kwargs)
+        target_axes = self._current_axes.replace(*point)
         statement = self.formatter.format_command("G92", params)
 
-        self._current_params.update(kwargs)
-        self._current_axes = target_axes
+        self._update_axes(target_axes, params)
         self.write(statement)
-
-        self._logger.debug("New position: %s", target_axes)
 
     def push_matrix(self) -> None:
         """Push the current transformation matrix onto the stack.
@@ -331,10 +338,60 @@ class CoreGBuilder(object):
 
         self.set_distance_mode(DistanceMode.RELATIVE)
 
+    @contextmanager
+    def absolute_distance(self):
+        """Temporarily set absolute distance mode within a context.
+
+        This context manager temporarily switches to absolute positioning
+        mode (G90) and automatically restores the previous mode when
+        exiting the context.
+
+        Example:
+            >>> with g.absolute_distance():
+            ...     g.move(x=10, y=10)  # Absolute move
+            ...     g.move(x=20, y=20)  # Absolute move
+            ... # Previous distance mode is restored here
+        """
+
+        mode = DistanceMode.ABSOLUTE
+        previous = self._distance_mode
+
+        try:
+            if mode != previous:
+                self.set_distance_mode(mode)
+            yield
+        finally:
+            if previous != mode:
+                self.set_distance_mode(previous)
+
+    @contextmanager
+    def relative_distance(self):
+        """Temporarily set relative distance mode within a context.
+
+        This context manager temporarily switches to relative positioning
+        mode (G91) and automatically restores the previous mode when
+        exiting the context.
+
+        Example:
+            >>> with g.relative_distance():
+            ...     g.move(x=10, y=10)  # Relative move
+            ...     g.move(x=20, y=20)  # Relative move
+            ... # Previous distance mode is restored here
+        """
+
+        mode = DistanceMode.RELATIVE
+        previous = self._distance_mode
+
+        try:
+            if mode != previous:
+                self.set_distance_mode(mode)
+            yield
+        finally:
+            if previous != mode:
+                self.set_distance_mode(previous)
+
     @typechecked
-    def rapid(self,
-        x: float | None = None, y: float | None = None,
-        z: float | None = None, **kwargs: Any) -> None:
+    def rapid(self, point: Point | None = None, **kwargs) -> None:
         """Execute a rapid move to the specified location.
 
         Performs a maximum-speed, uncoordinated move where each axis
@@ -343,77 +400,46 @@ class CoreGBuilder(object):
         positioning or tool changes.
 
         Args:
+            point (optional): Target position as a point
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
-            **kwargs: Additional parameters
+            **kwargs: Additional G-code parameters
 
         >>> G0 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
         """
 
-        self.move(x, y, z, rapid=True, **kwargs)
+        point, params = self._process_move_params(point, **kwargs)
+        move, target_axes = self._transform_move(point)
+        self._update_axes(target_axes, params)
+        self._write_rapid(move, params)
 
     @typechecked
-    def move(self,
-        x: float | None = None, y: float | None = None,
-        z: float | None = None, rapid: bool = False, **kwargs: Any) -> None:
+    def move(self, point: Point | None = None, **kwargs) -> None:
         """Execute a controlled linear move to the specified location.
 
-        Performs a coordinated linear movement at the current feed rate.
-        All axes will arrive at their target positions simultaneously,
-        following a straight line path. The move will be relative or
-        absolute based on current distance mode.
+        The target position can be specified either as a Point object or
+        as individual x, y, z coordinates. Additional movement parameters
+        can be provided as keyword arguments. The move will be relative
+        or absolute based on the current distance mode.
 
         Args:
+            point (optional): Target position as a point
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
-            rapid (bool): Use rapid movement instead of linear
-            **kwargs: Additional parameters
+            **kwargs: Additional G-code parameters
 
         >>> G1 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
         """
 
-        self._logger.debug("Move: (%s, %s, %s)", x, y, z)
-        self._logger.debug("Move params: rapid=%s, %s", rapid, kwargs)
-        self._logger.debug("Current position: %s", self._current_axes)
-
-        # Beware that axes are initialized with float("-inf") to
-        # indicate their current position is unknown. If that is the
-        # case, this will convert -inf coordinates to zero.
-
-        current_axes = self._current_axes.resolve()
-
-        # Compute target position in the original coordinate system.
-
-        target_axes = (
-            current_axes.replace(x, y, z)
-            if not self.is_relative else
-            current_axes + Point.create(x, y, z)
-        )
-
-        # Transform target coordinates and determine which axes need to
-        # move. An axis moves if it was explicitly requested or if the
-        # transformation matrix caused its position to change.
-
-        new_axes = self.transformer.apply_transform(target_axes)
-        old_axes = self.transformer.apply_transform(current_axes)
-        nx = self._get_coordinate_or_none(x, old_axes.x, new_axes.x)
-        ny = self._get_coordinate_or_none(y, old_axes.y, new_axes.y)
-        nz = self._get_coordinate_or_none(z, old_axes.z, new_axes.z)
-
-        # Write the move statement and update the internal state
-
-        self._write_move(nx, ny, nz, rapid, kwargs)
-        self._current_params.update(kwargs)
-        self._current_axes = target_axes
-
-        self._logger.debug("New position: %s", target_axes)
+        point, params = self._process_move_params(point, **kwargs)
+        move, target_axes = self._transform_move(point)
+        self._update_axes(target_axes, params)
+        self._write_move(move, params)
 
     @typechecked
-    def rapid_absolute(self,
-        x: float | None = None, y: float | None = None,
-        z: float | None = None, **kwargs: Any) -> None:
+    def rapid_absolute(self, point: Point | None = None, **kwargs) -> None:
         """Execute a rapid positioning move to absolute coordinates.
 
         Performs a maximum-speed move to the specified absolute
@@ -422,20 +448,24 @@ class CoreGBuilder(object):
         positioning mode if relative mode is active.
 
         Args:
+            point (optional): Target position as a point
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
-            **kwargs: Additional parameters
+            **kwargs: Additional G-code parameters
 
         >>> G0 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
         """
 
-        self.move_absolute(x, y, z, rapid = True, **kwargs)
+        move, params = self._process_move_params(point, **kwargs)
+        target_axes = self._current_axes.replace(*move)
+        self._update_axes(target_axes, params)
+
+        with self.absolute_distance():
+            self._write_rapid(move, params)
 
     @typechecked
-    def move_absolute(self,
-        x: float | None = None, y: float | None = None,
-        z: float | None = None, rapid: bool = False, **kwargs: Any) -> None:
+    def move_absolute(self, point: Point | None = None, **kwargs) -> None:
         """Execute a controlled move to absolute coordinates.
 
         Performs a coordinated linear move to the specified absolute
@@ -444,29 +474,21 @@ class CoreGBuilder(object):
         positioning mode if relative mode is active.
 
         Args:
+            point (optional): Target position as a point
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
-            **kwargs: Additional parameters
+            **kwargs: Additional G-code parameters
 
         >>> G1 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
         """
 
-        self._logger.debug("Move absolute: (%s, %s, %s)", x, y, z)
-        self._logger.debug("Move params: rapid=%s, %s", rapid, kwargs)
-        self._logger.debug("Current position: %s", self._current_axes)
+        move, params = self._process_move_params(point, **kwargs)
+        target_axes = self._current_axes.replace(*move)
+        self._update_axes(target_axes, params)
 
-        target_axes = self._current_axes.replace(x, y, z)
-        was_relative = self.is_relative
-
-        if was_relative: self.absolute()
-        self._write_move(x, y, z, rapid, kwargs)
-        if was_relative: self.relative()
-
-        self._current_params.update(kwargs)
-        self._current_axes = target_axes
-
-        self._logger.debug("New position: %s", target_axes)
+        with self.absolute_distance():
+            self._write_move(move, params)
 
     @typechecked
     def comment(self, message: str, *args: Any) -> None:
@@ -538,43 +560,131 @@ class CoreGBuilder(object):
 
         self._writers.clear()
 
-    def _write_move(self,
-        x: float | None, y: float | None, z: float | None,
-        rapid: bool, params: Dict[str, Any]) -> None:
-        """Write a move statement with the given parameters.
+    def _write_move(self, point: Point, params: MoveParams) -> None:
+        """Write a linear move statement with the given parameters.
 
         Args:
-            x: X position or `None` if it should not be changed
-            y: Y position or `None` if it should not be changed
-            z: Z position or `None` if it should not be changed
-            rapid: Rapid movement (G0) instead of linear (G1)
+            point: Target position
             params: Additional movement parameters
         """
 
-        command = "G0" if rapid else "G1"
-        params = { "x": x, "y": y, "z": z, **params }
-        statement = self.formatter.format_command(command, params)
+        args = { **params, "X": point.x, "Y": point.y, "Z": point.z }
+        statement = self.formatter.format_command("G1", args)
         self.write(statement)
 
-    @staticmethod
-    def _get_coordinate_or_none(
-        request: float | None,
-        origin: float, target: float) -> float | None:
-        """Determine if a coordinate needs to be updated.
+    def _write_rapid(self, point: Point, params: MoveParams) -> None:
+        """Write a rapid move statement with the given parameters.
 
         Args:
-            request: The requested coordinate value or `None`
-            origin: The original coordinate value
-            target: The target coordinate value
-
-        Returns:
-            float or None: Transformed coordinate or `None`
+            point: Target position
+            params: Additional movement parameters
         """
 
-        explicit_request = request is not None
-        should_update = explicit_request or target != origin
+        args = { **params, "X": point.x, "Y": point.y, "Z": point.z }
+        statement = self.formatter.format_command("G0", args)
+        self.write(statement)
 
-        return target if should_update else None
+    def _process_move_params(self,
+        point: Point | None, **kwargs) -> Tuple[Point, MoveParams]:
+        """Extract move parameters from the provided arguments.
+
+        The methods that perform movement operations accept a target
+        position as a Point object or as individual x, y, z coordinates.
+        This method processes the provided arguments and returns a tuple
+        containing the target point and a case-insensitive dictionary of
+        movement parameters (including X, Y and Z).
+
+        Args:
+            point (optional): Target position as a point
+            x (float, optional): Target X-axis position
+            y (float, optional): Target Y-axis position
+            z (float, optional): Target Z-axis position
+            **kwargs: Additional G-code parameters
+
+        Returns:
+            Tuple[Point, MoveParams]: A tuple containing:
+                - The target point of the movement
+                - Processed movement parameters
+        """
+
+        params = MoveParams(kwargs)
+        point = point or Point.from_params(params)
+        params["X"] = point.x
+        params["Y"] = point.y
+        params["Z"] = point.z
+
+        return point, params
+
+    def _compute_move_target(self, origin: Point, move: Point) -> Point:
+        """Compute the final target position based on the distance mode.
+
+        Calculates the absolute target position taking into account
+        whether the machine is in relative or absolute mode.
+
+        Args:
+            origin: The starting position point
+            move: Absolute target or relative offset
+
+        Returns:
+            Point: The absolute target position
+        """
+
+        return (
+            origin.replace(*move)
+            if not self.is_relative else
+            origin + Point.create(*move)
+        )
+
+    def _transform_move(self, point: Point) -> Tuple[Point, Point]:
+        """Transform target coordinates and determine movement.
+
+        This method transforms the target coordinates of a move using
+        the current transformation matrix and determines the movement
+        vector that should be used to reach the target.
+
+        Args:
+            point: Target position
+
+        Returns:
+            Tuple[Point, Point]: A tuple containing:
+                - Transformed absolute or relative movement vector
+                - Absolute target position before transformation
+        """
+
+        # Beware that axes are initialized with `None` to indicate their
+        # current position is unknown. If that is the case, this will
+        # convert `None` coordinates to zero.
+
+        current_axes = self._current_axes.resolve()
+        target_axes = self._compute_move_target(current_axes, point)
+
+        # Transform target coordinates and determine which axes need to
+        # move. An axis moves if it was explicitly requested (the point
+        # contains a coordinate for it) or if the transformation matrix
+        # caused its position to change. All other coordinates of the
+        # move vector are set to `None`.
+
+        origin = self.transformer.apply_transform(current_axes)
+        target = self.transformer.apply_transform(target_axes)
+        move = (target - origin) if self.is_relative else target
+        move = point.combine(origin, target, move)
+
+        return move, target_axes
+
+    def _update_axes(self, axes: Point, params: MoveParams) -> None:
+        """Update the internal state after a movement.
+
+        Updates the current position and movement parameters to reflect
+        the new machine state after executing a move command.
+
+        Args:
+            axes: The new position of all axes
+            params: The movement parameters used in the command
+        """
+
+        self._logger.debug("New position: %s", axes)
+        self._current_params.update(params)
+        self._current_axes = axes
 
     def __enter__(self) -> 'CoreGBuilder':
         """Enter the context manager."""

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-G-code writer module.
+Ouptut G-code to files, sockets, and serial connections.
 
 This module provides utilities for writing G-code to different outputs,
 including files, network sockets, and serial connections.
