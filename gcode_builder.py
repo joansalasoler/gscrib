@@ -237,15 +237,16 @@ class GCodeBuilder(GCodeCore):
             x (float, optional): New X-axis position value
             y (float, optional): New Y-axis position value
             z (float, optional): New Z-axis position value
+            comment (str, optional): Optional comment to add
             **kwargs: Additional axis positions
 
         >>> G92 [X<x>] [Y<y>] [Z<z>] [<axis><value> ...]
         """
 
         mode = PositioningMode.OFFSET
-        point, params = self._process_move_params(point, **kwargs)
+        point, params, comment = self._process_move_params(point, **kwargs)
         target_axes = self._current_axes.replace(*point)
-        statement = self._get_statement(mode, params)
+        statement = self._get_statement(mode, params, comment)
 
         self._update_axes(target_axes, params)
         self.write(statement)
@@ -490,11 +491,12 @@ class GCodeBuilder(GCodeCore):
         self._state.set_halt_mode(HaltMode.OFF)
         super().write(statement)
 
-    def _get_statement(self, value: BaseEnum, params: dict = {}) -> str:
+    def _get_statement(self,
+        value: BaseEnum, params: dict = {}, comment: str | None = None)-> str:
         """Generate a G-code statement from the codes table."""
 
         entry = gcode_table.get_entry(value)
         command = self.formatter.format_command(entry.instruction, params)
-        comment = self.formatter.format_comment(entry.description)
+        comment = self.formatter.format_comment(comment or entry.description)
 
         return f"{command} {comment}"

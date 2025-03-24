@@ -233,14 +233,15 @@ class GCodeCore(object):
             x (float, optional): New X-axis position value
             y (float, optional): New Y-axis position value
             z (float, optional): New Z-axis position value
+            comment (str, optional): Optional comment to add
             **kwargs: Additional axis positions
 
         >>> G92 [X<x>] [Y<y>] [Z<z>] [<axis><value> ...]
         """
 
-        point, params = self._process_move_params(point, **kwargs)
+        point, params, comment = self._process_move_params(point, **kwargs)
         target_axes = self._current_axes.replace(*point)
-        statement = self.formatter.format_command("G92", params)
+        statement = self.formatter.format_command("G92", params, comment)
 
         self._update_axes(target_axes, params)
         self.write(statement)
@@ -404,15 +405,16 @@ class GCodeCore(object):
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
+            comment (str, optional): Optional comment to add
             **kwargs: Additional G-code parameters
 
         >>> G0 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
         """
 
-        point, params = self._process_move_params(point, **kwargs)
+        point, params, comment = self._process_move_params(point, **kwargs)
         move, target_axes = self._transform_move(point)
         self._update_axes(target_axes, params)
-        self._write_rapid(move, params)
+        self._write_rapid(move, params, comment)
 
     @typechecked
     def move(self, point: Point | None = None, **kwargs) -> None:
@@ -428,15 +430,16 @@ class GCodeCore(object):
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
+            comment (str, optional): Optional comment to add
             **kwargs: Additional G-code parameters
 
         >>> G1 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
         """
 
-        point, params = self._process_move_params(point, **kwargs)
+        point, params, comment = self._process_move_params(point, **kwargs)
         move, target_axes = self._transform_move(point)
         self._update_axes(target_axes, params)
-        self._write_move(move, params)
+        self._write_move(move, params, comment)
 
     @typechecked
     def rapid_absolute(self, point: Point | None = None, **kwargs) -> None:
@@ -452,17 +455,18 @@ class GCodeCore(object):
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
+            comment (str, optional): Optional comment to add
             **kwargs: Additional G-code parameters
 
         >>> G0 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
         """
 
-        move, params = self._process_move_params(point, **kwargs)
+        move, params, comment = self._process_move_params(point, **kwargs)
         target_axes = self._current_axes.replace(*move)
         self._update_axes(target_axes, params)
 
         with self.absolute_distance():
-            self._write_rapid(move, params)
+            self._write_rapid(move, params, comment)
 
     @typechecked
     def move_absolute(self, point: Point | None = None, **kwargs) -> None:
@@ -478,17 +482,18 @@ class GCodeCore(object):
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
+            comment (str, optional): Optional comment to add
             **kwargs: Additional G-code parameters
 
         >>> G1 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
         """
 
-        move, params = self._process_move_params(point, **kwargs)
+        move, params, comment = self._process_move_params(point, **kwargs)
         target_axes = self._current_axes.replace(*move)
         self._update_axes(target_axes, params)
 
         with self.absolute_distance():
-            self._write_move(move, params)
+            self._write_move(move, params, comment)
 
     @typechecked
     def comment(self, message: str, *args: Any) -> None:
@@ -560,32 +565,36 @@ class GCodeCore(object):
 
         self._writers.clear()
 
-    def _write_move(self, point: Point, params: MoveParams) -> None:
+    def _write_move(self,
+        point: Point, params: MoveParams, comment: str | None = None) -> None:
         """Write a linear move statement with the given parameters.
 
         Args:
             point: Target position
             params: Additional movement parameters
+            comment: Comment to include in the move
         """
 
         args = { **params, "X": point.x, "Y": point.y, "Z": point.z }
-        statement = self.formatter.format_command("G1", args)
+        statement = self.formatter.format_command("G1", args, comment)
         self.write(statement)
 
-    def _write_rapid(self, point: Point, params: MoveParams) -> None:
+    def _write_rapid(self,
+        point: Point, params: MoveParams, comment: str | None = None) -> None:
         """Write a rapid move statement with the given parameters.
 
         Args:
             point: Target position
             params: Additional movement parameters
+            comment: Comment to include in the move
         """
 
         args = { **params, "X": point.x, "Y": point.y, "Z": point.z }
-        statement = self.formatter.format_command("G0", args)
+        statement = self.formatter.format_command("G0", args, comment)
         self.write(statement)
 
     def _process_move_params(self,
-        point: Point | None, **kwargs) -> Tuple[Point, MoveParams]:
+        point: Point | None, **kwargs) -> Tuple[Point, MoveParams, str | None]:
         """Extract move parameters from the provided arguments.
 
         The methods that perform movement operations accept a target
@@ -599,21 +608,24 @@ class GCodeCore(object):
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
+            comment (str, optional): Comment to include in the move
             **kwargs: Additional G-code parameters
 
         Returns:
             Tuple[Point, MoveParams]: A tuple containing:
                 - The target point of the movement
                 - Processed movement parameters
+                - Comment to include in the move
         """
 
+        comment = kwargs.pop("comment", None)
         params = MoveParams(kwargs)
         point = point or Point.from_params(params)
         params["X"] = point.x
         params["Y"] = point.y
         params["Z"] = point.z
 
-        return point, params
+        return point, params, comment
 
     def _compute_move_target(self, origin: Point, move: Point) -> Point:
         """Compute the final target position based on the distance mode.

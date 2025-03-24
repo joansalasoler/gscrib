@@ -176,22 +176,29 @@ class DefaultFormatter(BaseFormatter):
         return self._comment_template.format(text)
 
     @typechecked
-    def format_command(self, command: str, params: dict = {}) -> str:
+    def format_command(self,
+        command: str, params: dict = {}, comment: str | None = None) -> str:
         """Format a G-code command with optional parameters.
 
         Args:
             command: The G-code command (e.g., G0, G1, M104)
             params: Dictionary of parameters and their values
+            comment: Comment to append to the statement
 
         Returns:
             Formatted command statement string
         """
 
+        formatted_comment = ""
+
+        if comment is not None and len(comment.strip()) > 0:
+            formatted_comment = f" {self.format_comment(comment)}"
+
         if isinstance(params, dict) and len(params) > 0:
             formatted_params = self.format_parameters(params)
-            return f"{command} {formatted_params}"
+            return f"{command} {formatted_params}{formatted_comment}"
 
-        return command
+        return f"{command}{formatted_comment}"
 
     @typechecked
     def format_parameters(self, params: dict) -> str:

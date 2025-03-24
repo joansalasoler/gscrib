@@ -93,12 +93,14 @@ class BaseFormatter(ABC):
         """
 
     @abstractmethod
-    def format_command(self, command: str, params: dict = {}) -> str:
+    def format_command(self,
+        command: str, params: dict = {}, comment: str | None = None) -> str:
         """Format a G-code command with optional parameters.
 
         Args:
             command: The G-code command
             params: Command parameters
+            comment: Comment to append to the statement
 
         Returns:
             Formatted command statement string
