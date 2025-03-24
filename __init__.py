@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Builds G-code statements.
+"""Core G-code generation and output management.
 
 This module provides high-level builders for generating G-code commands
 for CNC machines, 3D printers, laser cutters, and similar devices
@@ -12,16 +12,16 @@ from . import formatters
 from . import writers
 
 from .config import GConfig
-from .gcode_builder import GBuilder
-from .gcode_core import CoreGBuilder
+from .gcode_builder import GCodeBuilder
+from .gcode_core import GCodeCore
 from .gcode_state import GState
 from .move_params import MoveParams
 from .point import Point
 from .transformer import Transformer
 
 __all__ = [
-    "CoreGBuilder",
-    "GBuilder",
+    "GCodeCore",
+    "GCodeBuilder",
     "GConfig",
     "GState",
     "MoveParams",

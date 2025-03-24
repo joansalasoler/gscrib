@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Utilities to format G-code statements.
+G-code syntax and number formatting utilities.
 
 This module provides utilities for formatting G-code output, including
 commands, parameters, comments, and numbers. It defines standard interfaces

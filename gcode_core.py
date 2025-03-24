@@ -38,7 +38,7 @@ from .transformer import Transformer
 from .writers import BaseWriter, SocketWriter, SerialWriter, FileWriter
 
 
-class CoreGBuilder(object):
+class GCodeCore(object):
     """Core G-code generation functionality.
 
     This class provides the fundamental building blocks for G-code
@@ -50,8 +50,8 @@ class CoreGBuilder(object):
     - Basic movement operations (linear and rapid moves)
     - Multiple output methods (file, serial, network socket)
 
-    For general use, it is recommended to use the `GBuilder` class
-    instead, which extends `CoreGBuilder` with a more complete set of
+    For general use, it is recommended to use the `GCodeBuilder` class
+    instead, which extends `GCodeCore` with a more complete set of
     G-code commands and additional state management capabilities.
 
     The `teardown()` method must be called when done to properly close
@@ -98,7 +98,7 @@ class CoreGBuilder(object):
         Custom label for Z axis in G-code output.
 
     Example:
-        >>> with CoreGBuilder(output="outfile.gcode") as g:
+        >>> with GCodeCore(output="outfile.gcode") as g:
         ...     g.absolute()        # Set absolute positioning mode
         ...     g.move(x=10, y=10)  # Linear move to (10, 10)
         ...     g.rapid(z=5)        # Rapid move up to Z=5
@@ -512,24 +512,24 @@ class CoreGBuilder(object):
 
     @typechecked
     def write(self, statement: str) -> None:
-        """Write a G-code statement to all configured writers.
+        """Write a raw G-code statement to all configured writers.
 
         Direct use of this method is discouraged as it bypasses all state
         management. Using this method may lead to inconsistencies between
         the internal state tracking and the actual machine state. Instead,
-        prefer using the dedicated methods like `move()` or `rapid()`,
-        which properly maintain state.
+        use the dedicated methods like move(), tool_on(), etc., which
+        properly maintain state and ensure safe operation.
 
         Args:
-            statement: The G-code statement to write
+            statement: The raw G-code statement to write
 
         Raises:
-            DeviceError: If writing fails
+            DeviceError: If writing to any output fails
 
         Example:
-            >>> g = CoreGBuilder()
+            >>> g = GCodeCore()
             >>> g.write("G1 X10 Y20") # Bypasses state tracking
-            >>> g.move(x=10, y=20) # Uses proper state management
+            >>> g.move(x=10, y=20) # Proper state management
         """
 
         self._logger.debug("Write statement: %s", statement)
@@ -686,7 +686,7 @@ class CoreGBuilder(object):
         self._current_params.update(params)
         self._current_axes = axes
 
-    def __enter__(self) -> 'CoreGBuilder':
+    def __enter__(self) -> 'GCodeCore':
         """Enter the context manager."""
 
         return self

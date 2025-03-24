@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 """
-Defines machine modes and types.
+G-code specific modes and parameter types.
 
 This module contains enumeration classes that define different machine
 states, options, and configurations for G-code generation. Each enum
 value is linked to a specific G-Code instruction and a description, which
-are stored in the `vpype_mecode.enums.codes_table`. The `GBuilder` class
+are stored in the `vpype_mecode.enums.codes_table`. The `GCodeBuilder` class
 uses this table to create the appropriate G-code statements.
 """
 

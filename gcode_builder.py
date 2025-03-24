@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import math
-from typing import Any
 from typeguard import typechecked
 
 from vpype_mecode.builder.codes import gcode_table
@@ -25,44 +24,40 @@ from vpype_mecode.builder.enums import *
 
 from .point import Point
 from .gcode_state import GState
-from .gcode_core import CoreGBuilder
-from .move_params import MoveParams
+from .gcode_core import GCodeCore
 
 
-class GBuilder(CoreGBuilder):
-    """G-code command generator for CNC machines and similar devices.
+class GCodeBuilder(GCodeCore):
+    """G-code generator with complete machine control capabilities.
 
-    A high-level G-code generator that provides methods for common CNC
-    operations. Extends `CoreGBuilder` to handle coordinate transformations
-    and maintains internal state to prevent invalid operations and
-    ensure proper sequencing of commands.
+    This class provides comprehensive control over CNC machines and
+    similar devices, handling machine state tracking, tool control,
+    temperature management, and other advanced features. It extends
+    GCodeCore to provide a complete machine control solution.
 
-    This class extends `CoreGBuilder` to provide among others:
+    Key features:
 
-    - Unit and coordinate system selection
+    - Machine state tracking and validation
+    - Coordinate system transformations
+    - Unit and coordinate system management
     - Tool control (spindle, laser, etc.)
-    - Temperature and cooling control
-    - Movement commands (rapid, linear)
-    - Program flow control
-    - Machine state tracking
+    - Temperature and cooling management
+    - Basic movement movement commands
+    - Emergency stop procedures
+    - Multiple output capabilities
 
-    The current machine state is tracked by the `state` manager. This
-    component maintains and validates the state of various machine
-    subsystems including:
-
-    - Tool state (on/off, power, rotation)
-    - Coolant state
-    - Temperature settings
-    - Units and coordinate systems
-    - Feed and distance modes
+    The machine state is tracked by the `state` manager, which maintains
+    and validates the state of various machine subsystems to prevent
+    invalid operations and ensure proper command sequencing.
 
     Example:
-        >>> with CoreGBuilder() as g:
+        >>> with GCodeMachine(output="outfile.gcode") as g:
         >>>     g.set_distance_mode(ABSOLUTE)
-        >>>     g.set_feed_mode(UNITS_PER_MINUTE)
         >>>     g.select_units(MILLIMETERS)
-        >>>     g.move_absolute(x=0.0, y=0.0)
-        >>>     g.move(x=10.0, y=10.0, z=5.0)
+        >>>     g.rapid_absolute(x=0.0, y=0.0, z=5.0)
+        >>>     g.tool_on(SpinMode.CLOCKWISE, 1000)
+        >>>     g.move(z=0.0, F=500)
+        >>>     g.move(x=10.0, y=10.0, F=1500)
     """
 
     __slots__ = (
@@ -257,14 +252,23 @@ class GBuilder(CoreGBuilder):
 
     @typechecked
     def sleep(self, units: TimeUnits, seconds: float) -> None:
-        """Delays program execution for the specified time.
+        """Pause program execution for the specified duration.
+
+        Generates a dwell command that pauses program execution. While
+        the input is always in seconds, different machine controllers
+        interpret the P parameter in G4 differently; some expect seconds,
+        others milliseconds. The `units` parameter allows generating the
+        correct format for your specific controller:
+
+        - TimeUnits.SECONDS: Output as seconds
+        - TimeUnits.MILLISECONDS: Output as milliseconds
 
         Args:
-            units (TimeUnits): Time unit specification
+            units (TimeUnits): Time unit (seconds/milliseconds)
             seconds (float): Sleep duration (minimum 1ms)
 
         Raises:
-            ValueError: If seconds is less than 1ms
+            ValueError: If seconds is less than 0.001
 
         >>> G4 P<seconds|milliseconds>
         """
@@ -436,14 +440,17 @@ class GBuilder(CoreGBuilder):
 
     @typechecked
     def emergency_halt(self, message: str) -> None:
-        """Execute a safety sequence and pause execution.
+        """Execute an emergency shutdown sequence and pause execution.
 
-        Performs an emergency shutdown sequence:
+        Performs a complete safety shutdown sequence in this order:
 
-        1. Deactivates the tool
-        2. Turns off coolant
+        1. Deactivates all active tools (spindle, laser, etc.)
+        2. Turns off all coolant systems
         3. Adds a comment with the emergency message
-        4. Halts program execution
+        4. Halts program execution with a mandatory pause
+
+        This method ensures safe machine state in emergency situations.
+        The program cannot resume until manually cleared.
 
         Args:
             message (str): Description of the emergency condition
@@ -460,24 +467,24 @@ class GBuilder(CoreGBuilder):
         self.halt_program(HaltMode.PAUSE)
 
     def write(self, statement: str) -> None:
-        """Write a G-code statement to all configured writers.
+        """Write a raw G-code statement to all configured writers.
 
         Direct use of this method is discouraged as it bypasses all state
         management. Using this method may lead to inconsistencies between
         the internal state tracking and the actual machine state. Instead,
-        prefer using the dedicated methods like `move()` or `rapid()`,
-        which properly maintain state.
+        use the dedicated methods like move(), tool_on(), etc., which
+        properly maintain state and ensure safe operation.
 
         Args:
-            statement: The G-code statement to write
+            statement: The raw G-code statement to write
 
         Raises:
-            DeviceError: If writing fails
+            DeviceError: If writing to any output fails
 
         Example:
-            >>> g = CoreGBuilder()
+            >>> g = GCodeCore()
             >>> g.write("G1 X10 Y20") # Bypasses state tracking
-            >>> g.move(x=10, y=20) # Uses proper state management
+            >>> g.move(x=10, y=20) # Proper state management
         """
 
         self._state.set_halt_mode(HaltMode.OFF)

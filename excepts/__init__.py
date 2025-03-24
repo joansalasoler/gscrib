@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Builder exceptions and errors.
+G-code generation specific error handling.
 
 This module defines a collection of exceptions to handle errors related
 to G-code processing and generation.

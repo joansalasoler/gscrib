@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Ouptut G-code to files, sockets, and serial connections.
+G-code output to files and machine connections.
 
 This module provides utilities for writing G-code to different outputs,
 including files, network sockets, and serial connections.

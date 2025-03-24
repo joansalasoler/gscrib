@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 """
-Converts enums to G-Code instructions.
+Maps machine operations to G/M-code commands.
 
 This module contains a table that translates our internal enum
-values into their corresponding G-Code instructions. The `GBuilder`
+values into their corresponding G-Code instructions. The `GCodeBuilder`
 class uses this mapping to generate valid G-Code output.
 """
 
