@@ -23,7 +23,7 @@ from vpype_mecode.builder.codes import gcode_table
 from vpype_mecode.builder.enums import *
 
 from .point import Point, PointLike
-from .path_tracer import PathTracer
+from .trace_path import TracePath
 from .gcode_state import GState
 from .gcode_core import GCodeCore
 
@@ -63,17 +63,25 @@ class GCodeBuilder(GCodeCore):
 
     __slots__ = (
         "_state",
+        "_tracer",
     )
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self._state: GState = GState()
+        self._tracer: TracePath = TracePath(self)
 
     @property
     def state(self) -> GState:
         """Current machine state."""
 
         return self._state
+
+    @property
+    def trace(self) -> TracePath:
+        """Interpolated path generation"""
+
+        return self._tracer
 
     @typechecked
     def select_units(self, length_units: LengthUnits | str) -> None:

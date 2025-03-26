@@ -52,18 +52,18 @@ class GState:
     def __init__(self) -> None:
         self._current_tool_number: int = 0
         self._current_tool_power: float = 0
-        self._current_spin_mode: SpinMode = SpinMode.OFF
-        self._current_power_mode: PowerMode = PowerMode.OFF
-        self._current_distance_mode: DistanceMode = DistanceMode.ABSOLUTE
-        self._current_extrusion_mode: ExtrusionMode = ExtrusionMode.ABSOLUTE
-        self._current_coolant_mode: CoolantMode = CoolantMode.OFF
-        self._current_feed_mode: FeedMode = FeedMode.UNITS_PER_MINUTE
-        self._current_tool_swap_mode: ToolSwapMode = ToolSwapMode.OFF
-        self._current_halt_mode: HaltMode = HaltMode.OFF
-        self._current_length_units: Optional[LengthUnits] = None
-        self._current_plane: Optional[Plane] = None
+        self._current_tool_swap_mode = ToolSwapMode.OFF
         self._is_coolant_active: bool = False
         self._is_tool_active: bool = False
+        self.set_spin_mode(SpinMode.OFF)
+        self.set_power_mode(PowerMode.OFF)
+        self.set_distance_mode(DistanceMode.ABSOLUTE)
+        self.set_extrusion_mode(ExtrusionMode.ABSOLUTE)
+        self.set_coolant_mode(CoolantMode.OFF)
+        self.set_feed_mode(FeedMode.UNITS_PER_MINUTE)
+        self.set_halt_mode(HaltMode.OFF)
+        self.set_length_units(LengthUnits.MILLIMETERS)
+        self.set_plane(Plane.XY)
 
     @property
     def is_coolant_active(self) -> bool:

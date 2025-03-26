@@ -9,6 +9,7 @@ control parameters and operational modes.
 
 from .bed_temperature import BedTemperature
 from .coolant_mode import CoolantMode
+from .direction import Direction
 from .distance_mode import DistanceMode
 from .extrusion_mode import ExtrusionMode
 from .fan_mode import FanMode
@@ -24,6 +25,7 @@ from .tool_swap_mode import ToolSwapMode
 __all__ = [
     "BedTemperature",
     "CoolantMode",
+    "Direction",
     "DistanceMode",
     "ExtrusionMode",
     "FanMode",

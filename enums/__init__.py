@@ -14,6 +14,7 @@ from .base_enum import BaseEnum
 from .modes import DirectWrite
 from .types import BedTemperature
 from .types import CoolantMode
+from .types import Direction
 from .types import DistanceMode
 from .types import ExtrusionMode
 from .types import FanMode
@@ -34,6 +35,7 @@ __all__ = [
     "DirectWrite",
     "BedTemperature",
     "CoolantMode",
+    "Direction",
     "DistanceMode",
     "ExtrusionMode",
     "FanMode",

@@ -16,6 +16,7 @@ from .gcode_builder import GCodeBuilder
 from .gcode_core import GCodeCore
 from .gcode_state import GState
 from .move_params import MoveParams
+from .trace_path import TracePath
 from .point import Point, PointLike
 from .transformer import Transformer
 
@@ -25,6 +26,7 @@ __all__ = [
     "GConfig",
     "GState",
     "MoveParams",
+    "TracePath",
     "Point",
     "PointLike",
     "Transformer",
