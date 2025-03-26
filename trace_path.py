@@ -43,7 +43,7 @@ class TracePath:
 
     Unlike standard G-code where arc movements are affected by the
     selected plane (G17/G18/G19), this class always traces paths on the
-    XY plane by default. To transform paths to other planes ororientations,
+    XY plane by default. To transform paths to other planes or orientations,
     use the transformation methods provided by the builder (translate,
     rotate, scale, etc).
 
@@ -56,11 +56,11 @@ class TracePath:
         >>> g.move(x=10, y=0)               # Move to start position
         >>> g.trace.select_resolution(0.1)  # Set 0.1mm resolution
         >>> g.trace.select_direction("cw")  # Set clockwise direction
-
-        # Draw a quarter circle in XY plane
+        >>>
+        >>> # Draw a quarter circle in XY plane
         >>> g.trace.arc(target=(0, 10), center=(-10, 0))
-
-        # Draw an arc rotated 45° around the X axis
+        >>>
+        >>> # Draw an arc rotated 45° around the X axis
         >>> with g.transformer:  # Use transformer as context manager
         ...     g.move(x=0, y=0)
         ...     g.rotate(math.pi / 4, 'x')  # Rotate 45° around X axis
@@ -123,10 +123,10 @@ class TracePath:
             ValueError: If start and end points are not equidistant
 
         Example:
-            # Draw a quarter circle (90 degrees) clockwise
-            g.move(x=0, y=10)
-            g.trace.select_direction("cw")  # clockwise
-            g.trace.arc(target=(10, 0), center=(0, -10))
+            >>> # Draw a quarter circle (90 degrees) clockwise
+            >>> g.move(x=0, y=10)
+            >>> g.trace.select_direction("cw")  # clockwise
+            >>> g.trace.arc(target=(10, 0), center=(0, -10))
         """
 
         # Convert all coordinates to absolute positions. Coordinates
@@ -181,11 +181,10 @@ class TracePath:
             center: Center point (x, y) relative to the current position
 
         Example:
-            # Draw a circle with 10mm radius
-            g.move(x=10, y=0)
-            g.trace.select_direction("ccw")  # counter-clockwise
-            g.trace.circle(center=(-10, 0))
-            g.teardown()
+            >>> # Draw a circle with 10mm radius
+            >>> g.move(x=10, y=0)
+            >>> g.trace.select_direction("ccw")  # counter-clockwise
+            >>> g.trace.circle(center=(-10, 0))
         """
 
         self.arc(self._g.position, center)
