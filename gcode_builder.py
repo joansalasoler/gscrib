@@ -22,7 +22,8 @@ from typeguard import typechecked
 from vpype_mecode.builder.codes import gcode_table
 from vpype_mecode.builder.enums import *
 
-from .point import Point
+from .point import Point, PointLike
+from .path_tracer import PathTracer
 from .gcode_state import GState
 from .gcode_core import GCodeCore
 
@@ -65,8 +66,8 @@ class GCodeBuilder(GCodeCore):
     )
 
     def __init__(self, **kwargs) -> None:
-        self._state: GState = GState()
         super().__init__(**kwargs)
+        self._state: GState = GState()
 
     @property
     def state(self) -> GState:
@@ -75,7 +76,7 @@ class GCodeBuilder(GCodeCore):
         return self._state
 
     @typechecked
-    def select_units(self, length_units: LengthUnits) -> None:
+    def select_units(self, length_units: LengthUnits | str) -> None:
         """Set the unit system for subsequent commands.
 
         Args:
@@ -84,12 +85,13 @@ class GCodeBuilder(GCodeCore):
         >>> G20|G21
         """
 
+        length_units = LengthUnits(length_units)
         self._state.set_length_units(length_units)
         statement = self._get_statement(length_units)
         self.write(statement)
 
     @typechecked
-    def select_plane(self, plane: Plane) -> None:
+    def select_plane(self, plane: Plane | str) -> None:
         """Select the working plane for machine operations.
 
         Args:
@@ -98,12 +100,13 @@ class GCodeBuilder(GCodeCore):
         >>> G17|G18|G19
         """
 
+        plane = Plane(plane)
         self._state.set_plane(plane)
         statement = self._get_statement(plane)
         self.write(statement)
 
     @typechecked
-    def set_distance_mode(self, mode: DistanceMode) -> None:
+    def set_distance_mode(self, mode: DistanceMode | str) -> None:
         """Set the positioning mode for subsequent commands.
 
         Args:
@@ -112,13 +115,13 @@ class GCodeBuilder(GCodeCore):
         >>> G90|G91
         """
 
-        self._distance_mode = mode
+        self._distance_mode = DistanceMode(mode)
         self._state.set_distance_mode(mode)
         statement = self._get_statement(mode)
         self.write(statement)
 
     @typechecked
-    def set_extrusion_mode(self, mode: ExtrusionMode) -> None:
+    def set_extrusion_mode(self, mode: ExtrusionMode | str) -> None:
         """Set the extrusion mode for subsequent commands.
 
         Args:
@@ -127,12 +130,13 @@ class GCodeBuilder(GCodeCore):
         >>> M82|M83
         """
 
+        mode = ExtrusionMode(mode)
         self._state.set_extrusion_mode(mode)
         statement = self._get_statement(mode)
         self.write(statement)
 
     @typechecked
-    def set_feed_mode(self, mode: FeedMode) -> None:
+    def set_feed_mode(self, mode: FeedMode | str) -> None:
         """Set the feed rate mode for subsequent commands.
 
         Args:
@@ -141,6 +145,7 @@ class GCodeBuilder(GCodeCore):
         >>> G93|G94|G95
         """
 
+        mode = FeedMode(mode)
         self._state.set_feed_mode(mode)
         statement = self._get_statement(mode)
         self.write(statement)
@@ -195,7 +200,8 @@ class GCodeBuilder(GCodeCore):
         self.write(statement)
 
     @typechecked
-    def set_bed_temperature(self, units: TemperatureUnits, temp: int) -> None:
+    def set_bed_temperature(self,
+        units: TemperatureUnits | str, temp: int) -> None:
         """Set the temperature of the bed and return immediately.
 
         Args:
@@ -205,12 +211,14 @@ class GCodeBuilder(GCodeCore):
         >>> M140 S<temp>
         """
 
+        units = TemperatureUnits(units)
         bed_units = BedTemperature.from_units(units)
         statement = self._get_statement(bed_units, { "S": temp })
         self.write(statement)
 
     @typechecked
-    def set_hotend_temperature(self, units: TemperatureUnits, temp: int) -> None:
+    def set_hotend_temperature(self,
+        units: TemperatureUnits | str, temp: int) -> None:
         """Set the temperature of the hotend and return immediately.
 
         Args:
@@ -220,11 +228,12 @@ class GCodeBuilder(GCodeCore):
         >>> M104 S<temp>
         """
 
+        units = TemperatureUnits(units)
         hotend_units = HotendTemperature.from_units(units)
         statement = self._get_statement(hotend_units, { "S": temp })
         self.write(statement)
 
-    def set_axis_position(self, point: Point | None = None, **kwargs) -> None:
+    def set_axis_position(self, point: PointLike = None, **kwargs) -> None:
         """Set the current position without moving the head.
 
         This command changes the machine's coordinate system by setting
@@ -252,7 +261,7 @@ class GCodeBuilder(GCodeCore):
         self.write(statement)
 
     @typechecked
-    def sleep(self, units: TimeUnits, seconds: float) -> None:
+    def sleep(self, units: TimeUnits | str, seconds: float) -> None:
         """Pause program execution for the specified duration.
 
         Generates a dwell command that pauses program execution. While
@@ -277,12 +286,13 @@ class GCodeBuilder(GCodeCore):
         if seconds < 0.001:
             raise ValueError(f"Invalid sleep time '{seconds}'.")
 
+        units = TimeUnits(units)
         params = { "P": units.scale(seconds) }
         statement = self._get_statement(units, params)
         self.write(statement)
 
     @typechecked
-    def tool_on(self, mode: SpinMode, speed: float) -> None:
+    def tool_on(self, mode: SpinMode | str, speed: float) -> None:
         """Activate the tool with specified direction and speed.
 
         The speed parameter represents tool-specific values that vary
@@ -305,6 +315,7 @@ class GCodeBuilder(GCodeCore):
         if mode == SpinMode.OFF:
             raise ValueError("Not a valid spin mode.")
 
+        mode = SpinMode(mode)
         self._state.set_spin_mode(mode, speed)
         params = self.formatter.format_parameters({ "S": speed })
         mode_statement = self._get_statement(mode)
@@ -322,7 +333,7 @@ class GCodeBuilder(GCodeCore):
         self.write(statement)
 
     @typechecked
-    def power_on(self, mode: PowerMode, power: float) -> None:
+    def power_on(self, mode: PowerMode | str, power: float) -> None:
         """Activate the tool with specified mode and power.
 
         The power parameter represents tool-specific values that vary
@@ -346,6 +357,7 @@ class GCodeBuilder(GCodeCore):
         if mode == PowerMode.OFF:
             raise ValueError("Not a valid power mode.")
 
+        mode = PowerMode(mode)
         self._state.set_power_mode(mode, power)
         params = self.formatter.format_parameters({ "S": power })
         mode_statement = self._get_statement(mode)
@@ -363,7 +375,7 @@ class GCodeBuilder(GCodeCore):
         self.write(statement)
 
     @typechecked
-    def tool_change(self, mode: ToolSwapMode, tool_number: int) -> None:
+    def tool_change(self, mode: ToolSwapMode | str, tool_number: int) -> None:
         """Execute a tool change operation.
 
         Performs a tool change sequence, ensuring proper safety
@@ -381,6 +393,7 @@ class GCodeBuilder(GCodeCore):
         >>> T<tool_number> M6
         """
 
+        mode = ToolSwapMode(mode)
         self._state.set_tool_number(mode, tool_number)
         change_statement = self._get_statement(mode)
         tool_digits = 2 ** math.ceil(math.log2(len(str(tool_number))))
@@ -388,7 +401,7 @@ class GCodeBuilder(GCodeCore):
         self.write(statement)
 
     @typechecked
-    def coolant_on(self, mode: CoolantMode) -> None:
+    def coolant_on(self, mode: CoolantMode | str) -> None:
         """Activate coolant system with the specified mode.
 
         Args:
@@ -403,6 +416,7 @@ class GCodeBuilder(GCodeCore):
         if mode == CoolantMode.OFF:
             raise ValueError("Not a valid coolant mode.")
 
+        mode = CoolantMode(mode)
         self._state.set_coolant_mode(mode)
         statement = self._get_statement(mode)
         self.write(statement)
@@ -435,6 +449,7 @@ class GCodeBuilder(GCodeCore):
         if mode == HaltMode.OFF:
             raise ValueError("Not a valid halt mode.")
 
+        mode = HaltMode(mode)
         self._state.set_halt_mode(mode)
         statement = self._get_statement(mode, kwargs)
         self.write(statement)

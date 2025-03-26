@@ -16,18 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import NamedTuple
-import numpy as np
+from typing import NamedTuple, TypeAlias
+from typing import Sequence, Union
 
+import numpy as np
 from .move_params import MoveParams
+
+OptFloat: TypeAlias = float | None
+PointLike: TypeAlias = Union['Point', Sequence[float | None], np.ndarray, None]
 
 
 class Point(NamedTuple):
     """A point in a 3D space."""
 
-    x: float | None = None
-    y: float | None = None
-    z: float | None = None
+    x: OptFloat = None
+    y: OptFloat = None
+    z: OptFloat = None
 
     @classmethod
     def unknown(cls) -> 'Point':
@@ -42,7 +46,7 @@ class Point(NamedTuple):
     @classmethod
     def from_vector(cls, vector: np.ndarray) -> 'Point':
         """Create a Point from a 4D vector"""
-        return cls.create(*vector[:3])
+        return cls(*vector[:3]).resolve()
 
     def to_vector(self) -> np.ndarray:
         """Convert point to a 4D vector"""
@@ -58,25 +62,17 @@ class Point(NamedTuple):
 
         return cls(x, y, z)
 
-    @classmethod
-    def create(cls,
-        x: float | None = None,
-        y: float | None = None,
-        z: float | None = None) -> 'Point':
-        """Create a point converting `None` values to zero.
+    def resolve(self) -> 'Point':
+        """Create a new point replacing None values with zeros."""
 
-        Args:
-            x: X coordinate, defaults to 0 if `None`
-            y: Y coordinate, defaults to 0 if `None`
-            z: Z coordinate, defaults to 0 if `None`
-        """
-
-        return cls(x or 0, y or 0, z or 0)
+        return Point(
+            0 if self.x is None else self.x,
+            0 if self.y is None else self.y,
+            0 if self.z is None else self.z
+        )
 
     def replace(self,
-        x: float | None = None,
-        y: float | None = None,
-        z: float | None = None) -> 'Point':
+        x: OptFloat = None, y: OptFloat = None, z: OptFloat = None) -> 'Point':
         """Create a new point replacing only the specified coordinates.
 
         Args:
@@ -92,15 +88,6 @@ class Point(NamedTuple):
             self.x if x is None else x,
             self.y if y is None else y,
             self.z if z is None else z
-        )
-
-    def resolve(self) -> 'Point':
-        """Create a new point replacing None values with zeros."""
-
-        return Point(
-            0 if self.x is None else self.x,
-            0 if self.y is None else self.y,
-            0 if self.z is None else self.z
         )
 
     def combine(self, o: 'Point', t: 'Point', m: 'Point') -> 'Point':

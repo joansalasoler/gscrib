@@ -16,7 +16,7 @@ from .gcode_builder import GCodeBuilder
 from .gcode_core import GCodeCore
 from .gcode_state import GState
 from .move_params import MoveParams
-from .point import Point
+from .point import Point, PointLike
 from .transformer import Transformer
 
 __all__ = [
@@ -26,6 +26,7 @@ __all__ = [
     "GState",
     "MoveParams",
     "Point",
+    "PointLike",
     "Transformer",
     "formatters",
     "writers",

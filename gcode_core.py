@@ -24,18 +24,19 @@
 
 import sys, logging
 from contextlib import contextmanager
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, TypeAlias
 from typeguard import typechecked
-
-from vpype_mecode.builder.excepts import DeviceError
 
 from .config import GConfig
 from .enums import DistanceMode
+from .excepts import DeviceError
 from .formatters import BaseFormatter, DefaultFormatter
 from .move_params import MoveParams
-from .point import Point
+from .point import Point, PointLike
 from .transformer import Transformer
 from .writers import BaseWriter, SocketWriter, SerialWriter, FileWriter
+
+ProcessedParams: TypeAlias = Tuple[Point, MoveParams, str | None]
 
 
 class GCodeCore(object):
@@ -203,7 +204,7 @@ class GCodeCore(object):
         return self._current_params.get(name)
 
     @typechecked
-    def set_distance_mode(self, mode: DistanceMode) -> None:
+    def set_distance_mode(self, mode: DistanceMode | str) -> None:
         """Set the positioning mode for subsequent commands.
 
         Args:
@@ -214,13 +215,13 @@ class GCodeCore(object):
 
         self._logger.debug("Setting distance mode to: %s", mode)
 
-        self._distance_mode = mode
+        self._distance_mode = DistanceMode(mode)
         command = "G91" if mode == DistanceMode.RELATIVE else "G90"
         statement = self._formatter.format_command(command)
         self.write(statement)
 
     @typechecked
-    def set_axis_position(self, point: Point | None = None, **kwargs) -> None:
+    def set_axis_position(self, point: PointLike = None, **kwargs) -> None:
         """Set the current position without moving the head.
 
         This command changes the machine's coordinate system by setting
@@ -392,7 +393,62 @@ class GCodeCore(object):
                 self.set_distance_mode(previous)
 
     @typechecked
-    def rapid(self, point: Point | None = None, **kwargs) -> None:
+    def to_absolute(self, point: PointLike) -> Point:
+        """Convert a point to absolute coordinates.
+
+        Calculates the absolute coordinates of a target point based on
+        the current position and positioning mode (relative/absolute).
+        Any None coordinates in the current position are first converted
+        to 0.0 to ensure all returned coordinates have numeric values.
+
+        The input is a point-like object containing target coordinates.
+        In absolute mode, these are the final coordinates. In relative
+        mode, these are offsets from the current position.
+
+        Args:
+            point: Absolute target or relative offset
+
+        Returns:
+            Point: The absolute target position
+        """
+
+        origin = self._current_axes.resolve()
+
+        return (
+            origin + Point(*point).resolve()
+            if self.is_relative else
+            origin.replace(*point)
+        )
+
+    @typechecked
+    def to_distance_mode(self, point: PointLike) -> Point:
+        """Convert an absolute point to match current distance mode.
+
+        Calculates the coordinates to use in a move command based on the
+        current positioning mode (relative/absolute). Any None coordinates
+        in the current position or the target point are first converted
+        to 0.0 to ensure all returned coordinates have numeric values.
+
+        In absolute mode, returns the absolute coordinates.
+        In relative mode, returns the offset from current position.
+
+        Args:
+            point: Target point in absolute coordinates
+
+        Returns:
+            Point: Coordinates matching current positioning mode
+        """
+
+        origin = self._current_axes.resolve()
+
+        return (
+            point.resolve() - origin
+            if self.is_relative else
+            point.resolve()
+        )
+
+    @typechecked
+    def rapid(self, point: PointLike = None, **kwargs) -> None:
         """Execute a rapid move to the specified location.
 
         Performs a maximum-speed, uncoordinated move where each axis
@@ -417,7 +473,7 @@ class GCodeCore(object):
         self._write_rapid(move, params, comment)
 
     @typechecked
-    def move(self, point: Point | None = None, **kwargs) -> None:
+    def move(self, point: PointLike = None, **kwargs) -> None:
         """Execute a controlled linear move to the specified location.
 
         The target position can be specified either as a Point object or
@@ -442,7 +498,7 @@ class GCodeCore(object):
         self._write_move(move, params, comment)
 
     @typechecked
-    def rapid_absolute(self, point: Point | None = None, **kwargs) -> None:
+    def rapid_absolute(self, point: PointLike = None, **kwargs) -> None:
         """Execute a rapid positioning move to absolute coordinates.
 
         Performs a maximum-speed move to the specified absolute
@@ -469,7 +525,7 @@ class GCodeCore(object):
             self._write_rapid(move, params, comment)
 
     @typechecked
-    def move_absolute(self, point: Point | None = None, **kwargs) -> None:
+    def move_absolute(self, point: PointLike = None, **kwargs) -> None:
         """Execute a controlled move to absolute coordinates.
 
         Performs a coordinated linear move to the specified absolute
@@ -593,8 +649,7 @@ class GCodeCore(object):
         statement = self.formatter.format_command("G0", args, comment)
         self.write(statement)
 
-    def _process_move_params(self,
-        point: Point | None, **kwargs) -> Tuple[Point, MoveParams, str | None]:
+    def _process_move_params(self, point: PointLike, **kwargs) -> ProcessedParams:
         """Extract move parameters from the provided arguments.
 
         The methods that perform movement operations accept a target
@@ -612,40 +667,26 @@ class GCodeCore(object):
             **kwargs: Additional G-code parameters
 
         Returns:
-            Tuple[Point, MoveParams]: A tuple containing:
-                - The target point of the movement
-                - Processed movement parameters
-                - Comment to include in the move
+            ProcessedParams: A tuple containing:
+                - (Point) The target point of the movement
+                - (MoveParams) Processed movement parameters
+                - (str | None) Comment to include in the move
         """
 
         comment = kwargs.pop("comment", None)
         params = MoveParams(kwargs)
-        point = point or Point.from_params(params)
+
+        point = (
+            Point(*point[:3])
+            if point is not None else
+            Point.from_params(params)
+        )
+
         params["X"] = point.x
         params["Y"] = point.y
         params["Z"] = point.z
 
         return point, params, comment
-
-    def _compute_move_target(self, origin: Point, move: Point) -> Point:
-        """Compute the final target position based on the distance mode.
-
-        Calculates the absolute target position taking into account
-        whether the machine is in relative or absolute mode.
-
-        Args:
-            origin: The starting position point
-            move: Absolute target or relative offset
-
-        Returns:
-            Point: The absolute target position
-        """
-
-        return (
-            origin.replace(*move)
-            if not self.is_relative else
-            origin + Point.create(*move)
-        )
 
     def _transform_move(self, point: Point) -> Tuple[Point, Point]:
         """Transform target coordinates and determine movement.
@@ -668,7 +709,7 @@ class GCodeCore(object):
         # convert `None` coordinates to zero.
 
         current_axes = self._current_axes.resolve()
-        target_axes = self._compute_move_target(current_axes, point)
+        target_axes = self.to_absolute(point)
 
         # Transform target coordinates and determine which axes need to
         # move. An axis moves if it was explicitly requested (the point
