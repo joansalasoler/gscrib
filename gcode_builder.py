@@ -43,7 +43,8 @@ class GCodeBuilder(GCodeCore):
     - Unit and coordinate system management
     - Tool control (spindle, laser, etc.)
     - Temperature and cooling management
-    - Basic movement movement commands
+    - Basic movement commands
+    - Interpolated movement commands
     - Emergency stop procedures
     - Multiple output capabilities
 
@@ -95,6 +96,7 @@ class GCodeBuilder(GCodeCore):
 
         length_units = LengthUnits(length_units)
         self._state.set_length_units(length_units)
+        self._tracer._set_length_units(length_units)
         statement = self._get_statement(length_units)
         self.write(statement)
 

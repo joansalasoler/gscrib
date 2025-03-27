@@ -24,7 +24,7 @@
 
 import sys, logging
 from contextlib import contextmanager
-from typing import Any, List, Tuple, TypeAlias
+from typing import Any, List, Sequence, Tuple, TypeAlias
 from typeguard import typechecked
 
 from .config import GConfig
@@ -419,6 +419,31 @@ class GCodeCore(object):
             if self.is_relative else
             origin.replace(*point)
         )
+
+    @typechecked
+    def to_absolute_list(self, points: Sequence[PointLike]) -> List[Point]:
+        """Convert a sequence of points to absolute coordinates.
+
+        Args:
+            points: Absolute targets or relative offsets
+
+        Returns:
+            Point: A tuple of absolute target positions
+        """
+
+        results = []
+        current = self._current_axes.resolve()
+
+        if self.is_relative:
+            for point in points:
+                current += Point(*point).resolve()
+                results.append(current)
+        else:
+            for point in points:
+                current = current.replace(*point)
+                results.append(current)
+
+        return results
 
     @typechecked
     def to_distance_mode(self, point: PointLike) -> Point:
