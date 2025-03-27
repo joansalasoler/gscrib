@@ -46,7 +46,7 @@ class Transformer:
     Example:
         >>> with GMatrix() as matrix:
         ...     matrix.translate(10.0, 0.0)
-        ...     matrix.rotate(math.pi / 2, axis = 'z')
+        ...     matrix.rotate(90, axis = 'z')
         ...     matrix.scale(2.0)
     """
 
@@ -158,7 +158,7 @@ class Transformer:
         """Apply a rotation transformation around any axis.
 
         Args:
-            angle: Rotation angle in radians.
+            angle: Rotation angle in degrees.
             axis: Axis of rotation ('x', 'y', or 'z').
 
         Raises:
@@ -255,7 +255,7 @@ class Transformer:
         """Get the rotation vector for the specified axis and angle.
 
         Args:
-            angle: Rotation angle in radians.
+            angle: Rotation angle in degrees.
             axis: Axis of rotation ('x', 'y', or 'z').
 
         Returns:
@@ -265,24 +265,28 @@ class Transformer:
             KeyError: If axis is not 'x', 'y', or 'z'.
         """
 
+        angle_rad = np.radians(angle)
+
         return {
-            'x': [angle, 0, 0],
-            'y': [0, angle, 0],
-            'z': [0, 0, angle]
+            'x': [angle_rad, 0, 0],
+            'y': [0, angle_rad, 0],
+            'z': [0, 0, angle_rad]
         }[axis]
 
     def _get_reflection_matrix_2d(self, angle: float) -> np.ndarray:
         """Get the 2D reflection matrix for the specified angle.
 
         Args:
-            angle: Reflection angle in radians.
+            angle: Reflection angle in degrees.
 
         Returns:
             A 2x2 numpy array representing the reflection matrix.
         """
 
-        sin_2a = np.sin(2 * angle)
-        cos_2a = np.cos(2 * angle)
+        angle_rad = np.radians(angle)
+
+        sin_2a = np.sin(2 * angle_rad)
+        cos_2a = np.cos(2 * angle_rad)
 
         return np.array([
             [cos_2a,  sin_2a],

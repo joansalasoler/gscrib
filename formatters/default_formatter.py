@@ -119,7 +119,7 @@ class DefaultFormatter(BaseFormatter):
             self._line_endings = chars.decode("unicode-escape")
 
     @typechecked
-    def format_number(self, number: Number) -> str:
+    def number(self, number: Number) -> str:
         """Format a number with specified decimal places.
 
         Args:
@@ -150,7 +150,7 @@ class DefaultFormatter(BaseFormatter):
         )
 
     @typechecked
-    def format_line(self, statement: str) -> str:
+    def line(self, statement: str) -> str:
         """Format a single G-code statement for output.
 
         Args:
@@ -163,7 +163,7 @@ class DefaultFormatter(BaseFormatter):
         return f"{statement.rstrip()}{self._line_endings}"
 
     @typechecked
-    def format_comment(self, text: str) -> str:
+    def comment(self, text: str) -> str:
         """Format text as a G-code comment.
 
         Args:
@@ -176,7 +176,7 @@ class DefaultFormatter(BaseFormatter):
         return self._comment_template.format(text)
 
     @typechecked
-    def format_command(self,
+    def command(self,
         command: str, params: dict = {}, comment: str | None = None) -> str:
         """Format a G-code command with optional parameters.
 
@@ -192,16 +192,16 @@ class DefaultFormatter(BaseFormatter):
         formatted_comment = ""
 
         if comment is not None and len(comment.strip()) > 0:
-            formatted_comment = f" {self.format_comment(comment)}"
+            formatted_comment = f" {self.comment(comment)}"
 
         if isinstance(params, dict) and len(params) > 0:
-            formatted_params = self.format_parameters(params)
+            formatted_params = self.parameters(params)
             return f"{command} {formatted_params}{formatted_comment}"
 
         return f"{command}{formatted_comment}"
 
     @typechecked
-    def format_parameters(self, params: dict) -> str:
+    def parameters(self, params: dict) -> str:
         """Format G-code statement parameters.
 
         Args:
@@ -223,14 +223,14 @@ class DefaultFormatter(BaseFormatter):
             if isinstance(param, Number):
                 buffer.extend(space)
                 buffer.extend(self._labels[axis])
-                buffer.extend(self.format_number(param))
+                buffer.extend(self.number(param))
 
         # Handle other parameters
 
         for label in (a for a in upper_params if a not in VALID_AXES):
             param = upper_params[label]
             is_number = isinstance(param, Number)
-            value = self.format_number(param) if is_number else str(param)
+            value = self.number(param) if is_number else str(param)
             buffer.extend(space)
             buffer.extend(label)
             buffer.extend(value)

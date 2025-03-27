@@ -100,7 +100,7 @@ class GCodeCore(object):
 
     Example:
         >>> with GCodeCore(output="outfile.gcode") as g:
-        ...     g.absolute()        # Set absolute positioning mode
+        ...     g.set_distance_mode("absolute")
         ...     g.move(x=10, y=10)  # Linear move to (10, 10)
         ...     g.rapid(z=5)        # Rapid move up to Z=5
     """
@@ -166,12 +166,12 @@ class GCodeCore(object):
         return sys.stdout
 
     @property
-    def transformer(self) -> Transformer:
+    def transform(self) -> Transformer:
         """Get the current coordinate transformer instance."""
         return self._transformer
 
     @property
-    def formatter(self) -> BaseFormatter:
+    def format(self) -> BaseFormatter:
         """Get the current G-code formatter instance."""
         return self._formatter
 
@@ -217,7 +217,7 @@ class GCodeCore(object):
 
         self._distance_mode = DistanceMode(mode)
         command = "G91" if mode == DistanceMode.RELATIVE else "G90"
-        statement = self._formatter.format_command(command)
+        statement = self.format.command(command)
         self.write(statement)
 
     @typechecked
@@ -242,7 +242,7 @@ class GCodeCore(object):
 
         point, params, comment = self._process_move_params(point, **kwargs)
         target_axes = self._current_axes.replace(*point)
-        statement = self.formatter.format_command("G92", params, comment)
+        statement = self.format.command("G92", params, comment)
 
         self._update_axes(target_axes, params)
         self.write(statement)
@@ -254,7 +254,7 @@ class GCodeCore(object):
         later with `pop_matrix()`.
         """
 
-        self.transformer.push_matrix()
+        self.transform.push_matrix()
 
     def pop_matrix(self) -> None:
         """Pop and restore the previous transformation matrix.
@@ -263,7 +263,7 @@ class GCodeCore(object):
         was when last pushed.
         """
 
-        self.transformer.pop_matrix()
+        self.transform.pop_matrix()
 
     def translate(self, x: float, y: float, z: float = 0) -> None:
         """Apply a translation transformation.
@@ -274,17 +274,17 @@ class GCodeCore(object):
             z: Translation distance along Z axis
         """
 
-        self.transformer.translate(x, y, z)
+        self.transform.translate(x, y, z)
 
     def rotate(self, angle: float, axis: str = 'z') -> None:
         """Apply a rotation transformation.
 
         Args:
-            angle: Rotation angle in radians
+            angle: Rotation angle in degrees
             axis: Axis of rotation (x, y, or z)
         """
 
-        self.transformer.rotate(angle, axis)
+        self.transform.rotate(angle, axis)
 
     def scale(self, *scale: float) -> None:
         """Apply a scaling transformation.
@@ -294,7 +294,7 @@ class GCodeCore(object):
                 is provided uniform scaling is applied to all axes.
         """
 
-        self.transformer.scale(*scale)
+        self.transform.scale(*scale)
 
     def reflect(self, normal: List[float]) -> None:
         """Apply a reflection transformation.
@@ -303,7 +303,7 @@ class GCodeCore(object):
             normal: Normal as a 3D vector (nx, ny, nz)
         """
 
-        self.transformer.reflect(normal)
+        self.transform.reflect(normal)
 
     def mirror(self, plane: str = "zx") -> None:
         """Apply a mirror transformation around a plane.
@@ -312,7 +312,7 @@ class GCodeCore(object):
             plane: Mirror plane ("xy", "yz", or "zx").
         """
 
-        self.transformer.mirror(plane)
+        self.transform.mirror(plane)
 
     def rename_axis(self, axis: str, label: str) -> None:
         """Rename an axis label in the G-code output.
@@ -322,23 +322,7 @@ class GCodeCore(object):
             label: New label for the axis
         """
 
-        self.formatter.set_axis_label(axis, label)
-
-    def absolute(self) -> None:
-        """Set the distance mode to absolute.
-
-        >>> G90
-        """
-
-        self.set_distance_mode(DistanceMode.ABSOLUTE)
-
-    def relative(self) -> None:
-        """Set the distance mode to relative.
-
-        >>> G91
-        """
-
-        self.set_distance_mode(DistanceMode.RELATIVE)
+        self.format.set_axis_label(axis, label)
 
     @contextmanager
     def absolute_distance(self):
@@ -593,7 +577,7 @@ class GCodeCore(object):
             f"{message} {' '.join((str(a) for a in args))}"
         )
 
-        comment = self.formatter.format_comment(text)
+        comment = self.format.comment(text)
         self.write(comment)
 
     @typechecked
@@ -621,7 +605,7 @@ class GCodeCore(object):
         self._logger.debug("Write statement: %s", statement)
 
         try:
-            line = self.formatter.format_line(statement)
+            line = self.format.line(statement)
             line_bytes = bytes(line, "utf-8")
 
             for writer in self._writers:
@@ -657,7 +641,7 @@ class GCodeCore(object):
         """
 
         args = { **params, "X": point.x, "Y": point.y, "Z": point.z }
-        statement = self.formatter.format_command("G1", args, comment)
+        statement = self.format.command("G1", args, comment)
         self.write(statement)
 
     def _write_rapid(self,
@@ -671,7 +655,7 @@ class GCodeCore(object):
         """
 
         args = { **params, "X": point.x, "Y": point.y, "Z": point.z }
-        statement = self.formatter.format_command("G0", args, comment)
+        statement = self.format.command("G0", args, comment)
         self.write(statement)
 
     def _process_move_params(self, point: PointLike, **kwargs) -> ProcessedParams:
@@ -742,8 +726,8 @@ class GCodeCore(object):
         # caused its position to change. All other coordinates of the
         # move vector are set to `None`.
 
-        origin = self.transformer.apply_transform(current_axes)
-        target = self.transformer.apply_transform(target_axes)
+        origin = self.transform.apply_transform(current_axes)
+        target = self.transform.apply_transform(target_axes)
         move = (target - origin) if self.is_relative else target
         move = point.combine(origin, target, move)
 

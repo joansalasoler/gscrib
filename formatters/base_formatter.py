@@ -60,7 +60,7 @@ class BaseFormatter(ABC):
         """
 
     @abstractmethod
-    def format_number(self, number: Number) -> str:
+    def number(self, number: Number) -> str:
         """Format a number with specified decimal places.
 
         Args:
@@ -71,7 +71,7 @@ class BaseFormatter(ABC):
         """
 
     @abstractmethod
-    def format_line(self, statement: str) -> str:
+    def line(self, statement: str) -> str:
         """Format a single G-code statement for output.
 
         Args:
@@ -82,7 +82,7 @@ class BaseFormatter(ABC):
         """
 
     @abstractmethod
-    def format_comment(self, text: str) -> str:
+    def comment(self, text: str) -> str:
         """Format text as a G-code comment.
 
         Args:
@@ -93,7 +93,7 @@ class BaseFormatter(ABC):
         """
 
     @abstractmethod
-    def format_command(self,
+    def command(self,
         command: str, params: dict = {}, comment: str | None = None) -> str:
         """Format a G-code command with optional parameters.
 
@@ -107,7 +107,7 @@ class BaseFormatter(ABC):
         """
 
     @abstractmethod
-    def format_parameters(self, params) -> str:
+    def parameters(self, params) -> str:
         """Format G-code statement parameters.
 
         Args:

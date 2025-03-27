@@ -181,7 +181,7 @@ class GCodeBuilder(GCodeCore):
         """
 
         self._state._set_tool_power(power)
-        statement = self.formatter.format_parameters({ "S": power })
+        statement = self.format.parameters({ "S": power })
         self.write(statement)
 
     @typechecked
@@ -327,7 +327,7 @@ class GCodeBuilder(GCodeCore):
 
         mode = SpinMode(mode)
         self._state._set_spin_mode(mode, speed)
-        params = self.formatter.format_parameters({ "S": speed })
+        params = self.format.parameters({ "S": speed })
         mode_statement = self._get_statement(mode)
         statement = f"{params} {mode_statement}"
         self.write(statement)
@@ -369,7 +369,7 @@ class GCodeBuilder(GCodeCore):
 
         mode = PowerMode(mode)
         self._state._set_power_mode(mode, power)
-        params = self.formatter.format_parameters({ "S": power })
+        params = self.format.parameters({ "S": power })
         mode_statement = self._get_statement(mode)
         statement = f"{params} {mode_statement}"
         self.write(statement)
@@ -521,7 +521,7 @@ class GCodeBuilder(GCodeCore):
         """Generate a G-code statement from the codes table."""
 
         entry = gcode_table.get_entry(value)
-        command = self.formatter.format_command(entry.instruction, params)
-        comment = self.formatter.format_comment(comment or entry.description)
+        command = self.format.command(entry.instruction, params)
+        comment = self.format.comment(comment or entry.description)
 
         return f"{command} {comment}"

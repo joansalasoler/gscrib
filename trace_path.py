@@ -62,9 +62,9 @@ class TracePath:
         >>> g.trace.arc(target=(0, 10), center=(-10, 0))
         >>>
         >>> # Draw an arc rotated 45° around the X axis
-        >>> with g.transformer:  # Use transformer as context manager
+        >>> with g.transform:  # Use transformer as context manager
         ...     g.move(x=0, y=0)
-        ...     g.rotate(math.pi / 4, 'x')  # Rotate 45° around X axis
+        ...     g.rotate(45, 'x')  # Rotate 45° around X axis
         ...     g.trace.circle(center=(0, 10))
         ... # Applied transforms are restored here
     """
