@@ -95,7 +95,7 @@ class GCodeBuilder(GCodeCore):
         """
 
         length_units = LengthUnits(length_units)
-        self._state.set_length_units(length_units)
+        self._state._set_length_units(length_units)
         self._tracer._set_length_units(length_units)
         statement = self._get_statement(length_units)
         self.write(statement)
@@ -111,7 +111,7 @@ class GCodeBuilder(GCodeCore):
         """
 
         plane = Plane(plane)
-        self._state.set_plane(plane)
+        self._state._set_plane(plane)
         statement = self._get_statement(plane)
         self.write(statement)
 
@@ -126,7 +126,7 @@ class GCodeBuilder(GCodeCore):
         """
 
         self._distance_mode = DistanceMode(mode)
-        self._state.set_distance_mode(mode)
+        self._state._set_distance_mode(mode)
         statement = self._get_statement(mode)
         self.write(statement)
 
@@ -141,7 +141,7 @@ class GCodeBuilder(GCodeCore):
         """
 
         mode = ExtrusionMode(mode)
-        self._state.set_extrusion_mode(mode)
+        self._state._set_extrusion_mode(mode)
         statement = self._get_statement(mode)
         self.write(statement)
 
@@ -156,7 +156,7 @@ class GCodeBuilder(GCodeCore):
         """
 
         mode = FeedMode(mode)
-        self._state.set_feed_mode(mode)
+        self._state._set_feed_mode(mode)
         statement = self._get_statement(mode)
         self.write(statement)
 
@@ -180,7 +180,7 @@ class GCodeBuilder(GCodeCore):
         >>> S<power>
         """
 
-        self._state.set_tool_power(power)
+        self._state._set_tool_power(power)
         statement = self.formatter.format_parameters({ "S": power })
         self.write(statement)
 
@@ -326,7 +326,7 @@ class GCodeBuilder(GCodeCore):
             raise ValueError("Not a valid spin mode.")
 
         mode = SpinMode(mode)
-        self._state.set_spin_mode(mode, speed)
+        self._state._set_spin_mode(mode, speed)
         params = self.formatter.format_parameters({ "S": speed })
         mode_statement = self._get_statement(mode)
         statement = f"{params} {mode_statement}"
@@ -338,7 +338,7 @@ class GCodeBuilder(GCodeCore):
         >>> M5
         """
 
-        self._state.set_spin_mode(SpinMode.OFF)
+        self._state._set_spin_mode(SpinMode.OFF)
         statement = self._get_statement(SpinMode.OFF)
         self.write(statement)
 
@@ -368,7 +368,7 @@ class GCodeBuilder(GCodeCore):
             raise ValueError("Not a valid power mode.")
 
         mode = PowerMode(mode)
-        self._state.set_power_mode(mode, power)
+        self._state._set_power_mode(mode, power)
         params = self.formatter.format_parameters({ "S": power })
         mode_statement = self._get_statement(mode)
         statement = f"{params} {mode_statement}"
@@ -380,7 +380,7 @@ class GCodeBuilder(GCodeCore):
         >>> M5
         """
 
-        self._state.set_power_mode(PowerMode.OFF)
+        self._state._set_power_mode(PowerMode.OFF)
         statement = self._get_statement(PowerMode.OFF)
         self.write(statement)
 
@@ -404,7 +404,7 @@ class GCodeBuilder(GCodeCore):
         """
 
         mode = ToolSwapMode(mode)
-        self._state.set_tool_number(mode, tool_number)
+        self._state._set_tool_number(mode, tool_number)
         change_statement = self._get_statement(mode)
         tool_digits = 2 ** math.ceil(math.log2(len(str(tool_number))))
         statement = f"T{tool_number:0{tool_digits}} {change_statement}"
@@ -427,7 +427,7 @@ class GCodeBuilder(GCodeCore):
             raise ValueError("Not a valid coolant mode.")
 
         mode = CoolantMode(mode)
-        self._state.set_coolant_mode(mode)
+        self._state._set_coolant_mode(mode)
         statement = self._get_statement(mode)
         self.write(statement)
 
@@ -437,7 +437,7 @@ class GCodeBuilder(GCodeCore):
         >>> M9
         """
 
-        self._state.set_coolant_mode(CoolantMode.OFF)
+        self._state._set_coolant_mode(CoolantMode.OFF)
         statement = self._get_statement(CoolantMode.OFF)
         self.write(statement)
 
@@ -460,7 +460,7 @@ class GCodeBuilder(GCodeCore):
             raise ValueError("Not a valid halt mode.")
 
         mode = HaltMode(mode)
-        self._state.set_halt_mode(mode)
+        self._state._set_halt_mode(mode)
         statement = self._get_statement(mode, kwargs)
         self.write(statement)
 
@@ -513,7 +513,7 @@ class GCodeBuilder(GCodeCore):
             >>> g.move(x=10, y=20) # Proper state management
         """
 
-        self._state.set_halt_mode(HaltMode.OFF)
+        self._state._set_halt_mode(HaltMode.OFF)
         super().write(statement)
 
     def _get_statement(self,

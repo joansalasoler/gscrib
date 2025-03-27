@@ -55,15 +55,15 @@ class GState:
         self._current_tool_swap_mode = ToolSwapMode.OFF
         self._is_coolant_active: bool = False
         self._is_tool_active: bool = False
-        self.set_spin_mode(SpinMode.OFF)
-        self.set_power_mode(PowerMode.OFF)
-        self.set_distance_mode(DistanceMode.ABSOLUTE)
-        self.set_extrusion_mode(ExtrusionMode.ABSOLUTE)
-        self.set_coolant_mode(CoolantMode.OFF)
-        self.set_feed_mode(FeedMode.UNITS_PER_MINUTE)
-        self.set_halt_mode(HaltMode.OFF)
-        self.set_length_units(LengthUnits.MILLIMETERS)
-        self.set_plane(Plane.XY)
+        self._set_spin_mode(SpinMode.OFF)
+        self._set_power_mode(PowerMode.OFF)
+        self._set_distance_mode(DistanceMode.ABSOLUTE)
+        self._set_extrusion_mode(ExtrusionMode.ABSOLUTE)
+        self._set_coolant_mode(CoolantMode.OFF)
+        self._set_feed_mode(FeedMode.UNITS_PER_MINUTE)
+        self._set_halt_mode(HaltMode.OFF)
+        self._set_length_units(LengthUnits.MILLIMETERS)
+        self._set_plane(Plane.XY)
 
     @property
     def is_coolant_active(self) -> bool:
@@ -141,7 +141,7 @@ class GState:
         return self._current_plane
 
     @typechecked
-    def set_length_units(self, length_units: LengthUnits) -> None:
+    def _set_length_units(self, length_units: LengthUnits) -> None:
         """Set the length measurement unit system.
 
         Args:
@@ -151,7 +151,7 @@ class GState:
         self._current_length_units = length_units
 
     @typechecked
-    def set_plane(self, plane: Plane) -> None:
+    def _set_plane(self, plane: Plane) -> None:
         """Set the working plane for circular movements.
 
         Args:
@@ -161,7 +161,7 @@ class GState:
         self._current_plane = plane
 
     @typechecked
-    def set_tool_power(self, power: float) -> None:
+    def _set_tool_power(self, power: float) -> None:
         """Set the current tool power level.
 
         Args:
@@ -175,7 +175,7 @@ class GState:
         self._current_tool_power = power
 
     @typechecked
-    def set_distance_mode(self, mode: DistanceMode) -> None:
+    def _set_distance_mode(self, mode: DistanceMode) -> None:
         """Set the coordinate input mode for position commands.
 
         Args:
@@ -185,7 +185,7 @@ class GState:
         self._current_distance_mode = mode
 
     @typechecked
-    def set_extrusion_mode(self, mode: ExtrusionMode) -> None:
+    def _set_extrusion_mode(self, mode: ExtrusionMode) -> None:
         """Set the coordinate input mode for extrusion.
 
         Args:
@@ -195,7 +195,7 @@ class GState:
         self._current_extrusion_mode = mode
 
     @typechecked
-    def set_feed_mode(self, mode: FeedMode) -> None:
+    def _set_feed_mode(self, mode: FeedMode) -> None:
         """Set the feed rate interpretation mode.
 
         Args:
@@ -205,7 +205,7 @@ class GState:
         self._current_feed_mode = mode
 
     @typechecked
-    def set_coolant_mode(self, mode: CoolantMode) -> None:
+    def _set_coolant_mode(self, mode: CoolantMode) -> None:
         """Set the current coolant mode.
 
         Args:
@@ -223,7 +223,7 @@ class GState:
         self._current_coolant_mode = mode
 
     @typechecked
-    def set_spin_mode(self, mode: SpinMode, speed: float = 0) -> None:
+    def _set_spin_mode(self, mode: SpinMode, speed: float = 0) -> None:
         """Set the current tool spin mode and speed.
 
         Args:
@@ -239,12 +239,12 @@ class GState:
         if mode != SpinMode.OFF:
             self._ensure_tool_is_inactive("Spindle already active.")
 
-        self.set_tool_power(speed)
+        self._set_tool_power(speed)
         self._is_tool_active = (mode != SpinMode.OFF)
         self._current_spin_mode = mode
 
     @typechecked
-    def set_power_mode(self, mode: PowerMode, power: float = 0) -> None:
+    def _set_power_mode(self, mode: PowerMode, power: float = 0) -> None:
         """Set the current tool power mode and level.
 
         Args:
@@ -260,12 +260,12 @@ class GState:
         if mode != PowerMode.OFF:
             self._ensure_tool_is_inactive("Power already active.")
 
-        self.set_tool_power(power)
+        self._set_tool_power(power)
         self._is_tool_active = (mode != PowerMode.OFF)
         self._current_power_mode = mode
 
     @typechecked
-    def set_tool_number(self, mode: ToolSwapMode, tool_number: int) -> None:
+    def _set_tool_number(self, mode: ToolSwapMode, tool_number: int) -> None:
         """Set the current tool number and swap mode.
 
         Args:
@@ -287,7 +287,7 @@ class GState:
         self._current_tool_swap_mode = mode
 
     @typechecked
-    def set_halt_mode(self, mode: HaltMode) -> None:
+    def _set_halt_mode(self, mode: HaltMode) -> None:
         """Set the current halt mode.
 
         Args:
