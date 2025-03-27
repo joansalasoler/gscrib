@@ -17,24 +17,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import math
+from typing import Callable
+from contextlib import contextmanager
 from typeguard import typechecked
 
-from vpype_mecode.builder.codes import gcode_table
-from vpype_mecode.builder.enums import *
-
+from .codes import gcode_table
+from .gcode_core import GCodeCore
+from .gcode_state import GState
+from .move_params import MoveParams
 from .point import Point, PointLike
 from .trace_path import TracePath
-from .gcode_state import GState
-from .gcode_core import GCodeCore
+from .enums import *
 
 
 class GCodeBuilder(GCodeCore):
     """G-code generator with complete machine control capabilities.
 
     This class provides comprehensive control over CNC machines and
-    similar devices, handling machine state tracking, tool control,
-    temperature management, and other advanced features. It extends
-    GCodeCore to provide a complete machine control solution.
+    similar devices. It extends GCodeCore to provide a complete machine
+    control solution with state tracking, path interpolation, temperature
+    management, parameter processing, and other advanced features.
+
+    See GCodeCore for basic G-code generation and configuration options.
 
     Key features:
 
@@ -44,33 +48,60 @@ class GCodeBuilder(GCodeCore):
     - Tool control (spindle, laser, etc.)
     - Temperature and cooling management
     - Basic movement commands
-    - Interpolated movement commands
+    - Path interpolation (arcs, splines, helixes)
     - Emergency stop procedures
     - Multiple output capabilities
+    - Move handlers for custom parameter processing
 
     The machine state is tracked by the `state` manager, which maintains
     and validates the state of various machine subsystems to prevent
     invalid operations and ensure proper command sequencing.
 
+    The `trace` property provides access to advanced path interpolation
+    capabilities, allowing generation of complex toolpaths like circular
+    arcs, helixes or splines.
+
+    Move handlers can be registered to process and modify movement
+    commands before they are written. Each handler receives the origin
+    and target points, along with current machine state, allowing for:
+
+    - Parameter validation and modification
+    - Feed rate limiting or scaling
+    - Automatic parameter calculations
+    - State-based parameter adjustments
+    - Safety checks and constraints
+
     Example:
         >>> with GCodeMachine(output="outfile.gcode") as g:
-        >>>     g.set_distance_mode(ABSOLUTE)
-        >>>     g.select_units(MILLIMETERS)
         >>>     g.rapid_absolute(x=0.0, y=0.0, z=5.0)
-        >>>     g.tool_on(SpinMode.CLOCKWISE, 1000)
+        >>>     g.tool_on(CLOCKWISE, 1000)
         >>>     g.move(z=0.0, F=500)
         >>>     g.move(x=10.0, y=10.0, F=1500)
+        >>>
+        >>> # Example using a custom handler to extrude filament
+        >>> def extrude_handler(origin, target, params, state):
+        >>>     dt = target - origin
+        >>>     length = math.hypot(dt.x, dt.y, dt.z)
+        >>>     params.update(E=0.1 * length)
+        >>>     return params
+        >>>
+        >>> with g.handler(extrude_handler):
+        >>>     g.move(x=10, y=0)   # Will add E=1.0
+        >>>     g.move(x=20, y=10)  # Will add E=1.414
+        >>>     g.move(x=10, y=10)  # Will add E=1.0
     """
 
     __slots__ = (
         "_state",
         "_tracer",
+        "_handlers",
     )
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self._state: GState = GState()
         self._tracer: TracePath = TracePath(self)
+        self._handlers = []
 
     @property
     def state(self) -> GState:
@@ -83,6 +114,46 @@ class GCodeBuilder(GCodeCore):
         """Interpolated path generation"""
 
         return self._tracer
+
+    @typechecked
+    def add_handler(self, handler: Callable) -> None:
+        """Add a permanent move parameter handler.
+
+        Handlers are called before each move to process and modify
+        movement parameters. Each handler receives these arguments:
+
+        - origin (Point): Absolute coordinates of the origin point
+        - target (Point): Absolute coordinates of the destination point
+        - params (MoveParams): Object containing movement parameters
+        - state (GState): Current machine state
+
+        Args:
+            handler: Callable that processes movement parameters
+
+        Example:
+            >>> def limit_feed(origin, target, params, state):
+            >>>     params.update(F=min(params.get('F'), 1000)
+            >>>     return params
+            >>>
+            >>> g.add_handler(limit_feed)
+        """
+
+        if handler not in self._handlers:
+            self._handlers.append(handler)
+
+    @typechecked
+    def remove_handler(self, handler: Callable) -> None:
+        """Remove a previously added move parameter handler.
+
+        Args:
+            handler: Handler callable to remove
+
+        Example:
+            >>> g.remove_handler(limit_feed)
+        """
+
+        if handler in self._handlers:
+            self._handlers.remove(handler)
 
     @typechecked
     def select_units(self, length_units: LengthUnits | str) -> None:
@@ -125,7 +196,8 @@ class GCodeBuilder(GCodeCore):
         >>> G90|G91
         """
 
-        self._distance_mode = DistanceMode(mode)
+        mode = DistanceMode(mode)
+        self._distance_mode = mode
         self._state._set_distance_mode(mode)
         statement = self._get_statement(mode)
         self.write(statement)
@@ -515,6 +587,48 @@ class GCodeBuilder(GCodeCore):
 
         self._state._set_halt_mode(HaltMode.OFF)
         super().write(statement)
+
+    @contextmanager
+    def handler(self, handler: Callable):
+        """Temporarily enable a move parameter handler.
+
+        Args:
+            handler: Callable that processes movement parameters
+
+        Example:
+            >>> with g.handler(extrude_handler):  # Adds a handler
+            >>>     g.move(x=10, y=0)  # Will add E=1.0
+            >>> # Handler is removed automatically here
+        """
+
+        try:
+            self._handlers.append(handler)
+            yield
+        finally:
+            self._handlers.remove(handler)
+
+    def _write_move(self,
+        point: Point, params: MoveParams, comment: str | None = None) -> MoveParams:
+        """Write a linear move statement with the given parameters.
+
+        Applies all registered move handlers before writing the movement
+        command. Each handler can modify the parameters based on the
+        movement and current machine state.
+
+        Args:
+            point: Target position for the move
+            params: Movement parameters (feed rate, etc.)
+            comment: Optional comment to include
+        """
+
+        if len(self._handlers) > 0:
+            origin = self.position.resolve()
+            target = self.to_absolute(point)
+
+            for handler in self._handlers:
+                params = handler(origin, target, params, self._state)
+
+        return super()._write_move(point, params, comment)
 
     def _get_statement(self,
         value: BaseEnum, params: dict = {}, comment: str | None = None)-> str:

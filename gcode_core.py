@@ -478,8 +478,8 @@ class GCodeCore(object):
 
         point, params, comment = self._process_move_params(point, **kwargs)
         move, target_axes = self._transform_move(point)
+        params = self._write_rapid(move, params, comment)
         self._update_axes(target_axes, params)
-        self._write_rapid(move, params, comment)
 
     @typechecked
     def move(self, point: PointLike = None, **kwargs) -> None:
@@ -503,8 +503,8 @@ class GCodeCore(object):
 
         point, params, comment = self._process_move_params(point, **kwargs)
         move, target_axes = self._transform_move(point)
+        params = self._write_move(move, params, comment)
         self._update_axes(target_axes, params)
-        self._write_move(move, params, comment)
 
     @typechecked
     def rapid_absolute(self, point: PointLike = None, **kwargs) -> None:
@@ -528,10 +528,11 @@ class GCodeCore(object):
 
         move, params, comment = self._process_move_params(point, **kwargs)
         target_axes = self._current_axes.replace(*move)
-        self._update_axes(target_axes, params)
 
         with self.absolute_distance():
-            self._write_rapid(move, params, comment)
+            params = self._write_rapid(move, params, comment)
+
+        self._update_axes(target_axes, params)
 
     @typechecked
     def move_absolute(self, point: PointLike = None, **kwargs) -> None:
@@ -555,10 +556,11 @@ class GCodeCore(object):
 
         move, params, comment = self._process_move_params(point, **kwargs)
         target_axes = self._current_axes.replace(*move)
-        self._update_axes(target_axes, params)
 
         with self.absolute_distance():
-            self._write_move(move, params, comment)
+            params = self._write_move(move, params, comment)
+
+        self._update_axes(target_axes, params)
 
     @typechecked
     def comment(self, message: str, *args: Any) -> None:
@@ -631,7 +633,7 @@ class GCodeCore(object):
         self._writers.clear()
 
     def _write_move(self,
-        point: Point, params: MoveParams, comment: str | None = None) -> None:
+        point: Point, params: MoveParams, comment: str | None = None) -> MoveParams:
         """Write a linear move statement with the given parameters.
 
         Args:
@@ -644,8 +646,10 @@ class GCodeCore(object):
         statement = self.format.command("G1", args, comment)
         self.write(statement)
 
+        return params
+
     def _write_rapid(self,
-        point: Point, params: MoveParams, comment: str | None = None) -> None:
+        point: Point, params: MoveParams, comment: str | None = None) -> MoveParams:
         """Write a rapid move statement with the given parameters.
 
         Args:
@@ -657,6 +661,8 @@ class GCodeCore(object):
         args = { **params, "X": point.x, "Y": point.y, "Z": point.z }
         statement = self.format.command("G0", args, comment)
         self.write(statement)
+
+        return params
 
     def _process_move_params(self, point: PointLike, **kwargs) -> ProcessedParams:
         """Extract move parameters from the provided arguments.
