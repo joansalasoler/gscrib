@@ -50,3 +50,15 @@ class Direction(BaseEnum):
                 angle += 2 * math.pi
 
         return angle
+
+    def full_turn(self) -> float:
+        """Returns a signed full rotation (±2π) based on direction.
+
+        Returns:
+            float: 2π for counter-clockwise, -2π for clockwise
+        """
+
+        if self is Direction.CLOCKWISE:
+            return -2 * math.pi
+
+        return 2 * math.pi
