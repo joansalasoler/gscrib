@@ -186,6 +186,64 @@ class TracePath:
         self.parametric(arc_function, total_length, **kwargs)
 
     @typechecked
+    def arc_radius(self, target: PointLike, radius: float, **kwargs) -> None:
+        """Trace an arc to target point with specified radius.
+
+        Creates an arc from the current position to the target point with
+        the specified radius. Similar to G2/G3 commands, if the radius
+        is positive, the shorter arc will be traced. When negative, the
+        longer arc will be traced.
+
+        The direction of the arc is determined by the last call to
+        select_direction(). If Z is provided for the target point, the
+        arc will perform helical interpolation.
+
+        Args:
+            target: Absolute or relative destination point (x, y, [z])
+            radius: Radius (positive for shorter arc, negative for longer)
+            **kwargs: Additional G-code parameters (added to each move)
+
+        Raises:
+            ValueError: If radius is too small for the given points
+
+        Example:
+            >>> # Draw a quarter circle with 10mm radius (shorter arc)
+            >>> g.move(x=0, y=0)
+            >>> g.trace.arc_radius(target=(10, 10), radius=10)
+            >>>
+            >>> # Draw the longer arc between the same points
+            >>> g.move(x=0, y=0)
+            >>> g.trace.arc_radius(target=(10, 10), radius=-10)
+        """
+
+        o = self._g.position.resolve()
+        t = self._g.to_absolute(target)
+
+        dt = t - o; a = t + o
+        distance = np.hypot(dt.x, dt.y)
+
+        # Validate that the two point can lie on the same circle
+
+        if radius == 0 or abs(radius) < distance / 2:
+            raise ValueError(
+                "Radius too small for the given points")
+
+        # Direction depends on radius sign and selected direction
+
+        height = np.sqrt(abs(radius) ** 2 - (distance / 2) ** 2)
+        is_clockwise = (self._direction == Direction.CLOCKWISE)
+
+        if is_clockwise == (radius > 0):
+            cx = a.x / 2 + height * dt.y / distance
+            cy = a.y / 2 - height * dt.x / distance
+        else:
+            cx = a.x / 2 - height * dt.y / distance
+            cy = a.y / 2 + height * dt.x / distance
+
+        center = (cx - o.x, cy - o.y)
+        self.arc(target, center, **kwargs)
+
+    @typechecked
     def circle(self, center: PointLike, **kwargs) -> None:
         """Trace a complete circle around a center point.
 
