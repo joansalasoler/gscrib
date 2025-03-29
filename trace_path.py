@@ -222,11 +222,14 @@ class TracePath:
         dt = t - o; a = t + o
         distance = np.hypot(dt.x, dt.y)
 
-        # Validate that the two point can lie on the same circle
+        # Validate that the two points can lie on the same circle
 
         if radius == 0 or abs(radius) < distance / 2:
-            raise ValueError(
-                "Radius too small for the given points")
+            if abs(abs(radius) - distance / 2) <= 0.01:
+                radius = np.copysign(distance / 2, radius)
+            else:
+                raise ValueError(
+                    "Radius too small for the given points")
 
         # Direction depends on radius sign and selected direction
 
@@ -296,7 +299,7 @@ class TracePath:
 
         controls = [origin]
 
-        for point in points[1:]:
+        for point in points:
             if point != controls[-1]:
                 controls.append(point)
 
@@ -510,14 +513,17 @@ class TracePath:
             ndarray: Filtered array of points
         """
 
+        if points.size < 3:
+            return points
+
         diffs = np.diff(points, axis=0)
         distances = np.linalg.norm(diffs, axis=1)
-        keep_mask = np.ones(len(points), dtype=bool)
+        keep_mask = np.ones(len(distances), dtype=bool)
 
         tolerance = self._resolution / 10
         remaining = self._resolution
 
-        for i, distance in enumerate(distances):
+        for i, distance in enumerate(distances[:-1]):
             remaining -= distance
 
             if remaining < tolerance:
@@ -526,5 +532,4 @@ class TracePath:
 
             keep_mask[i] = False
 
-        keep_mask[0] = keep_mask[-1] = True
-        return np.vstack([points[keep_mask]])
+        return np.vstack([points[0], points[1:][keep_mask]])
