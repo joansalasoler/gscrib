@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: pylint
+        name: pylint
+        entry: pylint -E gscrib
+        language: system
+        types: [python]
+        require_serial: true
