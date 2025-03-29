@@ -3,12 +3,6 @@
 # G-Code generator for Vpype.
 # Copyright (C) 2025 Joan Sala <contact@joansala.com>
 #
-# This file contains code originally written by Jack Minardi, which is
-# licensed under the MIT License. See the LICENSE-MIT file in this
-# project's root directory for the full text of the original license.
-#
-# Modifications made by Joan Sala are licensed under the GNU GPL.
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
