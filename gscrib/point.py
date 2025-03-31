@@ -121,6 +121,9 @@ class Point(NamedTuple):
         Args:
             other: Point to add to this point
 
+        Raises:
+            TypeError: If any of the point coordinates are None.
+
         Returns:
             A new point with the coordinates added
         """
@@ -137,6 +140,9 @@ class Point(NamedTuple):
         Args:
             other: Point to subtract from this point
 
+        Raises:
+            TypeError: If any of the point coordinates are None.
+
         Returns:
             A new point with the coordinates substracted
         """
@@ -145,4 +151,43 @@ class Point(NamedTuple):
             self.x - other.x,
             self.y - other.y,
             self.z - other.z
+        )
+
+    def __mul__(self, scalar: float) -> 'Point':
+        """Multiply the point's coordinates by a scalar.
+
+        Args:
+            scalar: The scalar value to multiply by.
+
+        Raises:
+            TypeError: If any of the point coordinates are None.
+
+        Returns:
+            A new point with the coordinates multiplied by the scalar.
+        """
+
+        return Point(
+            self.x * scalar,
+            self.y * scalar,
+            self.z * scalar
+        )
+
+    def __truediv__(self, scalar: float) -> 'Point':
+        """Divide the point's coordinates by a scalar.
+
+        Args:
+            scalar: The scalar value to divide by.
+
+        Returns:
+            A new point with the coordinates divided by the scalar.
+
+        Raises:
+            TypeError: If any of the point coordinates are None.
+            ZeroDivisionError: If the scalar is zero.
+        """
+
+        return Point(
+            self.x / scalar,
+            self.y / scalar,
+            self.z / scalar
         )
