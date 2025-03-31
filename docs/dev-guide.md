@@ -88,6 +88,64 @@ by referring to the [pytest documentation](https://docs.pytest.org/en/stable/).
 pytest
 ```
 
+## Extending the Builder
+
+### Adding G-code Commands
+
+G-code commands define specific machine instructions within the system.
+These commands are implemented using enums and mapped to their
+corresponding G-code instructions. The `GCodeBuilder` class provides
+high-level methods to generate and manage these commands.
+
+The following steps outline how to add a new G-code command.
+
+**Define the Command:**
+
+1. Create a new enum for command inside `gscrib/enums/`.
+2. Make sure the enum extends `BaseEnum`.
+
+```python
+from gscrib.enums import BaseEnum
+
+class LengthUnits(BaseEnum):
+    INCHES = 'in'
+    MILLIMETERS = 'mm'
+```
+
+**Map the Command:**
+
+1. Open `gscrib/codes/gcode_mappings.py`.
+2. Add the enum values and their G-code instructions.
+
+```python
+gcode_table = GCodeTable((
+    GCodeEntry(LengthUnits.INCHES,
+        'G20', 'Set length units, inches'),
+
+    GCodeEntry(LengthUnits.MILLIMETERS,
+        'G21', 'Set length units, millimeters'),
+))
+```
+
+**Implement the Command:**
+
+1. Open `gscrib/gcode_builder.py`.
+2. Modify `GCodeBuilder` to support the new command by adding a new method.
+3. Use `self._get_statement()` to build the G-code statement.
+4. Write the G-code statement using `self.write(statement)`.
+
+```python
+@typechecked
+def set_units(self, length_units: LengthUnits | str) -> None:
+    length_units = LengthUnits(length_units)
+    statement = self._get_statement(length_units)
+    self.write(statement)
+```
+
+By following these steps, you ensure that the new G-code command
+integrates seamlessly with the existing system while maintaining
+consistency and correctness.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
