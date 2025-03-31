@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
 from typing import Union, TextIO, BinaryIO
 
 from .base_writer import BaseWriter
@@ -62,7 +63,9 @@ class FileWriter(BaseWriter):
         self._is_terminal = False
 
         if isinstance(self._output, str):
-            self._file = open(self._output, "wb+")
+            file_path = Path(self._output)
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            self._file = file_path.open("wb+")
         elif hasattr(self._output, "isatty"):
             self._is_terminal = self._file.isatty()
 
