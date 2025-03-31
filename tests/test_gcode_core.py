@@ -1,4 +1,3 @@
-import math
 import pytest
 
 from gscrib import Point
@@ -44,7 +43,7 @@ class MockWriter(BaseWriter):
 def test_default_initialization():
     builder = GCodeCore()
     assert builder.position == Point.unknown()
-    assert not builder.is_relative
+    assert not builder.distance_mode.is_relative
     assert len(builder._writers) > 0
 
 def test_custom_initialization():
@@ -64,14 +63,14 @@ def test_custom_initialization():
 
 # Test distance modes
 
-def test_absolute_distance_mode(builder, mock_writer):
+def test_absolute_mode_mode(builder, mock_writer):
     builder.set_distance_mode("absolute")
-    assert not builder.is_relative
+    assert not builder.distance_mode.is_relative
     assert "G90" in mock_writer.written_lines
 
-def test_relative_distance_mode(builder, mock_writer):
+def test_relative_mode_mode(builder, mock_writer):
     builder.set_distance_mode("relative")
-    assert builder.is_relative
+    assert builder.distance_mode.is_relative
     assert "G91" in mock_writer.written_lines
 
 def test_distance_mode_switching(builder, mock_writer):
@@ -81,44 +80,44 @@ def test_distance_mode_switching(builder, mock_writer):
     assert "G91" in mock_writer.written_lines[0]
     assert "G90" in mock_writer.written_lines[1]
     assert "G91" in mock_writer.written_lines[2]
-    assert builder.is_relative
+    assert builder.distance_mode.is_relative
 
 # Test position management
 
-def test_set_axis_position(builder, mock_writer):
-    builder.set_axis_position(x=10, y=20, z=30)
+def test_set_axis(builder, mock_writer):
+    builder.set_axis(x=10, y=20, z=30)
     assert builder.position == Point(10, 20, 30)
     assert "G92 X10 Y20 Z30" in mock_writer.written_lines
-    builder.set_axis_position(x=50, y=20, z=30)
+    builder.set_axis(x=50, y=20, z=30)
     assert builder.position == Point(50, 20, 30)
 
-def test_set_axis_position_partial(builder, mock_writer):
-    builder.set_axis_position(x=10)
+def test_set_axis_partial(builder, mock_writer):
+    builder.set_axis(x=10)
     assert builder.position == Point(10, None, None)
     assert "G92 X10" in mock_writer.written_lines
 
-def test_set_axis_position_additional_axis(builder, mock_writer):
-    builder.set_axis_position(E=20)
+def test_set_axis_additional_axis(builder, mock_writer):
+    builder.set_axis(E=20)
     assert builder.position == Point(None, None, None)
     assert "G92 E20" in mock_writer.written_lines
-    assert builder.get_move_parameter('E') == 20
-    assert builder.get_move_parameter('X') == None
-    assert builder.get_move_parameter('Y') == None
-    assert builder.get_move_parameter('Z') == None
+    assert builder.get_parameter('E') == 20
+    assert builder.get_parameter('X') == None
+    assert builder.get_parameter('Y') == None
+    assert builder.get_parameter('Z') == None
 
-def test_get_move_parameter(builder):
+def test_get_parameter(builder):
     builder.move(x=10, y=20, F=1000)
-    assert builder.get_move_parameter('F') == 1000
-    assert builder.get_move_parameter('X') == 10
-    assert builder.get_move_parameter('Y') == 20
-    assert builder.get_move_parameter('Z') == None
+    assert builder.get_parameter('F') == 1000
+    assert builder.get_parameter('X') == 10
+    assert builder.get_parameter('Y') == 20
+    assert builder.get_parameter('Z') == None
 
     builder.rapid(z=15, y=5, e=100)
-    assert builder.get_move_parameter('E') == 100
-    assert builder.get_move_parameter('F') == 1000
-    assert builder.get_move_parameter('X') == None
-    assert builder.get_move_parameter('Y') == 5
-    assert builder.get_move_parameter('Z') == 15
+    assert builder.get_parameter('E') == 100
+    assert builder.get_parameter('F') == 1000
+    assert builder.get_parameter('X') == None
+    assert builder.get_parameter('Y') == 5
+    assert builder.get_parameter('Z') == 15
 
 # Test movement commands
 
@@ -146,7 +145,7 @@ def test_rapid_absolute(builder, mock_writer):
     assert builder.position == Point(10, 20, None)
     assert "G90" in mock_writer.written_lines
     assert "G0 X10 Y20" in mock_writer.written_lines
-    assert builder.is_relative
+    assert builder.distance_mode.is_relative
 
     builder.rapid_absolute(Point(z=30))
     assert builder.position == Point(10, 20, 30)
@@ -158,7 +157,7 @@ def test_move_absolute(builder, mock_writer):
     assert builder.position == Point(10, 20, None)
     assert "G90" in mock_writer.written_lines
     assert "G1 X10 Y20" in mock_writer.written_lines
-    assert builder.is_relative
+    assert builder.distance_mode.is_relative
 
     builder.move_absolute(Point(z=30))
     assert builder.position == Point(10, 20, 30)
@@ -182,34 +181,34 @@ def test_absolute_moves(builder, mock_writer):
     assert "G1 X5 Y15" in mock_writer.written_lines[2]
     assert builder.position == Point(5, 15, 0)
 
-def test_absolute_distance_context_manager(builder, mock_writer):
+def test_absolute_mode_context_manager(builder, mock_writer):
     builder.set_distance_mode("relative")
     builder.move(x=100, y=100)
     mock_writer.written_lines.clear()
 
-    with builder.absolute_distance():
-        assert not builder.is_relative
+    with builder.absolute_mode():
+        assert not builder.distance_mode.is_relative
         builder.move(x=10, y=20, z=30)
         builder.move(x=5, y=10, z=15)
 
-    assert builder.is_relative
+    assert builder.distance_mode.is_relative
     assert builder.position == Point(5, 10, 15)
     assert "G90" in mock_writer.written_lines[0]
     assert "G1 X10 Y20 Z30" in mock_writer.written_lines[1]
     assert "G1 X5 Y10 Z15" in mock_writer.written_lines[2]
     assert "G91" in mock_writer.written_lines[3]
 
-def test_relative_distance_context_manager(builder, mock_writer):
+def test_relative_mode_context_manager(builder, mock_writer):
     builder.set_distance_mode("absolute")
     builder.move(x=100, y=100)
     mock_writer.written_lines.clear()
 
-    with builder.relative_distance():
-        assert builder.is_relative
+    with builder.relative_mode():
+        assert builder.distance_mode.is_relative
         builder.move(x=10, y=20, z=30)
         builder.move(x=5, y=10, z=15)
 
-    assert not builder.is_relative
+    assert not builder.distance_mode.is_relative
     assert builder.position == Point(115, 130, 45)
     assert "G91" in mock_writer.written_lines[0]
     assert "G1 X10 Y20 Z30" in mock_writer.written_lines[1]

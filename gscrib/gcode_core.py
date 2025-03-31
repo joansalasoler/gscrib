@@ -22,7 +22,7 @@ from typing import Any, List, Sequence, Tuple, TypeAlias
 from typeguard import typechecked
 
 from .config import GConfig
-from .enums import DistanceMode
+from .enums import DistanceMode, Direction
 from .excepts import DeviceError
 from .formatters import BaseFormatter, DefaultFormatter
 from .move_params import MoveParams
@@ -61,7 +61,7 @@ class GCodeCore(object):
     include additional axes or parameters in move commands, only these
     three primary axes will transformed and tracked by the `position`
     property. All other custom parameters provided to the move methods
-    can be retrieved using the `get_move_parameter()` method.
+    can be retrieved using the `get_parameter()` method.
 
     This class constructor accepts the following configuration options:
 
@@ -114,6 +114,7 @@ class GCodeCore(object):
         self._current_axes = Point.unknown()
         self._current_params = MoveParams()
         self._distance_mode = DistanceMode.ABSOLUTE
+        self._direction = Direction.CLOCKWISE
         self._writers: List[BaseWriter] = []
         self._initialize_formatter(config)
         self._initialize_writers(config)
@@ -175,11 +176,11 @@ class GCodeCore(object):
         return self._current_axes
 
     @property
-    def is_relative(self) -> bool:
-        """Check if the current positioning mode is relative."""
-        return self._distance_mode == DistanceMode.RELATIVE
+    def distance_mode(self) -> DistanceMode:
+        """Get the current positioning mode."""
+        return self._distance_mode
 
-    def get_move_parameter(self, name: str) -> Any:
+    def get_parameter(self, name: str) -> Any:
         """Get the current value of a move parameter by name.
 
         This method retrieves the last used value for a G-code movement
@@ -202,7 +203,11 @@ class GCodeCore(object):
         """Set the positioning mode for subsequent commands.
 
         Args:
-            mode (DistanceMode): The distance mode to use
+            mode (DistanceMode): The distance mode (absolute/relative)
+
+
+        Raises:
+            ValueError: If distance mode is not valid
 
         >>> G90|G91
         """
@@ -215,7 +220,7 @@ class GCodeCore(object):
         self.write(statement)
 
     @typechecked
-    def set_axis_position(self, point: PointLike = None, **kwargs) -> None:
+    def set_axis(self, point: PointLike = None, **kwargs) -> None:
         """Set the current position without moving the head.
 
         This command changes the machine's coordinate system by setting
@@ -319,7 +324,7 @@ class GCodeCore(object):
         self.format.set_axis_label(axis, label)
 
     @contextmanager
-    def absolute_distance(self):
+    def absolute_mode(self):
         """Temporarily set absolute distance mode within a context.
 
         This context manager temporarily switches to absolute positioning
@@ -327,7 +332,7 @@ class GCodeCore(object):
         exiting the context.
 
         Example:
-            >>> with g.absolute_distance():
+            >>> with g.absolute_mode():
             ...     g.move(x=10, y=10)  # Absolute move
             ...     g.move(x=20, y=20)  # Absolute move
             ... # Previous distance mode is restored here
@@ -345,7 +350,7 @@ class GCodeCore(object):
                 self.set_distance_mode(previous)
 
     @contextmanager
-    def relative_distance(self):
+    def relative_mode(self):
         """Temporarily set relative distance mode within a context.
 
         This context manager temporarily switches to relative positioning
@@ -353,7 +358,7 @@ class GCodeCore(object):
         exiting the context.
 
         Example:
-            >>> with g.relative_distance():
+            >>> with g.relative_mode():
             ...     g.move(x=10, y=10)  # Relative move
             ...     g.move(x=20, y=20)  # Relative move
             ... # Previous distance mode is restored here
@@ -394,7 +399,7 @@ class GCodeCore(object):
 
         return (
             origin + Point(*point).resolve()
-            if self.is_relative else
+            if self.distance_mode.is_relative else
             origin.replace(*point)
         )
 
@@ -412,7 +417,7 @@ class GCodeCore(object):
         results = []
         current = self._current_axes.resolve()
 
-        if self.is_relative:
+        if self.distance_mode.is_relative:
             for point in points:
                 current += Point(*point).resolve()
                 results.append(current)
@@ -446,7 +451,7 @@ class GCodeCore(object):
 
         return (
             point.resolve() - origin
-            if self.is_relative else
+            if self.distance_mode.is_relative else
             point.resolve()
         )
 
@@ -523,7 +528,7 @@ class GCodeCore(object):
         move, params, comment = self._process_move_params(point, **kwargs)
         target_axes = self._current_axes.replace(*move)
 
-        with self.absolute_distance():
+        with self.absolute_mode():
             params = self._write_rapid(move, params, comment)
 
         self._update_axes(target_axes, params)
@@ -551,7 +556,7 @@ class GCodeCore(object):
         move, params, comment = self._process_move_params(point, **kwargs)
         target_axes = self._current_axes.replace(*move)
 
-        with self.absolute_distance():
+        with self.absolute_mode():
             params = self._write_move(move, params, comment)
 
         self._update_axes(target_axes, params)
@@ -726,9 +731,10 @@ class GCodeCore(object):
         # caused its position to change. All other coordinates of the
         # move vector are set to `None`.
 
+        is_relative = self.distance_mode.is_relative
         origin = self.transform.apply_transform(current_axes)
         target = self.transform.apply_transform(target_axes)
-        move = (target - origin) if self.is_relative else target
+        move = (target - origin) if is_relative else target
         move = point.combine(origin, target, move)
 
         return move, target_axes

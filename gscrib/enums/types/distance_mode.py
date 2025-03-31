@@ -24,3 +24,13 @@ class DistanceMode(BaseEnum):
 
     ABSOLUTE = "absolute"
     RELATIVE = "relative"
+
+    @property
+    def is_absolute(self) -> bool:
+        """Check if this mode is absolute."""
+        return self == DistanceMode.ABSOLUTE
+
+    @property
+    def is_relative(self) -> bool:
+        """Check if this mode is relative."""
+        return self == DistanceMode.RELATIVE

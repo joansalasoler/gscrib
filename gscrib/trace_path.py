@@ -22,9 +22,8 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 from typeguard import typechecked
 
-from .enums import Direction, LengthUnits
+from .enums import Direction
 from .point import Point, PointLike
-from .gcode_core import GCodeCore
 
 PathFn: TypeAlias = Callable[[np.ndarray], np.ndarray]
 
@@ -50,9 +49,9 @@ class TracePath:
     operations until the context is exited.
 
     Example:
-        >>> g.move(x=10, y=0)               # Move to start position
-        >>> g.trace.select_resolution(0.1)  # Set 0.1mm resolution
-        >>> g.trace.select_direction("cw")  # Set clockwise direction
+        >>> g.move(x=10, y=0)      # Move to start position
+        >>> g.set_resolution(0.1)  # Set 0.1mm resolution
+        >>> g.set_direction("cw")  # Set clockwise direction
         >>>
         >>> # Draw a quarter circle in XY plane
         >>> g.trace.arc(target=(0, 10), center=(-10, 0))
@@ -65,52 +64,8 @@ class TracePath:
         ... # Applied transforms are restored here
     """
 
-    __slots__ = (
-        '_g',
-        '_direction',
-        '_resolution',
-        '_length_units'
-    )
-
-    def __init__(self, builder: GCodeCore):
-        self._g: GCodeCore = builder
-        self._length_units = LengthUnits.MILLIMETERS
-        self.select_direction(Direction.CLOCKWISE)
-        self.select_resolution(0.1) # 0.1 mm
-
-    def _set_length_units(self, length_units: LengthUnits) -> None:
-        """Set new length units and scale resolution to them"""
-
-        if length_units != self._length_units:
-            in_px = length_units.to_pixels(self._resolution)
-            self.select_resolution(self._length_units.scale(in_px))
-            self._length_units = length_units
-
-    @typechecked
-    def select_resolution(self, resolution: float) -> None:
-        """Set the resolution for interpolation.
-
-        Controls the accuracy of path approximation by specifying the
-        minimum length of linear segments used to trace the path.
-
-        Args:
-            resolution (float): Length in current work units
-        """
-
-        if resolution <= 0:
-            raise ValueError("Resolution must be positive")
-
-        self._resolution = resolution
-
-    @typechecked
-    def select_direction(self, direction: Direction | str) -> None:
-        """Set the rotation direction for subsequent movements.
-
-        Args:
-            direction: Clockwise or counter-clockwise rotation
-        """
-
-        self._direction = Direction(direction)
+    def __init__(self, builder):
+        self._g = builder
 
     @typechecked
     def arc(self, target: PointLike, center: PointLike, **kwargs) -> None:
@@ -121,7 +76,7 @@ class TracePath:
         point, maintaining a constant radius throughout the motion.
 
         The direction of the arc is determined by the last call to
-        select_direction(). If Z is provided for the target point, the
+        set_direction(). If Z is provided for the target point, the
         arc will perform helical interpolation.
 
         Args:
@@ -135,7 +90,7 @@ class TracePath:
         Example:
             >>> # Draw a quarter circle (90 degrees) clockwise
             >>> g.move(x=0, y=10)
-            >>> g.trace.select_direction("cw")  # clockwise
+            >>> g.set_direction("cw")  # clockwise
             >>> g.trace.arc(target=(10, 0), center=(0, -10))
         """
 
@@ -161,9 +116,10 @@ class TracePath:
         # Compute the angular displacement between start and end points.
         # Total angle is negative for clockwise arcs, positive otherwise
 
+        direction = self._g.state.direction
         end_angle = np.arctan2(dt.y, dt.x)
         start_angle = np.arctan2(do.y, do.x)
-        total_angle = self._direction.enforce(end_angle - start_angle)
+        total_angle = direction.enforce(end_angle - start_angle)
 
         # Vertical displacement for helical motion if Z is provided
 
@@ -189,7 +145,7 @@ class TracePath:
         longer arc will be traced.
 
         The direction of the arc is determined by the last call to
-        select_direction(). If Z is provided for the target point, the
+        set_direction(). If Z is provided for the target point, the
         arc will perform helical interpolation.
 
         Args:
@@ -227,8 +183,9 @@ class TracePath:
 
         # Direction depends on radius sign and selected direction
 
+        direction = self._g.state.direction
         height = np.sqrt(abs(radius) ** 2 - (distance / 2) ** 2)
-        is_clockwise = (self._direction == Direction.CLOCKWISE)
+        is_clockwise = (direction == Direction.CLOCKWISE)
 
         if is_clockwise == (radius > 0):
             cx = a.x / 2 + height * dt.y / distance
@@ -247,7 +204,7 @@ class TracePath:
         Creates a full 360-degree circular path around the specified
         center point, starting and ending at the current position. The
         direction of rotation is determined by the last call to
-        select_direction().
+        set_direction().
 
         Args:
             center: Center point (x, y) relative to the current position
@@ -256,7 +213,7 @@ class TracePath:
         Example:
             >>> # Draw a circle with 10mm radius
             >>> g.move(x=10, y=0)
-            >>> g.trace.select_direction("ccw")  # counter-clockwise
+            >>> g.set_direction("ccw")  # counter-clockwise
             >>> g.trace.circle(center=(-10, 0))
         """
 
@@ -363,8 +320,9 @@ class TracePath:
         end_angle = np.arctan2(dt.y, dt.x)
         start_angle = np.arctan2(do.y, do.x)
 
-        turn_angle = self._direction.full_turn()
-        base_angle = self._direction.enforce(end_angle - start_angle)
+        direction = self._g.state.direction
+        turn_angle = direction.full_turn()
+        base_angle = direction.enforce(end_angle - start_angle)
         total_angle = base_angle + turn_angle * (turns - 1)
 
         height = t.z - o.z if len(target) > 2 else 0
@@ -483,7 +441,8 @@ class TracePath:
         # To fit better the curve, generate more points than needed
         # then keep only segments longer than or equal to resolution
 
-        num_segments = max(2, int(10 * length / self._resolution))
+        resolution = self._g.state.resolution
+        num_segments = max(2, int(10 * length / resolution))
         thetas = np.linspace(0, 1, num_segments + 1)[1:]
         points = self._filter_segments(function(thetas))
 
@@ -533,14 +492,15 @@ class TracePath:
         distances = np.linalg.norm(diffs, axis=1)
         keep_mask = np.ones(len(distances), dtype=bool)
 
-        tolerance = self._resolution / 10
-        remaining = self._resolution
+        resolution = self._g.state.resolution
+        tolerance = resolution / 10
+        remaining = resolution
 
         for i, distance in enumerate(distances[:-1]):
             remaining -= distance
 
             if remaining < tolerance:
-                remaining = self._resolution
+                remaining = resolution
                 continue
 
             keep_mask[i] = False

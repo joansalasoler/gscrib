@@ -44,7 +44,11 @@ class GState:
         "_current_tool_swap_mode",
         "_current_halt_mode",
         "_current_length_units",
+        "_current_time_units",
+        "_current_temperature_units",
         "_current_plane",
+        "_current_direction",
+        "_current_resolution",
         "_is_coolant_active",
         "_is_tool_active",
     )
@@ -63,7 +67,11 @@ class GState:
         self._set_feed_mode(FeedMode.UNITS_PER_MINUTE)
         self._set_halt_mode(HaltMode.OFF)
         self._set_length_units(LengthUnits.MILLIMETERS)
+        self._set_time_units(TimeUnits.SECONDS)
+        self._set_temperature_units(TemperatureUnits.CELSIUS)
         self._set_plane(Plane.XY)
+        self._set_direction(Direction.CLOCKWISE)
+        self._set_resolution(0.1) # mm
 
     @property
     def is_coolant_active(self) -> bool:
@@ -76,69 +84,84 @@ class GState:
         return self._is_tool_active
 
     @property
-    def is_relative(self) -> bool:
-        """Check if relative distance mode is active."""
-        return self._current_distance_mode == DistanceMode.RELATIVE
-
-    @property
-    def current_tool_number(self) -> int:
+    def tool_number(self) -> int:
         """Get the current tool number."""
         return self._current_tool_number
 
     @property
-    def current_tool_power(self) -> float:
+    def tool_power(self) -> float:
         """Get the current tool power."""
         return self._current_tool_power
 
     @property
-    def current_spin_mode(self) -> SpinMode:
+    def spin_mode(self) -> SpinMode:
         """Get the current spin mode."""
         return self._current_spin_mode
 
     @property
-    def current_power_mode(self) -> PowerMode:
+    def power_mode(self) -> PowerMode:
         """Get the current power mode."""
         return self._current_power_mode
 
     @property
-    def current_coolant_mode(self) -> CoolantMode:
+    def coolant_mode(self) -> CoolantMode:
         """Get the current coolant mode."""
         return self._current_coolant_mode
 
     @property
-    def current_distance_mode(self) -> DistanceMode:
+    def distance_mode(self) -> DistanceMode:
         """Get the current distance mode."""
         return self._current_distance_mode
 
     @property
-    def current_extrusion_mode(self) -> ExtrusionMode:
+    def extrusion_mode(self) -> ExtrusionMode:
         """Get the current extrusion mode."""
         return self._current_extrusion_mode
 
     @property
-    def current_feed_mode(self) -> FeedMode:
+    def feed_mode(self) -> FeedMode:
         """Get the current feed mode."""
         return self._current_feed_mode
 
     @property
-    def current_tool_swap_mode(self) -> ToolSwapMode:
+    def tool_swap_mode(self) -> ToolSwapMode:
         """Get the current tool swap mode."""
         return self._current_tool_swap_mode
 
     @property
-    def current_halt_mode(self) -> HaltMode:
+    def halt_mode(self) -> HaltMode:
         """Get the current halt mode."""
         return self._current_halt_mode
 
     @property
-    def current_length_units(self) -> LengthUnits:
+    def length_units(self) -> LengthUnits:
         """Get the current length units sytem."""
         return self._current_length_units
 
     @property
-    def current_plane(self) -> Plane:
+    def time_units(self) -> TimeUnits:
+        """Get the current time units sytem."""
+        return self._current_time_units
+
+    @property
+    def temperature_units(self) -> TemperatureUnits:
+        """Get the current temperature units sytem."""
+        return self._current_temperature_units
+
+    @property
+    def plane(self) -> Plane:
         """Get the current working plane."""
         return self._current_plane
+
+    @property
+    def direction(self) -> Direction:
+        """Get the current direction for interpolated moves."""
+        return self._current_direction
+
+    @property
+    def resolution(self) -> float:
+        """Get the current resolution for interpolated moves."""
+        return self._current_resolution
 
     @typechecked
     def _set_length_units(self, length_units: LengthUnits) -> None:
@@ -151,6 +174,26 @@ class GState:
         self._current_length_units = length_units
 
     @typechecked
+    def _set_time_units(self, time_units: TimeUnits) -> None:
+        """Set the time measurement unit system.
+
+        Args:
+            time_units (TimeUnits): The unit system to use.
+        """
+
+        self._current_time_units = time_units
+
+    @typechecked
+    def _set_temperature_units(self, temp_units: TemperatureUnits) -> None:
+        """Set the temperature measurement unit system.
+
+        Args:
+            temp_units (TemperatureUnits): The unit system to use.
+        """
+
+        self._current_temperature_units = temp_units
+
+    @typechecked
     def _set_plane(self, plane: Plane) -> None:
         """Set the working plane for circular movements.
 
@@ -159,6 +202,33 @@ class GState:
         """
 
         self._current_plane = plane
+
+    @typechecked
+    def _set_direction(self, direction: Direction) -> None:
+        """Set the rotation direction for interpolated moves.
+
+        Args:
+            direction (Direction): Rotation direction to use.
+        """
+
+        self._current_direction = direction
+
+
+    @typechecked
+    def _set_resolution(self, resolution: float) -> None:
+        """Set the resolution for interpolated moves.
+
+        Args:
+            resolution (float): The resolution to use.
+
+        Raises:
+            ValueError: If resolution is non-positive.
+        """
+
+        if resolution <= 0:
+            raise ValueError("Resolution must be positive")
+
+        self._current_resolution = resolution
 
     @typechecked
     def _set_tool_power(self, power: float) -> None:

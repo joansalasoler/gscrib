@@ -48,10 +48,10 @@ class GCodeBuilder(GCodeCore):
     - Tool control (spindle, laser, etc.)
     - Temperature and cooling management
     - Basic movement commands
-    - Path interpolation (arcs, splines, helixes)
+    - Path interpolation (arcs, splines, helixes, etc.)
     - Emergency stop procedures
     - Multiple output capabilities
-    - Move handlers for custom parameter processing
+    - Move hooks for custom parameter processing
 
     The machine state is tracked by the `state` manager, which maintains
     and validates the state of various machine subsystems to prevent
@@ -61,9 +61,9 @@ class GCodeBuilder(GCodeCore):
     capabilities, allowing generation of complex toolpaths like circular
     arcs, helixes or splines.
 
-    Move handlers can be registered to process and modify movement
-    commands before they are written. Each handler receives the origin
-    and target points, along with current machine state, allowing for:
+    Move hooks can be registered to process and modify movement commands
+    before they are written. Each hook receives the origin and target
+    points, along with current machine state, allowing for:
 
     - Parameter validation and modification
     - Feed rate limiting or scaling
@@ -78,14 +78,14 @@ class GCodeBuilder(GCodeCore):
         >>>     g.move(z=0.0, F=500)
         >>>     g.move(x=10.0, y=10.0, F=1500)
         >>>
-        >>> # Example using a custom handler to extrude filament
-        >>> def extrude_handler(origin, target, params, state):
+        >>> # Example using a custom hook to extrude filament
+        >>> def extrude_hook(origin, target, params, state):
         >>>     dt = target - origin
         >>>     length = math.hypot(dt.x, dt.y, dt.z)
         >>>     params.update(E=0.1 * length)
         >>>     return params
         >>>
-        >>> with g.handler(extrude_handler):
+        >>> with g.hook(extrude_hook):
         >>>     g.move(x=10, y=0)   # Will add E=1.0
         >>>     g.move(x=20, y=10)  # Will add E=1.414
         >>>     g.move(x=10, y=10)  # Will add E=1.0
@@ -94,14 +94,14 @@ class GCodeBuilder(GCodeCore):
     __slots__ = (
         "_state",
         "_tracer",
-        "_handlers",
+        "_hooks",
     )
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self._state: GState = GState()
         self._tracer: TracePath = TracePath(self)
-        self._handlers = []
+        self._hooks = []
 
     @property
     def state(self) -> GState:
@@ -116,11 +116,11 @@ class GCodeBuilder(GCodeCore):
         return self._tracer
 
     @typechecked
-    def add_handler(self, handler: Callable) -> None:
-        """Add a permanent move parameter handler.
+    def add_hook(self, hook: Callable) -> None:
+        """Add a permanent move parameter hook.
 
-        Handlers are called before each move to process and modify
-        movement parameters. Each handler receives these arguments:
+        Hooks are called before each move to process and modify movement
+        parameters. Each hook receives these arguments:
 
         - origin (Point): Absolute coordinates of the origin point
         - target (Point): Absolute coordinates of the destination point
@@ -128,63 +128,131 @@ class GCodeBuilder(GCodeCore):
         - state (GState): Current machine state
 
         Args:
-            handler: Callable that processes movement parameters
+            hook: Callable that processes movement parameters
 
         Example:
             >>> def limit_feed(origin, target, params, state):
             >>>     params.update(F=min(params.get('F'), 1000)
             >>>     return params
             >>>
-            >>> g.add_handler(limit_feed)
+            >>> g.add_hook(limit_feed)
         """
 
-        if handler not in self._handlers:
-            self._handlers.append(handler)
+        if hook not in self._hooks:
+            self._hooks.append(hook)
 
     @typechecked
-    def remove_handler(self, handler: Callable) -> None:
-        """Remove a previously added move parameter handler.
+    def remove_hook(self, hook: Callable) -> None:
+        """Remove a previously added move parameter hook.
 
         Args:
-            handler: Handler callable to remove
+            hook: Callable to remove
 
         Example:
-            >>> g.remove_handler(limit_feed)
+            >>> g.remove_hook(limit_feed)
         """
 
-        if handler in self._handlers:
-            self._handlers.remove(handler)
+        if hook in self._hooks:
+            self._hooks.remove(hook)
 
     @typechecked
-    def select_units(self, length_units: LengthUnits | str) -> None:
+    def set_length_units(self, length_units: LengthUnits | str) -> None:
         """Set the unit system for subsequent commands.
 
         Args:
             length_units (LengthUnits): The unit system to use
 
+        Raises:
+            ValueError: If length units is not valid
+
         >>> G20|G21
         """
 
         length_units = LengthUnits(length_units)
-        self._state._set_length_units(length_units)
-        self._tracer._set_length_units(length_units)
+
+        if length_units != self.state.length_units:
+            in_px = length_units.to_pixels(self.state.resolution)
+            self.set_resolution(length_units.scale(in_px))
+            self.state._set_length_units(length_units)
+
         statement = self._get_statement(length_units)
         self.write(statement)
 
     @typechecked
-    def select_plane(self, plane: Plane | str) -> None:
+    def set_time_units(self, time_units: TimeUnits | str) -> None:
+        """Set the time units for subsequent commands.
+
+        Args:
+            time_units (TimeUnits): Time units (seconds/milliseconds)
+
+        Raises:
+            ValueError: If time units is not valid
+        """
+
+        time_units = TimeUnits(time_units)
+        self.state._set_time_units(time_units)
+
+    @typechecked
+    def set_temperature_units(self, temp_units: TemperatureUnits | str) -> None:
+        """Set the temperature units for subsequent commands.
+
+        Args:
+            temp_units (TemperatureUnits): Temperature units
+
+        Raises:
+            ValueError: If temperature units is not valid
+        """
+
+        temp_units = TemperatureUnits(temp_units)
+        self.state._set_temperature_units(temp_units)
+
+    @typechecked
+    def set_plane(self, plane: Plane | str) -> None:
         """Select the working plane for machine operations.
 
         Args:
             plane (Plane): The plane to use for subsequent operations
 
+        Raises:
+            ValueError: If plane is not valid
+
         >>> G17|G18|G19
         """
 
         plane = Plane(plane)
-        self._state._set_plane(plane)
+        self.state._set_plane(plane)
         statement = self._get_statement(plane)
         self.write(statement)
+
+    @typechecked
+    def set_direction(self, direction: Direction | str) -> None:
+        """Set the rotation direction for interpolated moves.
+
+        Args:
+            direction: Clockwise or counter-clockwise rotation
+
+        Raises:
+            ValueError: If rotation direction is not valid
+        """
+
+        direction = Direction(direction)
+        self.state._set_direction(direction)
+
+    @typechecked
+    def set_resolution(self, resolution: float) -> None:
+        """Set the resolution for interpolated moves.
+
+        Controls the accuracy of path approximation by specifying the
+        minimum length of linear segments used to trace the path.
+
+        Args:
+            resolution (float): Length in current work units
+
+        ValueError:
+            If the resolution is non-positive.
+        """
+
+        self.state._set_resolution(resolution)
 
     @typechecked
     def set_distance_mode(self, mode: DistanceMode | str) -> None:
@@ -193,12 +261,15 @@ class GCodeBuilder(GCodeCore):
         Args:
             mode (DistanceMode): The distance mode to use
 
+        Raises:
+            ValueError: If distance mode is not valid
+
         >>> G90|G91
         """
 
         mode = DistanceMode(mode)
         self._distance_mode = mode
-        self._state._set_distance_mode(mode)
+        self.state._set_distance_mode(mode)
         statement = self._get_statement(mode)
         self.write(statement)
 
@@ -209,11 +280,14 @@ class GCodeBuilder(GCodeCore):
         Args:
             mode (ExtrusionMode): The extrusion mode to use
 
+        Raises:
+            ValueError: If extrusion mode is not valid
+
         >>> M82|M83
         """
 
         mode = ExtrusionMode(mode)
-        self._state._set_extrusion_mode(mode)
+        self.state._set_extrusion_mode(mode)
         statement = self._get_statement(mode)
         self.write(statement)
 
@@ -224,11 +298,14 @@ class GCodeBuilder(GCodeCore):
         Args:
             mode (FeedMode): The feed rate mode to use
 
+        Raises:
+            ValueError: If feed mode is not valid
+
         >>> G93|G94|G95
         """
 
         mode = FeedMode(mode)
-        self._state._set_feed_mode(mode)
+        self.state._set_feed_mode(mode)
         statement = self._get_statement(mode)
         self.write(statement)
 
@@ -252,7 +329,7 @@ class GCodeBuilder(GCodeCore):
         >>> S<power>
         """
 
-        self._state._set_tool_power(power)
+        self.state._set_tool_power(power)
         statement = self.format.parameters({ "S": power })
         self.write(statement)
 
@@ -282,40 +359,44 @@ class GCodeBuilder(GCodeCore):
         self.write(statement)
 
     @typechecked
-    def set_bed_temperature(self,
-        units: TemperatureUnits | str, temp: int) -> None:
+    def set_bed_temperature(self, temperature: int) -> None:
         """Set the temperature of the bed and return immediately.
 
-        Args:
-            units (TemperatureUnits): Temperature units
-            temp (float): Target temperature
+        Different machine controllers interpret the S parameter in M140
+        differently. Use the method `set_temperature_units()` to set the
+        correct temperature units for your specific controller.
 
-        >>> M140 S<temp>
+        Args:
+            temperature (float): Target temperature
+
+        >>> M140 S<temperature>
         """
 
-        units = TemperatureUnits(units)
+        units = self.state.temperature_units
         bed_units = BedTemperature.from_units(units)
-        statement = self._get_statement(bed_units, { "S": temp })
+        statement = self._get_statement(bed_units, { "S": temperature })
         self.write(statement)
 
     @typechecked
-    def set_hotend_temperature(self,
-        units: TemperatureUnits | str, temp: int) -> None:
+    def set_hotend_temperature(self, temperature: int) -> None:
         """Set the temperature of the hotend and return immediately.
 
-        Args:
-            units (TemperatureUnits): Temperature units
-            temp (float): Target temperature
+        Different machine controllers interpret the S parameter in M104
+        differently. Use the method `set_temperature_units()` to set the
+        correct temperature units for your specific controller.
 
-        >>> M104 S<temp>
+        Args:
+            temperature (float): Target temperature
+
+        >>> M104 S<temperature>
         """
 
-        units = TemperatureUnits(units)
+        units = self.state.temperature_units
         hotend_units = HotendTemperature.from_units(units)
-        statement = self._get_statement(hotend_units, { "S": temp })
+        statement = self._get_statement(hotend_units, { "S": temperature })
         self.write(statement)
 
-    def set_axis_position(self, point: PointLike = None, **kwargs) -> None:
+    def set_axis(self, point: PointLike = None, **kwargs) -> None:
         """Set the current position without moving the head.
 
         This command changes the machine's coordinate system by setting
@@ -343,34 +424,32 @@ class GCodeBuilder(GCodeCore):
         self.write(statement)
 
     @typechecked
-    def sleep(self, units: TimeUnits | str, seconds: float) -> None:
+    def sleep(self, duration: float) -> None:
         """Pause program execution for the specified duration.
 
-        Generates a dwell command that pauses program execution. While
-        the input is always in seconds, different machine controllers
-        interpret the P parameter in G4 differently; some expect seconds,
-        others milliseconds. The `units` parameter allows generating the
-        correct format for your specific controller:
-
-        - TimeUnits.SECONDS: Output as seconds
-        - TimeUnits.MILLISECONDS: Output as milliseconds
+        Generates a dwell command that pauses program execution.
+        Different machine controllers interpret the P parameter in G4
+        differently. Use the method `set_time_units()` to set the
+        correct time units for your specific controller.
 
         Args:
-            units (TimeUnits): Time unit (seconds/milliseconds)
-            seconds (float): Sleep duration (minimum 1ms)
+            duration (float): Sleep duration in time units
 
         Raises:
-            ValueError: If seconds is less than 0.001
+            ValueError: If duration is less than 1 ms
 
         >>> G4 P<seconds|milliseconds>
         """
 
-        if seconds < 0.001:
-            raise ValueError(f"Invalid sleep time '{seconds}'.")
+        units = self.state.time_units
 
-        units = TimeUnits(units)
-        params = { "P": units.scale(seconds) }
-        statement = self._get_statement(units, params)
+        if units == TimeUnits.SECONDS and duration < 0.001:
+            raise ValueError(f"Invalid sleep time '{duration}'.")
+
+        if units == TimeUnits.MILLISECONDS and duration < 1:
+            raise ValueError(f"Invalid sleep time '{duration}'.")
+
+        statement = self._get_statement(units, { "P": duration })
         self.write(statement)
 
     @typechecked
@@ -398,7 +477,7 @@ class GCodeBuilder(GCodeCore):
             raise ValueError("Not a valid spin mode.")
 
         mode = SpinMode(mode)
-        self._state._set_spin_mode(mode, speed)
+        self.state._set_spin_mode(mode, speed)
         params = self.format.parameters({ "S": speed })
         mode_statement = self._get_statement(mode)
         statement = f"{params} {mode_statement}"
@@ -410,7 +489,7 @@ class GCodeBuilder(GCodeCore):
         >>> M5
         """
 
-        self._state._set_spin_mode(SpinMode.OFF)
+        self.state._set_spin_mode(SpinMode.OFF)
         statement = self._get_statement(SpinMode.OFF)
         self.write(statement)
 
@@ -440,7 +519,7 @@ class GCodeBuilder(GCodeCore):
             raise ValueError("Not a valid power mode.")
 
         mode = PowerMode(mode)
-        self._state._set_power_mode(mode, power)
+        self.state._set_power_mode(mode, power)
         params = self.format.parameters({ "S": power })
         mode_statement = self._get_statement(mode)
         statement = f"{params} {mode_statement}"
@@ -452,7 +531,7 @@ class GCodeBuilder(GCodeCore):
         >>> M5
         """
 
-        self._state._set_power_mode(PowerMode.OFF)
+        self.state._set_power_mode(PowerMode.OFF)
         statement = self._get_statement(PowerMode.OFF)
         self.write(statement)
 
@@ -476,7 +555,7 @@ class GCodeBuilder(GCodeCore):
         """
 
         mode = ToolSwapMode(mode)
-        self._state._set_tool_number(mode, tool_number)
+        self.state._set_tool_number(mode, tool_number)
         change_statement = self._get_statement(mode)
         tool_digits = 2 ** math.ceil(math.log2(len(str(tool_number))))
         statement = f"T{tool_number:0{tool_digits}} {change_statement}"
@@ -499,7 +578,7 @@ class GCodeBuilder(GCodeCore):
             raise ValueError("Not a valid coolant mode.")
 
         mode = CoolantMode(mode)
-        self._state._set_coolant_mode(mode)
+        self.state._set_coolant_mode(mode)
         statement = self._get_statement(mode)
         self.write(statement)
 
@@ -509,7 +588,7 @@ class GCodeBuilder(GCodeCore):
         >>> M9
         """
 
-        self._state._set_coolant_mode(CoolantMode.OFF)
+        self.state._set_coolant_mode(CoolantMode.OFF)
         statement = self._get_statement(CoolantMode.OFF)
         self.write(statement)
 
@@ -532,7 +611,7 @@ class GCodeBuilder(GCodeCore):
             raise ValueError("Not a valid halt mode.")
 
         mode = HaltMode(mode)
-        self._state._set_halt_mode(mode)
+        self.state._set_halt_mode(mode)
         statement = self._get_statement(mode, kwargs)
         self.write(statement)
 
@@ -585,34 +664,34 @@ class GCodeBuilder(GCodeCore):
             >>> g.move(x=10, y=20) # Proper state management
         """
 
-        self._state._set_halt_mode(HaltMode.OFF)
+        self.state._set_halt_mode(HaltMode.OFF)
         super().write(statement)
 
     @contextmanager
-    def handler(self, handler: Callable):
-        """Temporarily enable a move parameter handler.
+    def hook(self, hook: Callable):
+        """Temporarily enable a move parameter hook.
 
         Args:
-            handler: Callable that processes movement parameters
+            hook: Callable that processes movement parameters
 
         Example:
-            >>> with g.handler(extrude_handler):  # Adds a handler
+            >>> with g.hook(extrude_hook):  # Adds a hook
             >>>     g.move(x=10, y=0)  # Will add E=1.0
-            >>> # Handler is removed automatically here
+            >>> # Hook is removed automatically here
         """
 
         try:
-            self._handlers.append(handler)
+            self._hooks.append(hook)
             yield
         finally:
-            self._handlers.remove(handler)
+            self._hooks.remove(hook)
 
     def _write_move(self,
         point: Point, params: MoveParams, comment: str | None = None) -> MoveParams:
         """Write a linear move statement with the given parameters.
 
-        Applies all registered move handlers before writing the movement
-        command. Each handler can modify the parameters based on the
+        Applies all registered move hooks before writing the movement
+        command. Each hook can modify the parameters based on the
         movement and current machine state.
 
         Args:
@@ -621,12 +700,12 @@ class GCodeBuilder(GCodeCore):
             comment: Optional comment to include
         """
 
-        if len(self._handlers) > 0:
+        if len(self._hooks) > 0:
             origin = self.position.resolve()
             target = self.to_absolute(point)
 
-            for handler in self._handlers:
-                params = handler(origin, target, params, self._state)
+            for hook in self._hooks:
+                params = hook(origin, target, params, self.state)
 
         return super()._write_move(point, params, comment)
 
