@@ -427,6 +427,25 @@ class TracePath:
         self.helix(target, Point(0, 0), turns, **kwargs)
 
     @typechecked
+    def polyline(self, targets: Sequence[PointLike], **kwargs) -> None:
+        """Trace straight lines through the given points.
+
+        Creates a series of straight lines connecting all the specified
+        points, starting from the current position.
+
+        Args:
+            points: Sequence of control points (x, y, [z])
+            **kwargs: Additional G-code parameters (added to each move)
+
+        Raises:
+            ValueError: If not enought points are provided
+        """
+
+        for point in self._g.to_absolute_list(targets):
+            point = self._g.to_distance_mode(point)
+            self._g.move(point, **kwargs)
+
+    @typechecked
     def parametric(self, function: PathFn, length: float, **kwargs) -> None:
         """Approximate a parametric curve with linear segments.
 

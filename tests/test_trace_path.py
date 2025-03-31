@@ -175,6 +175,21 @@ def test_spiral_with_z(tracer, builder):
     assert np.isclose(final_pos.y, 0, atol=0.1)
     assert np.isclose(final_pos.z, 5, atol=0.1)
 
+def test_polyline(tracer, builder):
+    tracer.polyline(targets=[(5, 5), (10, -5), (15, 0)])
+    final_pos = builder.position
+    assert np.isclose(final_pos.x, 15, atol=0.1)
+    assert np.isclose(final_pos.y, 0, atol=0.1)
+    assert np.isclose(final_pos.z, 0, atol=0.1)
+
+def test_polyline_relative(tracer, builder):
+    builder.set_distance_mode("relative")
+    tracer.polyline(targets=[(5, 5), (10, -5), (15, 0)])
+    final_pos = builder.position
+    assert np.isclose(final_pos.x, 30, atol=0.1)
+    assert np.isclose(final_pos.y, 0, atol=0.1)
+    assert np.isclose(final_pos.z, 0, atol=0.1)
+
 def test_parametric(tracer, builder):
     def circle(thetas):
         x = 10 * np.cos(2 * np.pi * thetas)
