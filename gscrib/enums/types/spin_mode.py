@@ -19,9 +19,20 @@
 from gscrib.enums.base_enum import BaseEnum
 
 
+SYNONYMS = {
+    "cw": "clockwise",
+    "ccw": "counter"
+}
+
 class SpinMode(BaseEnum):
     """Spindle rotation direction and state."""
 
     OFF = "off"
     CLOCKWISE = "clockwise"
     COUNTER = "counter"
+
+    @classmethod
+    def _missing_(cls, value):
+        if value in SYNONYMS:
+            return cls(SYNONYMS[value])
+        return None

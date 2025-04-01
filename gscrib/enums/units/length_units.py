@@ -22,16 +22,26 @@ from gscrib.enums.base_enum import BaseEnum
 # Pixels to units
 
 CONVERSIONS_FACTORS = {
-    "in": 1.0 / 96.0,
-    "mm": 25.4 / 96.0,
+    "inches": 1.0 / 96.0,
+    "millimeters": 25.4 / 96.0,
 }
 
+SYNONYMS = {
+    "in": "inches",
+    "mm": "millimeters",
+}
 
 class LengthUnits(BaseEnum):
     """Units of length measurement."""
 
-    INCHES = "in"
-    MILLIMETERS = "mm"
+    INCHES = "inches"
+    MILLIMETERS = "millimeters"
+
+    @classmethod
+    def _missing_(cls, value):
+        if value in SYNONYMS:
+            return cls(SYNONYMS[value])
+        return None
 
     def __init__(self, value):
         self.scale_factor = CONVERSIONS_FACTORS[value]

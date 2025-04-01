@@ -20,11 +20,22 @@ import math
 from gscrib.enums.base_enum import BaseEnum
 
 
+SYNONYMS = {
+    "cw": "clockwise",
+    "ccw": "counter"
+}
+
 class Direction(BaseEnum):
     """Directions for interpolated moves."""
 
-    CLOCKWISE = "cw"
-    COUNTER = "ccw"
+    CLOCKWISE = "clockwise"
+    COUNTER = "counter"
+
+    @classmethod
+    def _missing_(cls, value):
+        if value in SYNONYMS:
+            return cls(SYNONYMS[value])
+        return None
 
     def enforce(self, angle: float) -> float:
         """Enforce the direction of an angular move.

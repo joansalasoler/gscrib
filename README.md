@@ -64,11 +64,11 @@ M05 ; Stop tool
 
 ```python
 # Clockwise arc
-g.set_direction("cw")
+g.set_direction("clockwise")
 g.trace.arc(target=(10, 0), center=(5, 0))
 
 # Counterclockwise arc
-g.set_direction("ccw")
+g.set_direction("counter")
 g.trace.arc(target=(0, 0), center=(0, -10))
 
 # Spline curve through a series of control points
@@ -80,6 +80,9 @@ g.trace.helix(target=(10, 0, 10), center=(-10, 0), turns=3)
 
 # Spiral
 g.trace.spiral(target=(10, 0, 5), turns=2)
+
+# Thread
+g.trace.thread(target=(10, 0, 5), pitch=1)
 ```
 
 ### Advanced Path Interpolation

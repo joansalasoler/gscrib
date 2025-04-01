@@ -18,12 +18,22 @@
 
 from gscrib.enums.base_enum import BaseEnum
 
+SYNONYMS = {
+    "s": "seconds",
+    "ms": "milliseconds"
+}
 
 class TimeUnits(BaseEnum):
     """Units of time measurement."""
 
-    SECONDS = "s"
-    MILLISECONDS = "ms"
+    SECONDS = "seconds"
+    MILLISECONDS = "milliseconds"
+
+    @classmethod
+    def _missing_(cls, value):
+        if value in SYNONYMS:
+            return cls(SYNONYMS[value])
+        return None
 
     def scale(self, value_in_seconds: float) -> float:
         """Scale a value in `seconds` to this unit"""

@@ -616,6 +616,40 @@ class GCodeBuilder(GCodeCore):
         self.write(statement)
 
     @typechecked
+    def pause(self, optional: bool = False) -> None:
+        """Pause program execution.
+
+        Invokes `halt_program(HaltMode.OPTIONAL_PAUSE)` if optional is
+        True, otherwise `halt_program(HaltMode.PAUSE)`.
+
+        Args:
+            optional (bool): If True, pause is optional
+        """
+
+        self.halt_program(
+            HaltMode.OPTIONAL_PAUSE
+            if optional is True else
+            HaltMode.PAUSE
+        )
+
+    @typechecked
+    def stop(self, reset: bool = False) -> None:
+        """Stop program execution.
+
+        Invokes `halt_program(HaltMode.END_WITH_RESET)` if reset is
+        True, otherwise `halt_program(HaltMode.END_WITHOUT_RESET)`.
+
+        Args:
+            reset (bool): If True, reset the machine
+        """
+
+        self.halt_program(
+            HaltMode.END_WITH_RESET
+            if reset is True else
+            HaltMode.END_WITHOUT_RESET
+        )
+
+    @typechecked
     def emergency_halt(self, message: str) -> None:
         """Execute an emergency shutdown sequence and pause execution.
 
