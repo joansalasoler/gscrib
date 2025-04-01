@@ -36,15 +36,18 @@ Documentation for the latest version of the project can be found at
 ```python
 from gscrib import GCodeBuilder
 
-with GCodeBuilder(output="output.gcode") as g:
-    g.set_axis(x=0, y=0, z=0)     # Set initial position
-    g.rapid(z=5)                  # Rapid move up to Z=5
-    g.rapid(x=10, y=10)           # Rapid move to (10, 10)
-    g.tool_on("clockwise", 1000)  # Start tool at 1000 RPM
-    g.coolant_on("flood")         # Enable flood coolant
-    g.move(x=20, y=20, F=1500)    # Linear move with feed rate
-    g.coolant_off()               # Turn off coolant
-    g.tool_off()                  # Turn off tool
+g = GCodeBuilder(output="output.gcode"):
+
+g.set_axis(x=0, y=0, z=0)     # Set initial position
+g.rapid(z=5)                  # Rapid move up to Z=5
+g.rapid(x=10, y=10)           # Rapid move to (10, 10)
+g.tool_on("clockwise", 1000)  # Start tool at 1000 RPM
+g.coolant_on("flood")         # Enable flood coolant
+g.move(x=20, y=20, F=1500)    # Linear move with feed rate
+g.coolant_off()               # Turn off coolant
+g.tool_off()                  # Turn off tool
+
+g.teardown()                  # Flush file changes
 ```
 
 Generated G-code:
@@ -79,7 +82,7 @@ g.trace.spline(control_points)
 g.trace.helix(target=(10, 0, 10), center=(-10, 0), turns=3)
 
 # Spiral
-g.trace.spiral(target=(10, 0, 5), turns=2)
+g.trace.spiral(target=(10, 0), turns=2)
 
 # Thread
 g.trace.thread(target=(10, 0, 5), pitch=1)
@@ -123,10 +126,11 @@ def extrude_hook(origin, target, params, state):
     params.update(E=0.1 * length) # Add extrusion parameter
     return params
 
-with g.hook(extrude_hook):
-    g.move(x=10, y=0)   # Will add E=1.0
-    g.move(x=20, y=10)  # Will add E=1.414
-    g.move(x=10, y=10)  # Will add E=1.0
+g.add_hook(extrude_hook)
+g.move(x=10, y=0)   # Will add E=1.0
+g.move(x=20, y=10)  # Will add E=1.414
+g.move(x=10, y=10)  # Will add E=1.0
+g.remove_hook(extrude_hook)
 ```
 
 ### Toolpath Manipulation
@@ -149,6 +153,35 @@ g.trace.arc(target=(10, 0), center=(5, 0))
 
 # Restore original transformation state
 g.pop_matrix()
+```
+
+### Context Managers
+
+Gscrib provides several context managers to allow you to modify settings,
+apply transforms, or add hooks for specific operations, and automatically
+restore the previous state when the context ends.
+
+```python
+# Automatic teardown (flush and close)
+with GCodeBuilder(output="outfile.gcode") as g:
+    g.move(x=10, y=10)
+
+# Temporary absolute positioning
+with g.absolute_mode():
+    g.move(x=10, y=10)
+
+# Temporary relative positioning
+with g.relative_mode():
+    g.move(x=10, y=10)
+
+# Temporary hooks
+with g.hook(temporary_hook):
+    g.move(x=10, y=10)
+
+# Temporary transformations
+with g.transform:
+    g.rotate(angle=45, axis="z")
+    g.trace.arc(target=(10, 0), center=(5, 0))
 ```
 
 ## Development setup
@@ -191,6 +224,24 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 3. Commit your changes (```git commit -m 'Add some amazing feature'```)
 4. Push to the branch (```git push origin feature/amazing-feature```)
 5. Open a Pull Request
+
+## Acknowledgments
+
+Gscrib is an independent project that was initially forked from
+[Mecode](https://github.com/jminardi/mecode), a lightweight Python library
+for G-code generation originally developed at the
+[Lewis Lab](http://lewisgroup.seas.harvard.edu/) at Harvard University.
+The development of Gscrib was heavily influenced by Mecode’s design, and
+we are grateful for the foundational work done by its original author
+and contributors.
+
+Additionally, Gscrib includes code developed by the authors of
+[Printrun](https://github.com/kliment/Printrun), a Python-based suite
+for controlling 3D printers.
+
+As Gscrib continues to evolve with new features, optimizations, and
+expanded capabilities, we recognize and appreciate the importance of this
+early work in shaping its foundation.
 
 ## License
 
