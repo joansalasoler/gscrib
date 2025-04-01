@@ -55,3 +55,9 @@ Explore the feasibility of integrating heightmaps into the system to
 dynamically adjust Z-height based on surface variations. Currently, a
 basic raster-based heightmap implementation is available through the
 Vpype-Gscrib plugin.
+
+## Scaffolding System
+
+Scaffolding means creating a basic structure for a program. Implement a
+extendable scaffolding system that provides common templates for G-code
+programs, including initialization, error handling, and shutdown sequences.
