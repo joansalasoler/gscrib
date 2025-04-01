@@ -8,21 +8,20 @@ customizable G-code programs.
 
 ## Features
 
-- **Core G-code Generation**: Generate essential G-code commands for
-  linear and rapid moves, coordinate transformations, and more.
-- **Advanced Path Interpolation**: Create arcs, splines, helices, spirals,
-  and parametric curves for complex toolpaths.
-- **Temperature & Tool Control**: Manage spindle speed, laser power, fan
-  speed, and temperature settings.
-- **State Management**: Track machine state (position, distance mode,
-  units, etc.) for safe and consistent operations.
-- **Transformation Utilities**: Apply translations, rotations, scaling,
-  reflections, and mirroring to toolpaths.
+- **Core G-code Generation**: Linear and rapid moves, coordinate
+  transformations, and more.
+- **Advanced Path Interpolation**: Trace arcs, splines, helices,
+  parametric curves, and more.
+- **Temperature & Tool Control**: Manage spindle speed, laser power,
+  fan speed, and more.
+- **State Management**: Track machine state for safe and consistent
+  operations.
+- **Transformation Utilities**: Apply rotations, scaling, reflections,
+  and more.
 - **Customizable Hooks**: Add custom logic to modify parameters dynamically.
 - **Multiple Output Options**: Write G-code to files, serial ports,
   or network sockets.
-- **Error Handling**: Built-in validation and error handling ensure safe
-  and reliable G-code generation.
+- **Error Handling**: Built-in validation and error handling.
 
 ## Documentation
 
@@ -97,7 +96,6 @@ shapes dynamically.
 import numpy as np
 
 # Custom parametric circle function
-
 def circle(thetas):
     x = 10 * np.cos(2 * np.pi * thetas)
     y = 10 * np.sin(2 * np.pi * thetas)
@@ -120,6 +118,7 @@ adding extrusion for 3D printing.
 ```python
 import math
 
+# Custom extrusion hook function
 def extrude_hook(origin, target, params, state):
     dt = target - origin
     length = math.hypot(dt.x, dt.y, dt.z)
@@ -183,6 +182,14 @@ with g.transform:
     g.rotate(angle=45, axis="z")
     g.trace.arc(target=(10, 0), center=(5, 0))
 ```
+
+## Projects Using Gscrib
+
+- **Vpype-Gscrib**: A [vpype](https://vpype.readthedocs.io/en/latest/)
+  plugin that extends vpype’s capabilities with a powerful command-line
+  interface for converting SVG files into G-code. It provides a flexible
+  and efficient toolkit for plotter and CNC workflows. See
+  [Vpype-Gscrib's Documentation](https://vpype-gscrib.readthedocs.io/en/latest/)
 
 ## Development setup
 
