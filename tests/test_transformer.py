@@ -1,10 +1,9 @@
-import math
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
-from gscrib.transformer import Transformer
-from gscrib.point import Point
+from gscrib.geometry import CoordinateTransformer
+from gscrib.geometry import Point
 
 
 # --------------------------------------------------------------------
@@ -13,11 +12,11 @@ from gscrib.point import Point
 
 @pytest.fixture
 def transformer():
-    return Transformer()
+    return CoordinateTransformer()
 
 @pytest.fixture
 def transformed():
-    t = Transformer()
+    t = CoordinateTransformer()
     t.translate(10, 20, 30)
     t.rotate(90)
     t.scale(2)
@@ -31,52 +30,40 @@ def transformed():
 # Test initialization
 
 def test_default_initialization():
-    t = Transformer()
+    t = CoordinateTransformer()
     assert_array_equal(t._current_matrix, np.eye(4))
     assert_array_equal(t._inverse_matrix, np.eye(4))
     assert len(t._matrix_stack) == 0
 
 # Test matrix stack operations
 
-def test_push_matrix(transformer):
+def test_save_state(transformer):
     original = transformer._current_matrix.copy()
-    transformer.push_matrix()
+    transformer.save_state()
     transformer.translate(10, 0, 0)
     assert len(transformer._matrix_stack) == 1
     assert_array_equal(transformer._matrix_stack[0], original)
 
-def test_pop_matrix(transformer):
+def test_restore_state(transformer):
     original = transformer._current_matrix.copy()
-    transformer.push_matrix()
+    transformer.save_state()
     transformer.translate(10, 0, 0)
-    transformer.pop_matrix()
+    transformer.restore_state()
     assert_array_equal(transformer._current_matrix, original)
     assert len(transformer._matrix_stack) == 0
 
 def test_pop_empty_stack(transformer):
     with pytest.raises(IndexError):
-        transformer.pop_matrix()
+        transformer.restore_state()
 
 def test_multiple_push_pop(transformer):
-    transformer.push_matrix()
+    transformer.save_state()
     transformer.translate(10, 0, 0)
-    transformer.push_matrix()
+    transformer.save_state()
     transformer.rotate(90)
-    transformer.pop_matrix()
-    transformer.pop_matrix()
+    transformer.restore_state()
+    transformer.restore_state()
     assert_array_equal(transformer._current_matrix, np.eye(4))
-
-def test_context_manager(transformer):
-    original = transformer._current_matrix.copy()
-
-    with transformer as t:
-        t.translate(10, 0, 0)
-        point1 = t.apply_transform(Point(0, 0, 0))
-        assert point1 == Point(10, 0, 0)
-
-    point2 = t.apply_transform(Point(0, 0, 0))
-    assert_array_equal(transformer._current_matrix, original)
-    assert point2 == Point(0, 0, 0)
 
 # Test basic transformations
 
@@ -168,11 +155,11 @@ def test_combined_transformations(transformer):
 def test_nested_transformations(transformer):
     point = Point(1, 0, 0)
     transformer.translate(1, 0, 0)
-    transformer.push_matrix()
+    transformer.save_state()
     transformer.rotate(90, "z")
     transformer.scale(2)
     point1 = transformer.apply_transform(point)
-    transformer.pop_matrix()
+    transformer.restore_state()
     point2 = transformer.apply_transform(point)
 
     expected1 = Point(0, 4, 0).to_vector()[:3]
@@ -249,7 +236,7 @@ def test_reflection_preserves_distances(transformer):
 # Test precision and accuracy
 
 def test_transformation_precision():
-    t = Transformer()
+    t = CoordinateTransformer()
     small_angle = 1e-10
     t.rotate(small_angle)
     point = t.apply_transform(Point(1, 0, 0))
@@ -257,7 +244,7 @@ def test_transformation_precision():
     assert abs(point.y) < 1e-9
 
 def test_matrix_determinant_stability():
-    t = Transformer()
+    t = CoordinateTransformer()
 
     for _ in range(100):
         t.rotate(0.1)
@@ -270,7 +257,7 @@ def test_matrix_determinant_stability():
 
 def test_invalid_transform_matrix():
     with pytest.raises(ValueError):
-        transformer = Transformer()
+        transformer = CoordinateTransformer()
         transformer.chain_transform(np.eye(3))
 
 def test_reflect_invalid_normal(transformer):

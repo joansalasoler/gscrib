@@ -57,4 +57,5 @@ API Reference
    gscrib.enums
    gscrib.excepts
    gscrib.formatters
+   gscrib.geometry
    gscrib.writers

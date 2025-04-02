@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List
+import copy
+from typing import List, Tuple
 
 import numpy as np
 from typeguard import typechecked
@@ -26,22 +27,22 @@ from scipy import linalg
 from .point import Point
 
 
-class Transformer:
-    """Geometric transformations using 4x4 matrices.
+class CoordinateTransformer:
+    """Coordinate system transformations using 4x4 matrices.
 
-    This class provides methods for various 3D transformations including
-    translation, rotation, scaling, and reflection. It maintains a
-    transformation stack for nested transformations and can be used as
-    a context manager.
+    This class provides methods for transforming the coordinate system
+    through operations such as translation, rotation, scaling, and
+    reflection. It maintains a transformation stack for nested
+    transformations.
 
-    The transformations are represented internally using 4x4 homogeneous
+    Transformations are represented internally using 4x4 homogeneous
     transformation matrices, allowing for chaining of operations.
 
     Example:
-        >>> with GMatrix() as matrix:
-        ...     matrix.translate(10.0, 0.0)
-        ...     matrix.rotate(90, axis = 'z')
-        ...     matrix.scale(2.0)
+        >>> with CoordinateTransformer() as t:
+        ...     t.translate(10.0, 0.0)
+        ...     t.rotate(90, axis = 'z')
+        ...     t.scale(2.0)
     """
 
     __slots__ = (
@@ -57,31 +58,20 @@ class Transformer:
         self._inverse_matrix: np.ndarray = np.eye(4)
         self._matrix_stack: List[np.ndarray] = []
 
-    def __enter__(self) -> 'Transformer':
-        """Context manager entry that pushes the current matrix."""
-
-        self.push_matrix()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        """Context manager exit that pops the matrix."""
-
-        self.pop_matrix()
-
-    def push_matrix(self) -> None:
-        """Push a copy of the current matrix onto the stack."""
+    def save_state(self) -> None:
+        """Save the current transformation state onto the stack."""
 
         self._matrix_stack.append(self._current_matrix.copy())
 
-    def pop_matrix(self) -> None:
-        """Pop the top matrix from the stack.
+    def restore_state(self) -> None:
+        """Restore the last saved transformation state.
 
         Raises:
             IndexError: If attempting to pop from an empty stack.
         """
 
         if not self._matrix_stack:
-            raise IndexError("Cannot pop matrix: stack is empty")
+            raise IndexError("Cannot restore state: stack is empty")
 
         self._current_matrix = self._matrix_stack.pop()
         self._inverse_matrix = linalg.inv(self._current_matrix)
@@ -244,6 +234,22 @@ class Transformer:
 
         vector = self._inverse_matrix @ point.to_vector()
         return Point.from_vector(vector)
+
+    def _copy_state(self) -> Tuple:
+        """Create a deep copy of the current state."""
+
+        return (
+            copy.deepcopy(self._current_matrix),
+            copy.deepcopy(self._inverse_matrix),
+            copy.deepcopy(self._matrix_stack)
+        )
+
+    def _revert_state(self, state: Tuple) -> None:
+        """Revert to a previous state."""
+
+        self._current_matrix = copy.deepcopy(state[0])
+        self._inverse_matrix = copy.deepcopy(state[1])
+        self._matrix_stack = copy.deepcopy(state[2])
 
     def _get_rotation_vector(self, angle: float, axis: str) -> List[float]:
         """Get the rotation vector for the specified axis and angle.

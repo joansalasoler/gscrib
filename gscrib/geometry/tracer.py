@@ -22,13 +22,13 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 from typeguard import typechecked
 
-from .enums import Direction
+from gscrib.enums import Direction
 from .point import Point, PointLike
 
 PathFn: TypeAlias = Callable[[np.ndarray], np.ndarray]
 
 
-class TracePath:
+class PathTracer:
     """Generating G-code with interpolated motion paths.
 
     This class provides methods to generate G-code commands for complex
@@ -57,9 +57,9 @@ class TracePath:
         >>> g.trace.arc(target=(0, 10), center=(-10, 0))
         >>>
         >>> # Draw an arc rotated 45° around the X axis
-        >>> with g.transform:  # Use transformer as context manager
+        >>> with g.current_transform():  # Save current transform
         ...     g.move(x=0, y=0)
-        ...     g.rotate(45, 'x')  # Rotate 45° around X axis
+        ...     g.transform.rotate(45, 'x')  # Rotate 45° around X axis
         ...     g.trace.circle(center=(0, 10))
         ... # Applied transforms are restored here
     """

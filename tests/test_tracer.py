@@ -1,7 +1,8 @@
 import pytest
 import numpy as np
 from unittest.mock import Mock, patch
-from gscrib import TracePath, GCodeBuilder
+from gscrib import GCodeBuilder
+from gscrib.geometry import PathTracer
 from gscrib.writers import BaseWriter
 
 
@@ -11,7 +12,7 @@ from gscrib.writers import BaseWriter
 
 @pytest.fixture
 def tracer(builder):
-    return TracePath(builder)
+    return PathTracer(builder)
 
 @pytest.fixture
 def mock_writer():
@@ -19,7 +20,7 @@ def mock_writer():
 
 @pytest.fixture
 def mock_parametric():
-    with patch('gscrib.trace_path.TracePath.parametric') as mock_parametric:
+    with patch('gscrib.geometry.tracer.PathTracer.parametric') as mock_parametric:
         yield mock_parametric
 
 @pytest.fixture

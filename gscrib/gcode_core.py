@@ -25,12 +25,11 @@ from .config import GConfig
 from .enums import DistanceMode, Direction
 from .excepts import DeviceError
 from .formatters import BaseFormatter, DefaultFormatter
-from .move_params import MoveParams
-from .point import Point, PointLike
-from .transformer import Transformer
+from .params import ParamsDict
+from .geometry import Point, PointLike, CoordinateTransformer
 from .writers import BaseWriter, SocketWriter, SerialWriter, FileWriter
 
-ProcessedParams: TypeAlias = Tuple[Point, MoveParams, str | None]
+ProcessedParams: TypeAlias = Tuple[Point, ParamsDict, str | None]
 
 
 class GCodeCore(object):
@@ -110,9 +109,9 @@ class GCodeCore(object):
 
         self._logger = logging.getLogger(__name__)
         self._formatter = DefaultFormatter()
-        self._transformer = Transformer()
+        self._transformer = CoordinateTransformer()
         self._current_axes = Point.unknown()
-        self._current_params = MoveParams()
+        self._current_params = ParamsDict()
         self._distance_mode = DistanceMode.ABSOLUTE
         self._direction = Direction.CLOCKWISE
         self._writers: List[BaseWriter] = []
@@ -161,7 +160,7 @@ class GCodeCore(object):
         return sys.stdout
 
     @property
-    def transform(self) -> Transformer:
+    def transform(self) -> CoordinateTransformer:
         """Get the current coordinate transformer instance."""
         return self._transformer
 
@@ -246,73 +245,6 @@ class GCodeCore(object):
         self._update_axes(target_axes, params)
         self.write(statement)
 
-    def push_matrix(self) -> None:
-        """Push the current transformation matrix onto the stack.
-
-        Saves the current transformation state that can be restored
-        later with `pop_matrix()`.
-        """
-
-        self.transform.push_matrix()
-
-    def pop_matrix(self) -> None:
-        """Pop and restore the previous transformation matrix.
-
-        Restores from the stack the transformation state to what it
-        was when last pushed.
-        """
-
-        self.transform.pop_matrix()
-
-    def translate(self, x: float, y: float, z: float = 0) -> None:
-        """Apply a translation transformation.
-
-        Args:
-            x: Translation distance along X axis
-            y: Translation distance along Y axis
-            z: Translation distance along Z axis
-        """
-
-        self.transform.translate(x, y, z)
-
-    def rotate(self, angle: float, axis: str = 'z') -> None:
-        """Apply a rotation transformation.
-
-        Args:
-            angle: Rotation angle in degrees
-            axis: Axis of rotation (x, y, or z)
-        """
-
-        self.transform.rotate(angle, axis)
-
-    def scale(self, *scale: float) -> None:
-        """Apply a scaling transformation.
-
-        Args:
-            *scale: Scale factors for each axis. If only one value
-                is provided uniform scaling is applied to all axes.
-        """
-
-        self.transform.scale(*scale)
-
-    def reflect(self, normal: List[float]) -> None:
-        """Apply a reflection transformation.
-
-        Args:
-            normal: Normal as a 3D vector (nx, ny, nz)
-        """
-
-        self.transform.reflect(normal)
-
-    def mirror(self, plane: str = "zx") -> None:
-        """Apply a mirror transformation around a plane.
-
-        Args:
-            plane: Mirror plane ("xy", "yz", or "zx").
-        """
-
-        self.transform.mirror(plane)
-
     def rename_axis(self, axis: str, label: str) -> None:
         """Rename an axis label in the G-code output.
 
@@ -341,12 +273,13 @@ class GCodeCore(object):
         mode = DistanceMode.ABSOLUTE
         previous = self._distance_mode
 
+        if mode != self._distance_mode:
+            self.set_distance_mode(mode)
+
         try:
-            if mode != previous:
-                self.set_distance_mode(mode)
             yield
         finally:
-            if previous != mode:
+            if previous != self._distance_mode:
                 self.set_distance_mode(previous)
 
     @contextmanager
@@ -367,13 +300,36 @@ class GCodeCore(object):
         mode = DistanceMode.RELATIVE
         previous = self._distance_mode
 
+        if mode != self._distance_mode:
+            self.set_distance_mode(mode)
+
         try:
-            if mode != previous:
-                self.set_distance_mode(mode)
             yield
         finally:
-            if previous != mode:
+            if previous != self._distance_mode:
                 self.set_distance_mode(previous)
+
+    @contextmanager
+    def current_transform(self):
+        """Temporarily save the transformation state within a context.
+
+        This context manager allows you to temporarily modify the current
+        coordinate system. Any changes made to the coordinate system
+        within the context will be reverted when exiting the context.
+
+        Example:
+            >>> with g.current_transform():
+            ...     g.transform.translate(10, 0, 0)
+            ...     g.move(x=10, y=10)  # Transformed move
+            ... # Transformation state is restored here
+        """
+
+        state = self.transform._copy_state()
+
+        try:
+            yield
+        finally:
+            self.transform._revert_state(state)
 
     @typechecked
     def to_absolute(self, point: PointLike) -> Point:
@@ -632,7 +588,7 @@ class GCodeCore(object):
         self._writers.clear()
 
     def _write_move(self,
-        point: Point, params: MoveParams, comment: str | None = None) -> MoveParams:
+        point: Point, params: ParamsDict, comment: str | None = None) -> ParamsDict:
         """Write a linear move statement with the given parameters.
 
         Args:
@@ -648,7 +604,7 @@ class GCodeCore(object):
         return params
 
     def _write_rapid(self,
-        point: Point, params: MoveParams, comment: str | None = None) -> MoveParams:
+        point: Point, params: ParamsDict, comment: str | None = None) -> ParamsDict:
         """Write a rapid move statement with the given parameters.
 
         Args:
@@ -688,7 +644,7 @@ class GCodeCore(object):
         """
 
         comment = kwargs.pop("comment", None)
-        params = MoveParams(kwargs)
+        params = ParamsDict(kwargs)
 
         point = (
             Point(*point[:3])
@@ -739,7 +695,7 @@ class GCodeCore(object):
 
         return move, target_axes
 
-    def _update_axes(self, axes: Point, params: MoveParams) -> None:
+    def _update_axes(self, axes: Point, params: ParamsDict) -> None:
         """Update the internal state after a movement.
 
         Updates the current position and movement parameters to reflect

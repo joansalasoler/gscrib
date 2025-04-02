@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-class MoveParams(dict):
+class ParamsDict(dict):
     """A case-insensitive dictionary for G-code movement parameters.
 
     This dictionary subclass automatically converts all keys to

@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from gscrib.point import Point
+from gscrib.geometry import Point
 
 
 # --------------------------------------------------------------------

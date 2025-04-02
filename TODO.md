@@ -19,7 +19,7 @@ Enhance G-code compatibility by supporting the following commands:
 Make sure that the selected plane (XY, XZ, or YZ) influences the
 generation of interpolated paths during G-code generation. Even when
 matrix transformations are in play, allowing the selected plane to
-affect the TracePath method improves user experience and simplifies
+affect the PathTracer method improves user experience and simplifies
 code generation.
 
 ## Iterators for Grids, Polygons, and More

@@ -1,5 +1,7 @@
 import pytest
 
+from numpy.testing import assert_array_equal
+
 from gscrib import Point
 from gscrib import GCodeCore
 from gscrib.writers import BaseWriter
@@ -218,12 +220,12 @@ def test_relative_mode_context_manager(builder, mock_writer):
 # Test transformations
 
 def test_translation(builder, mock_writer):
-    builder.translate(10, 20, 0)
+    builder.transform.translate(10, 20, 0)
     builder.move(x=0, y=0)
     assert "G1 X10 Y20" in mock_writer.written_lines
 
 def test_rotation(builder, mock_writer):
-    builder.rotate(90)  # 90 degrees
+    builder.transform.rotate(90)  # 90 degrees
     builder.move(x=10, y=0)
     written_line = mock_writer.written_lines[-1]
     assert "G1" in written_line
@@ -231,36 +233,36 @@ def test_rotation(builder, mock_writer):
     assert "X0" in written_line
 
 def test_scaling(builder, mock_writer):
-    builder.scale(2)
+    builder.transform.scale(2)
     builder.move(x=10, y=10)
     assert "G1 X20 Y20" in mock_writer.written_lines
 
 def test_reflection(builder, mock_writer):
-    builder.reflect([1, 1, 0])
+    builder.transform.reflect([1, 1, 0])
     builder.move(x=10, y=10)
     assert "G1 X-10 Y-10" in mock_writer.written_lines
 
 def test_matrix_stack(builder, mock_writer):
-    builder.translate(10, 0)
-    builder.push_matrix()
-    builder.translate(10, 0)
+    builder.transform.translate(10, 0)
+    builder.transform.save_state()
+    builder.transform.translate(10, 0)
     builder.move(x=0, y=0)
-    builder.pop_matrix()
+    builder.transform.restore_state()
     builder.move(x=0, y=0)
     assert "G1 X20 Y0" in mock_writer.written_lines
     assert "G1 X10 Y0" in mock_writer.written_lines
 
 def test_combined_transformations(builder, mock_writer):
-    builder.translate(10, 0)
-    builder.rotate(90)
-    builder.scale(2)
+    builder.transform.translate(10, 0)
+    builder.transform.rotate(90)
+    builder.transform.scale(2)
     builder.move(x=5, y=0)
     assert builder.position == Point(5, 0, 0)
     assert "G1 X0 Y30" in mock_writer.written_lines[-1]
 
 def test_relative_with_transformations(builder, mock_writer):
-    builder.translate(10, 0)
-    builder.scale(3)
+    builder.transform.translate(10, 0)
+    builder.transform.scale(3)
     builder.set_distance_mode("relative")
     builder.move(x=5, y=0)
     builder.move(x=5, y=10)
@@ -268,6 +270,28 @@ def test_relative_with_transformations(builder, mock_writer):
     assert "G91" in mock_writer.written_lines[0]
     assert "G1 X15 Y0" in mock_writer.written_lines[1]
     assert "G1 X15 Y30" in mock_writer.written_lines[2]
+
+def test_current_transform_context_manager(builder, mock_writer):
+    t = builder.transform
+    t.save_state()
+    matrix_state = t._copy_state()
+
+    with builder.current_transform():
+        t.save_state()
+
+        t.translate(10, 0, 0)
+        point1 = t.apply_transform(Point(0, 0, 0))
+        assert point1 == Point(10, 0, 0)
+
+        t.save_state()
+        t.restore_state()
+
+    # Should always revert to previous state
+    point2 = t.apply_transform(Point(0, 0, 0))
+    assert_array_equal(matrix_state[0], t._current_matrix)
+    assert_array_equal(matrix_state[1], t._inverse_matrix)
+    assert_array_equal(matrix_state[2], t._matrix_stack)
+    assert point2 == Point(0, 0, 0)
 
 # Test comments
 

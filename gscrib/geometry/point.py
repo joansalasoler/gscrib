@@ -20,7 +20,7 @@ from typing import NamedTuple, TypeAlias
 from typing import Sequence, Union
 
 import numpy as np
-from .move_params import MoveParams
+from gscrib.params import ParamsDict
 
 OptFloat: TypeAlias = float | None
 PointLike: TypeAlias = Union['Point', Sequence[float | None], np.ndarray, None]
@@ -53,7 +53,7 @@ class Point(NamedTuple):
         return np.array([self.x or 0, self.y or 0, self.z or 0, 1.0])
 
     @classmethod
-    def from_params(cls, params: MoveParams) -> 'Point':
+    def from_params(cls, params: ParamsDict) -> 'Point':
         """Create a point from a dictionary of move parameters."""
 
         x = params.get('X', None)

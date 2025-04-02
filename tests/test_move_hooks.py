@@ -1,7 +1,7 @@
 import math
 import pytest
 from gscrib import GCodeBuilder, GState
-from gscrib import Point, MoveParams
+from gscrib import Point, ParamsDict
 from gscrib.enums import SpinMode
 
 
@@ -41,7 +41,7 @@ def test_remove_hook(builder):
 def test_hook_context(builder):
     assert len(builder._hooks) == 0
 
-    with builder.hook(noop_hook):
+    with builder.move_hook(noop_hook):
         assert noop_hook in builder._hooks
         assert len(builder._hooks) == 1
 
@@ -51,7 +51,7 @@ def test_hook_context_with_exception(builder):
     assert len(builder._hooks) == 0
 
     with pytest.raises(ValueError):
-        with builder.hook(noop_hook):
+        with builder.move_hook(noop_hook):
             assert noop_hook in builder._hooks
             raise ValueError("Test exception")
 
@@ -69,7 +69,7 @@ def test_write_move_with_hook(builder):
 
     builder.add_hook(test_hook)
     point = Point(10, 20, 0)
-    params = MoveParams(F=2000)
+    params = ParamsDict(F=2000)
     builder._write_move(point, params)
     assert processed_params is not None
     assert processed_params.get('F') == 2000
@@ -91,7 +91,7 @@ def test_multiple_hooks(builder):
     builder.add_hook(hook2)
 
     point = Point(10, 20, 0)
-    params = MoveParams(F=2000)
+    params = ParamsDict(F=2000)
     builder._write_move(point, params)
 
     assert results == [1, 2] # Verify invokation order
@@ -108,13 +108,13 @@ def test_practical_extrusion_hook(builder):
 
     # Move 10mm in X direction
     point = Point(10, 0, 0)
-    params = MoveParams()
+    params = ParamsDict()
     builder._write_move(point, params)
     assert params.get('E') == pytest.approx(1.0)  # 10mm * 0.1
 
     # Diagonal move (10mm, 10mm)
     point = Point(10, 10, 0)
-    params = MoveParams()
+    params = ParamsDict()
     builder._write_move(point, params)
     assert params.get('E') == pytest.approx(1.414, rel=1e-3)  # sqrt(200) * 0.1
 
@@ -127,13 +127,13 @@ def test_hook_state_access(builder):
     builder.add_hook(state_checker)
 
     # Move with tool off
-    params = MoveParams()
+    params = ParamsDict()
     point = Point(10, 0, 0)
     builder._write_move(point, params)
     assert params.get('F') == 2000
 
     # Move with tool on
-    params = MoveParams()
+    params = ParamsDict()
     builder._state._set_spin_mode(SpinMode.CLOCKWISE, 100)
     builder._write_move(point, params)
     assert params.get('F') == 1000

@@ -10,15 +10,14 @@ from . import enums
 from . import excepts
 from . import formatters
 from . import writers
+from . import geometry
 
 from .config import GConfig
 from .gcode_builder import GCodeBuilder
 from .gcode_core import GCodeCore
 from .gcode_state import GState
-from .move_params import MoveParams
-from .trace_path import TracePath
-from .point import Point, PointLike
-from .transformer import Transformer
+from .params import ParamsDict
+from .geometry import Point, PointLike
 
 __version__ = "0.1.0"
 
@@ -27,13 +26,12 @@ __all__ = [
     "GCodeBuilder",
     "GConfig",
     "GState",
-    "MoveParams",
-    "TracePath",
+    "ParamsDict",
     "Point",
     "PointLike",
-    "Transformer",
     "formatters",
     "writers",
     "enums",
-    "excepts"
+    "excepts",
+    "geometry",
 ]

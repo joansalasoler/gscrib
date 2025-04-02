@@ -24,9 +24,8 @@ from typeguard import typechecked
 from .codes import gcode_table
 from .gcode_core import GCodeCore
 from .gcode_state import GState
-from .move_params import MoveParams
-from .point import Point, PointLike
-from .trace_path import TracePath
+from .params import ParamsDict
+from .geometry import Point, PointLike, PathTracer
 from .enums import *
 
 
@@ -85,7 +84,7 @@ class GCodeBuilder(GCodeCore):
         >>>     params.update(E=0.1 * length)
         >>>     return params
         >>>
-        >>> with g.hook(extrude_hook):
+        >>> with g.move_hook(extrude_hook):
         >>>     g.move(x=10, y=0)   # Will add E=1.0
         >>>     g.move(x=20, y=10)  # Will add E=1.414
         >>>     g.move(x=10, y=10)  # Will add E=1.0
@@ -100,7 +99,7 @@ class GCodeBuilder(GCodeCore):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self._state: GState = GState()
-        self._tracer: TracePath = TracePath(self)
+        self._tracer: PathTracer = PathTracer(self)
         self._hooks = []
 
     @property
@@ -110,7 +109,7 @@ class GCodeBuilder(GCodeCore):
         return self._state
 
     @property
-    def trace(self) -> TracePath:
+    def trace(self) -> PathTracer:
         """Interpolated path generation"""
 
         return self._tracer
@@ -702,26 +701,27 @@ class GCodeBuilder(GCodeCore):
         super().write(statement)
 
     @contextmanager
-    def hook(self, hook: Callable):
+    def move_hook(self, hook: Callable):
         """Temporarily enable a move parameter hook.
 
         Args:
             hook: Callable that processes movement parameters
 
         Example:
-            >>> with g.hook(extrude_hook):  # Adds a hook
+            >>> with g.move_hook(extrude_hook):  # Adds a hook
             >>>     g.move(x=10, y=0)  # Will add E=1.0
             >>> # Hook is removed automatically here
         """
 
+        self.add_hook(hook)
+
         try:
-            self._hooks.append(hook)
             yield
         finally:
-            self._hooks.remove(hook)
+            self.remove_hook(hook)
 
     def _write_move(self,
-        point: Point, params: MoveParams, comment: str | None = None) -> MoveParams:
+        point: Point, params: ParamsDict, comment: str | None = None) -> ParamsDict:
         """Write a linear move statement with the given parameters.
 
         Applies all registered move hooks before writing the movement

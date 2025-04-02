@@ -139,19 +139,19 @@ translations, rotations, scaling, reflections, or mirroring.
 
 ```python
 # Save current transformation state
-g.push_matrix()
+g.transform.save_state()
 
 # Translate 10 units along X and Y
-g.translate(x=10, y=10)
+g.transform.translate(x=10, y=10)
 
 # Rotate 45 degrees around Z-axis
-g.rotate(angle=45, axis="z")
+g.transform.rotate(angle=45, axis="z")
 
 # Trace an arc in the transformed coordinate system
 g.trace.arc(target=(10, 0), center=(5, 0))
 
 # Restore original transformation state
-g.pop_matrix()
+g.transform.restore_state()
 ```
 
 ### Context Managers
@@ -165,22 +165,22 @@ restore the previous state when the context ends.
 with GCodeBuilder(output="outfile.gcode") as g:
     g.move(x=10, y=10)
 
-# Temporary absolute positioning
-with g.absolute_mode():
-    g.move(x=10, y=10)
+    # Temporary absolute positioning
+    with g.absolute_mode():
+        g.move(x=10, y=10)
 
-# Temporary relative positioning
-with g.relative_mode():
-    g.move(x=10, y=10)
+    # Temporary relative positioning
+    with g.relative_mode():
+        g.move(x=10, y=10)
 
-# Temporary hooks
-with g.hook(temporary_hook):
-    g.move(x=10, y=10)
+    # Temporary hooks
+    with g.move_hook(temporary_hook):
+        g.move(x=10, y=10)
 
-# Temporary transformations
-with g.transform:
-    g.rotate(angle=45, axis="z")
-    g.trace.arc(target=(10, 0), center=(5, 0))
+    # Temporary transformations
+    with g.current_transform():
+        g.transform.rotate(angle=45, axis="z")
+        g.trace.arc(target=(10, 0), center=(5, 0))
 ```
 
 ## Projects Using Gscrib
