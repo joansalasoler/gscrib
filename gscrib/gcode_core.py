@@ -133,23 +133,23 @@ class GCodeCore(object):
 
         if config.print_lines is True:
             writer = FileWriter(self._get_stdout_file())
-            self._writers.append(writer)
+            self.add_writer(writer)
 
         if config.output is not None:
             writer = FileWriter(config.output)
-            self._writers.append(writer)
+            self.add_writer(writer)
 
         if config.direct_write == "socket":
             writer = SocketWriter(config.host, config.port)
-            self._writers.append(writer)
+            self.add_writer(writer)
 
         if config.direct_write == "serial":
             writer = SerialWriter(config.port, config.baudrate)
-            self._writers.append(writer)
+            self.add_writer(writer)
 
         if len(self._writers) == 0:
             writer = FileWriter(self._get_stdout_file())
-            self._writers.append(writer)
+            self.add_writer(writer)
 
     def _get_stdout_file(self) -> Any:
         """Get binary or text stdout file."""
@@ -196,6 +196,28 @@ class GCodeCore(object):
         """
 
         return self._current_params.get(name)
+
+    @typechecked
+    def add_writer(self, writer: BaseWriter) -> None:
+        """Add a new writer to the list of writers.
+
+        Args:
+            writer (BaseWriter): The writer to add
+        """
+
+        if not writer in self._writers:
+            self._writers.append(writer)
+
+    @typechecked
+    def remove_writer(self, writer: BaseWriter) -> None:
+        """Remove a writer from the list of writers.
+
+        Args:
+            writer (BaseWriter): The writer to remove
+        """
+
+        if writer in self._writers:
+            self._writers.remove(writer)
 
     @typechecked
     def set_distance_mode(self, mode: DistanceMode | str) -> None:
