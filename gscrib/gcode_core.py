@@ -22,7 +22,7 @@ from typing import Any, List, Sequence, Tuple, TypeAlias
 from typeguard import typechecked
 
 from .config import GConfig
-from .enums import DistanceMode, Direction
+from .enums import Axis, DistanceMode, Direction
 from .excepts import DeviceError
 from .formatters import BaseFormatter, DefaultFormatter
 from .params import ParamsDict
@@ -267,7 +267,7 @@ class GCodeCore(object):
         self._update_axes(target_axes, params)
         self.write(statement)
 
-    def rename_axis(self, axis: str, label: str) -> None:
+    def rename_axis(self, axis: Axis | str, label: str) -> None:
         """Rename an axis label in the G-code output.
 
         Args:

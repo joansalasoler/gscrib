@@ -144,6 +144,9 @@ g.transform.save_state()
 # Translate 10 units along X and Y
 g.transform.translate(x=10, y=10)
 
+# Change the pivot point for the next transformation
+g.transform.set_pivot(point=(5, 5, 0))
+
 # Rotate 45 degrees around Z-axis
 g.transform.rotate(angle=45, axis="z")
 

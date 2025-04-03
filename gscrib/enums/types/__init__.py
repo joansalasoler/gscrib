@@ -7,6 +7,7 @@ This package provides enumeration classes that define various machine
 control parameters and operational modes.
 """
 
+from .axis import Axis
 from .bed_temperature import BedTemperature
 from .coolant_mode import CoolantMode
 from .direction import Direction
@@ -23,6 +24,7 @@ from .spin_mode import SpinMode
 from .tool_swap_mode import ToolSwapMode
 
 __all__ = [
+    "Axis",
     "BedTemperature",
     "CoolantMode",
     "Direction",

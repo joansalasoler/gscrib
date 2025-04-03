@@ -23,6 +23,7 @@ from numbers import Number
 import numpy as np
 from typeguard import typechecked
 
+from gscrib.enums import Axis
 from .base_formatter import BaseFormatter
 
 
@@ -30,7 +31,6 @@ DEFAULT_DECIMAL_PLACES = 5
 DEFAULT_COMMENT_SYMBOLS = ";"
 COMMENT_OPENINGS = ("(", "[", "{", "<", '"', "'", "/*")
 COMMENT_ENDINGS = (")", "]", "}", ">", '"', "'", "*/")
-VALID_AXES = ( "X", "Y", "Z" )
 
 
 class DefaultFormatter(BaseFormatter):
@@ -40,7 +40,8 @@ class DefaultFormatter(BaseFormatter):
         "_labels",
         "_line_endings",
         "_decimal_places",
-        "_comment_template"
+        "_comment_template",
+        "_valid_axes",
     )
 
     def __init__(self):
@@ -48,11 +49,12 @@ class DefaultFormatter(BaseFormatter):
 
         self._line_endings = os.linesep
         self._decimal_places = DEFAULT_DECIMAL_PLACES
-        self._labels = { a: a for a in VALID_AXES }
+        self._valid_axes = [a.value.upper() for a in Axis]
+        self._labels = { a: a for a in self._valid_axes }
         self.set_comment_symbols(DEFAULT_COMMENT_SYMBOLS)
 
     @typechecked
-    def set_axis_label(self, axis: str, label: str):
+    def set_axis_label(self, axis: Axis | str, label: str):
         """Set a custom label for an axis.
 
         Args:
@@ -63,13 +65,11 @@ class DefaultFormatter(BaseFormatter):
             ValueError: If axis is invalid or label is empty
         """
 
-        if axis.upper() not in VALID_AXES:
-            raise ValueError(f"Invalid axis: {axis}")
-
         if not label.strip():
             raise ValueError("Axis label cannot be empty")
 
-        self._labels[axis.upper()] = label.strip().upper()
+        axis_name = Axis(axis.lower()).value.upper()
+        self._labels[axis_name] = label.strip().upper()
 
     @typechecked
     def set_comment_symbols(self, value: str) -> None:
@@ -217,7 +217,7 @@ class DefaultFormatter(BaseFormatter):
 
         # Handle XYZ axis parameters
 
-        for axis in (a for a in VALID_AXES if a in upper_params):
+        for axis in (a for a in self._valid_axes if a in upper_params):
             param = upper_params[axis]
 
             if isinstance(param, Number):
@@ -227,7 +227,7 @@ class DefaultFormatter(BaseFormatter):
 
         # Handle other parameters
 
-        for label in (a for a in upper_params if a not in VALID_AXES):
+        for label in (a for a in upper_params if a not in self._valid_axes):
             param = upper_params[label]
             is_number = isinstance(param, Number)
             value = self.number(param) if is_number else str(param)

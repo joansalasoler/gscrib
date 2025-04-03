@@ -24,7 +24,8 @@ from typeguard import typechecked
 from scipy.spatial.transform import Rotation
 from scipy import linalg
 
-from .point import Point
+from gscrib.enums import Axis, Plane
+from .point import Point, PointLike
 
 
 class CoordinateTransformer:
@@ -46,6 +47,8 @@ class CoordinateTransformer:
     """
 
     __slots__ = (
+        '_to_pivot',
+        '_from_pivot',
         '_current_matrix',
         '_inverse_matrix',
         '_matrix_stack'
@@ -54,12 +57,35 @@ class CoordinateTransformer:
     def __init__(self) -> None:
         """Initialize with identity matrix."""
 
+        self.set_pivot(point=(0, 0, 0))
         self._current_matrix: np.ndarray = np.eye(4)
         self._inverse_matrix: np.ndarray = np.eye(4)
         self._matrix_stack: List[np.ndarray] = []
 
+    @typechecked
+    def set_pivot(self, point: PointLike) -> None:
+        """Set the pivot point for transformations.
+
+        The pivot point is the reference around which transformations
+        like rotation and scaling occur. For example, to rotate a circle
+        around its center, set the pivot point to the circle’s midpoint
+        before applying the rotation. By default it is set to the
+        origin of coordinates.
+
+        Args:
+            point: Pivot point in absolute coordinates.
+        """
+
+        x, y, z = Point(*point).resolve()
+        self._from_pivot = self._tranlation_matrix(-x, -y, -z)
+        self._to_pivot = self._tranlation_matrix(x, y, z)
+
     def save_state(self) -> None:
-        """Save the current transformation state onto the stack."""
+        """Save the current transformation state onto the stack.
+
+        This allows for temporary modifications to the transformation
+        state, which can later be reverted using `restore_state()`.
+        """
 
         self._matrix_stack.append(self._current_matrix.copy())
 
@@ -90,7 +116,8 @@ class CoordinateTransformer:
         if transform_matrix.shape != (4, 4):
             raise ValueError("Transform matrix must be 4x4")
 
-        self._current_matrix = transform_matrix @ self._current_matrix
+        matrix = self._to_pivot @ transform_matrix @ self._from_pivot
+        self._current_matrix = matrix @ self._current_matrix
         self._inverse_matrix = linalg.inv(self._current_matrix)
 
     @typechecked
@@ -103,8 +130,7 @@ class CoordinateTransformer:
             z: Translation in Z axis (default: 0.0).
         """
 
-        translation_matrix = np.eye(4)
-        translation_matrix[:-1, -1] = [x, y, z]
+        translation_matrix = self._tranlation_matrix(x, y, z)
         self.chain_transform(translation_matrix)
 
     @typechecked
@@ -138,7 +164,7 @@ class CoordinateTransformer:
         self.chain_transform(scale_matrix)
 
     @typechecked
-    def rotate(self, angle: float, axis: str = 'z') -> None:
+    def rotate(self, angle: float, axis: Axis | str = Axis.Z) -> None:
         """Apply a rotation transformation around any axis.
 
         Args:
@@ -149,8 +175,8 @@ class CoordinateTransformer:
             KeyError: If axis is not 'x', 'y', or 'z'.
         """
 
-        axis = axis.lower()
-        rotation_vector = self._get_rotation_vector(angle, axis)
+        axis = Axis(axis)
+        rotation_vector = self._rotation_vector(angle, axis)
         rotation = Rotation.from_rotvec(rotation_vector)
 
         rotation_matrix = np.eye(4)
@@ -182,7 +208,7 @@ class CoordinateTransformer:
         self.chain_transform(reflection_matrix)
 
     @typechecked
-    def mirror(self, plane: str = "zx") -> None:
+    def mirror(self, plane: Plane | str = Plane.ZX) -> None:
         """Apply a mirror transformation across a plane.
 
         Args:
@@ -192,46 +218,36 @@ class CoordinateTransformer:
             ValueError: If the plane is not "xy", "yz", or "zx".
         """
 
-        normals = {
-            "xy": [0, 0, 1],
-            "yz": [1, 0, 0],
-            "zx": [0, 1, 0],
-        }
-
-        if plane not in normals:
-            raise ValueError(f"Invalid plane '{plane}'")
-
-        self.reflect(normals[plane])
+        plane = Plane(plane)
+        self.reflect(plane.normal())
 
     @typechecked
-    def apply_transform(self, point: Point) -> Point:
+    def apply_transform(self, point: PointLike) -> Point:
         """Transform a point using the current transformation matrix.
 
         Args:
-            x: X coordinate.
-            y: Y coordinate.
-            z: Z coordinate.
+            point: A Point or point-like object.
 
         Returns:
-            A tuple of transformed (x, y, z) coordinates.
+            A Point with the transformed (x, y, z) coordinates.
         """
 
+        point = Point(*point)
         vector = self._current_matrix @ point.to_vector()
         return Point.from_vector(vector)
 
     @typechecked
-    def reverse_transform(self, point: Point) -> Point:
+    def reverse_transform(self, point: PointLike) -> Point:
         """Invert a transformed point using the current matrix.
 
         Args:
-            x: X coordinate.
-            y: Y coordinate.
-            z: Z coordinate.
+            point: A Point or point-like object.
 
         Returns:
-            A tuple of inverted (x, y, z) coordinates.
+            A Point with the inverted (x, y, z) coordinates.
         """
 
+        point = Point(*point)
         vector = self._inverse_matrix @ point.to_vector()
         return Point.from_vector(vector)
 
@@ -241,7 +257,9 @@ class CoordinateTransformer:
         return (
             copy.deepcopy(self._current_matrix),
             copy.deepcopy(self._inverse_matrix),
-            copy.deepcopy(self._matrix_stack)
+            copy.deepcopy(self._matrix_stack),
+            copy.deepcopy(self._from_pivot),
+            copy.deepcopy(self._to_pivot),
         )
 
     def _revert_state(self, state: Tuple) -> None:
@@ -250,9 +268,11 @@ class CoordinateTransformer:
         self._current_matrix = copy.deepcopy(state[0])
         self._inverse_matrix = copy.deepcopy(state[1])
         self._matrix_stack = copy.deepcopy(state[2])
+        self._from_pivot = copy.deepcopy(state[3])
+        self._to_pivot = copy.deepcopy(state[4])
 
-    def _get_rotation_vector(self, angle: float, axis: str) -> List[float]:
-        """Get the rotation vector for the specified axis and angle.
+    def _rotation_vector(self, angle: float, axis: Axis) -> List[float]:
+        """Create a rotation vector for the specified axis and angle.
 
         Args:
             angle: Rotation angle in degrees.
@@ -268,27 +288,25 @@ class CoordinateTransformer:
         angle_rad = np.radians(angle)
 
         return {
-            'x': [angle_rad, 0, 0],
-            'y': [0, angle_rad, 0],
-            'z': [0, 0, angle_rad]
+            Axis.X: [angle_rad, 0, 0],
+            Axis.Y: [0, angle_rad, 0],
+            Axis.Z: [0, 0, angle_rad]
         }[axis]
 
-    def _get_reflection_matrix_2d(self, angle: float) -> np.ndarray:
-        """Get the 2D reflection matrix for the specified angle.
+    def _tranlation_matrix(self, x: float, y: float, z: float) -> np.array:
+        """Create a translation matrix for the given point.
 
         Args:
-            angle: Reflection angle in degrees.
+            x: Translation in X axis.
+            y: Translation in Y axis.
+            z: Translation in Z axis
 
         Returns:
-            A 2x2 numpy array representing the reflection matrix.
+            The translation matrix.
         """
 
-        angle_rad = np.radians(angle)
+        translation_matrix = np.eye(4)
+        translation_matrix[:-1, -1] = [x, y, z]
 
-        sin_2a = np.sin(2 * angle_rad)
-        cos_2a = np.cos(2 * angle_rad)
+        return translation_matrix
 
-        return np.array([
-            [cos_2a,  sin_2a],
-            [sin_2a, -cos_2a]
-        ])

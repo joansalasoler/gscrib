@@ -12,6 +12,7 @@ uses this table to create the appropriate G-code statements.
 
 from .base_enum import BaseEnum
 from .modes import DirectWrite
+from .types import Axis
 from .types import BedTemperature
 from .types import CoolantMode
 from .types import Direction
@@ -32,6 +33,7 @@ from .units import TimeUnits
 
 __all__ = [
     "BaseEnum",
+    "Axis",
     "DirectWrite",
     "BedTemperature",
     "CoolantMode",

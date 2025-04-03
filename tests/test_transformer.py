@@ -33,6 +33,8 @@ def test_default_initialization():
     t = CoordinateTransformer()
     assert_array_equal(t._current_matrix, np.eye(4))
     assert_array_equal(t._inverse_matrix, np.eye(4))
+    assert_array_equal(t._from_pivot, np.eye(4))
+    assert_array_equal(t._to_pivot, np.eye(4))
     assert len(t._matrix_stack) == 0
 
 # Test matrix stack operations
@@ -87,7 +89,6 @@ def test_rotate_z_90_degrees(transformer):
     point = transformer.apply_transform(Point(1, 0, 0))
     transformed_array = point.to_vector()[:3]
     expected_array = Point(0, 1, 0).to_vector()[:3]
-    print(transformed_array)
     assert_array_almost_equal(transformed_array, expected_array)
 
 def test_rotate_x_90_degrees(transformer):
@@ -95,7 +96,6 @@ def test_rotate_x_90_degrees(transformer):
     point = transformer.apply_transform(Point(0, 1, 0))
     transformed_array = point.to_vector()[:3]
     expected_array = Point(0, 0, 1).to_vector()[:3]
-    print(transformed_array)
     assert_array_almost_equal(transformed_array, expected_array)
 
 def test_rotate_y_90_degrees(transformer):
@@ -103,7 +103,6 @@ def test_rotate_y_90_degrees(transformer):
     point = transformer.apply_transform(Point(0, 0, 1))
     transformed_array = point.to_vector()[:3]
     expected_array = Point(1, 0, 0).to_vector()[:3]
-    print(transformed_array)
     assert_array_almost_equal(transformed_array, expected_array)
 
 def test_mirror_xy_plane(transformer):
@@ -233,24 +232,108 @@ def test_reflection_preserves_distances(transformer):
 
     assert new_dist == pytest.approx(orig_dist)
 
+# Test transformations around pivot
+
+def test_default_pivot(transformer):
+    point = Point(1, 2, 3)
+    result = transformer.apply_transform(point)
+
+    assert np.allclose(result.x, 1)
+    assert np.allclose(result.y, 2)
+    assert np.allclose(result.z, 3)
+
+def test_rotation_around_pivot(transformer):
+    pivot = Point(1, 1, 0)
+    point = Point(2, 1, 0)
+    transformer.set_pivot(pivot)
+    transformer.rotate(90, 'z')
+    result = transformer.apply_transform(point)
+
+    assert np.allclose(result.x, 1)
+    assert np.allclose(result.y, 2)
+    assert np.allclose(result.z, 0)
+
+def test_scale_around_pivot(transformer):
+    pivot = Point(1, 1, 0)
+    transformer.set_pivot(pivot)
+
+    point = Point(3, 1, 0)
+    transformer.scale(2.0)
+    result = transformer.apply_transform(point)
+
+    assert np.allclose(result.x, 5)  # 1 + (2 * 2) = 5
+    assert np.allclose(result.y, 1)
+    assert np.allclose(result.z, 0)
+
+def test_mirror_with_pivot(transformer):
+    pivot = Point(1, 0, 0)
+    transformer.set_pivot(pivot)
+
+    transformer.mirror('yz')
+    p = Point(2, 1, 0)
+    result = transformer.apply_transform(p)
+
+    assert np.allclose(result.x, 0)  # 1 - (2-1) = 0
+    assert np.allclose(result.y, 1)
+    assert np.allclose(result.z, 0)
+
+def test_change_pivot(transformer):
+    transformer.set_pivot(point = (1, 1, 0))
+    transformer.rotate(90, 'z')
+    transformer.set_pivot(point = (0, 0, 0))
+    transformer.scale(2.0)
+
+    point = Point(2, 1, 0)
+    result = transformer.apply_transform(point)
+    expected = Point(2, 4, 0)
+
+    assert np.allclose(result.x, expected.x)
+    assert np.allclose(result.y, expected.y)
+    assert np.allclose(result.z, expected.z)
+
+def test_inverse_transformation_with_pivot(transformer):
+    pivot = Point(1, 1, 0)
+    transformer.set_pivot(pivot)
+    transformer.rotate(90, 'z')
+    transformer.scale(2.0)
+
+    point = Point(2, 1, 0)
+    transformed = transformer.apply_transform(point)
+    result = transformer.reverse_transform(transformed)
+
+    assert np.allclose(result.x, point.x)
+    assert np.allclose(result.y, point.y)
+    assert np.allclose(result.z, point.z)
+
+def test_multiple_transformations_with_pivot(transformer):
+    transformer = CoordinateTransformer()
+    pivot = Point(1, 1, 0)
+    transformer.set_pivot(pivot)
+
+    point = Point(2, 1, 0)
+    transformer.scale(2.0)
+    transformer.rotate(90, 'z')
+    result = transformer.apply_transform(point)
+
+    assert np.allclose(result.x, 1)
+    assert np.allclose(result.y, 3)
+    assert np.allclose(result.z, 0)
+
 # Test precision and accuracy
 
-def test_transformation_precision():
-    t = CoordinateTransformer()
+def test_transformation_precision(transformer):
     small_angle = 1e-10
-    t.rotate(small_angle)
-    point = t.apply_transform(Point(1, 0, 0))
+    transformer.rotate(small_angle)
+    point = transformer.apply_transform(Point(1, 0, 0))
     assert abs(point.x - 1) < 1e-9
     assert abs(point.y) < 1e-9
 
-def test_matrix_determinant_stability():
-    t = CoordinateTransformer()
-
+def test_matrix_determinant_stability(transformer):
     for _ in range(100):
-        t.rotate(0.1)
-        t.scale(0.99)
+        transformer.rotate(0.1)
+        transformer.scale(0.99)
 
-    determinant = np.linalg.det(t._current_matrix)
+    determinant = np.linalg.det(transformer._current_matrix)
     assert determinant != 0  # Matrix should not become singular
 
 # Test error handling
@@ -265,7 +348,7 @@ def test_reflect_invalid_normal(transformer):
         transformer.reflect([0, 0, 0])
 
 def test_invalid_rotation_axis(transformer):
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         transformer.rotate(90, axis="w")
 
 def test_invalid_mirror_plane(transformer):

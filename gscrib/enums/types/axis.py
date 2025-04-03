@@ -19,20 +19,9 @@
 from gscrib.enums.base_enum import BaseEnum
 
 
-NORMALS = {
-    "xy": [0, 0, 1],
-    "yz": [1, 0, 0],
-    "zx": [0, 1, 0],
-}
+class Axis(BaseEnum):
+    """Coordinate system axes."""
 
-class Plane(BaseEnum):
-    """Working planes for machine operations."""
-
-    XY = "xy"
-    ZX = "zx"
-    YZ = "yz"
-
-    def normal(self):
-        """Return the normal vector of the plane."""
-        return NORMALS[self.value]
-
+    X = "x"
+    Y = "y"
+    Z = "z"

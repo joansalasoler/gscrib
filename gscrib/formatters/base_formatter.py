@@ -19,6 +19,8 @@
 from abc import ABC, abstractmethod
 from numbers import Number
 
+from gscrib.enums import Axis
+
 
 class BaseFormatter(ABC):
     """Abstract base class for G-code formatting.
@@ -27,7 +29,7 @@ class BaseFormatter(ABC):
     """
 
     @abstractmethod
-    def set_axis_label(self, axis: str, label: str) -> None:
+    def set_axis_label(self, axis: Axis | str, label: str) -> None:
         """Set a custom label for an axis.
 
         Args:
