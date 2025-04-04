@@ -279,7 +279,7 @@ class PathTracer:
 
     @typechecked
     def helix(self,
-        target: PointLike, center: PointLike, turns: float = 1, **kwargs) -> None:
+        target: PointLike, center: PointLike, turns: int = 1, **kwargs) -> None:
         """Trace a helical path to target point with varying radius.
 
         Creates a helical motion that can change radius as it moves from
@@ -366,7 +366,7 @@ class PathTracer:
         self.helix(target, center, turns, **kwargs)
 
     @typechecked
-    def spiral(self, target: PointLike, turns: float = 1, **kwargs) -> None:
+    def spiral(self, target: PointLike, turns: int = 1, **kwargs) -> None:
         """Trace a spiral path from current position to target point.
 
         Creates a spiral motion that changes radius as it moves from the
