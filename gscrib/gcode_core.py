@@ -198,6 +198,20 @@ class GCodeCore(object):
         return self._current_params.get(name)
 
     @typechecked
+    def set_formatter(self, formatter: BaseFormatter) -> None:
+        """Set a new G-code formatter.
+
+        This method allows you to change the G-code formatter used by
+        the generator. The formatter is responsible for converting commands
+        and parameters into the appropriate string format for output.
+
+        Args:
+            formatter (BaseFormatter): The formatter to use
+        """
+
+        self._formatter = formatter
+
+    @typechecked
     def add_writer(self, writer: BaseWriter) -> None:
         """Add a new writer to the list of writers.
 
