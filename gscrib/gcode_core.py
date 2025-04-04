@@ -339,6 +339,9 @@ class GCodeCore(object):
         coordinate system. Any changes made to the coordinate system
         within the context will be reverted when exiting the context.
 
+        Returns:
+            CoordinateTransformer: The current transformer instance.
+
         Example:
             >>> with g.current_transform():
             ...     g.transform.translate(10, 0, 0)
@@ -349,7 +352,7 @@ class GCodeCore(object):
         state = self.transform._copy_state()
 
         try:
-            yield
+            yield self.transform
         finally:
             self.transform._revert_state(state)
 
