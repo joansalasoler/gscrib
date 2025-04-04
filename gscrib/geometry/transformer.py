@@ -49,9 +49,11 @@ class CoordinateTransformer:
     __slots__ = (
         '_to_pivot',
         '_from_pivot',
+        '_curent_pivot',
         '_current_matrix',
         '_inverse_matrix',
-        '_matrix_stack'
+        '_matrix_stack',
+        '_pivot_stack',
     )
 
     def __init__(self) -> None:
@@ -61,6 +63,7 @@ class CoordinateTransformer:
         self._current_matrix: np.ndarray = np.eye(4)
         self._inverse_matrix: np.ndarray = np.eye(4)
         self._matrix_stack: List[np.ndarray] = []
+        self._pivot_stack: List[Point] = []
 
     @typechecked
     def set_pivot(self, point: PointLike) -> None:
@@ -76,21 +79,31 @@ class CoordinateTransformer:
             point: Pivot point in absolute coordinates.
         """
 
-        x, y, z = Point(*point).resolve()
+
+        point = Point(*point).resolve()
+        x, y, z = point
+
         self._from_pivot = self._tranlation_matrix(-x, -y, -z)
         self._to_pivot = self._tranlation_matrix(x, y, z)
+        self._curent_pivot = point
 
     def save_state(self) -> None:
         """Save the current transformation state onto the stack.
 
         This allows for temporary modifications to the transformation
-        state, which can later be reverted using `restore_state()`.
+        state, which can later be reverted using `restore_state()`. The
+        cuurrent transformation matrix and pivot point are saved.
         """
 
         self._matrix_stack.append(self._current_matrix.copy())
+        self._pivot_stack.append(self._curent_pivot)
 
     def restore_state(self) -> None:
         """Restore the last saved transformation state.
+
+        This reverts the transformation matrix and pivot point to the
+        last saved state. This is useful for undoing temporary
+        transformations or changes made after a `save_state()` call.
 
         Raises:
             IndexError: If attempting to pop from an empty stack.
@@ -101,6 +114,9 @@ class CoordinateTransformer:
 
         self._current_matrix = self._matrix_stack.pop()
         self._inverse_matrix = linalg.inv(self._current_matrix)
+
+        pivot_point = self._pivot_stack.pop()
+        self.set_pivot(pivot_point)
 
     @typechecked
     def chain_transform(self, transform_matrix: np.ndarray) -> None:
