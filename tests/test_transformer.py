@@ -1,4 +1,5 @@
 import pytest
+import copy
 import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
@@ -31,28 +32,42 @@ def transformed():
 
 def test_default_initialization():
     t = CoordinateTransformer()
-    assert_array_equal(t._current_matrix, np.eye(4))
-    assert_array_equal(t._inverse_matrix, np.eye(4))
-    assert_array_equal(t._from_pivot, np.eye(4))
-    assert_array_equal(t._to_pivot, np.eye(4))
-    assert len(t._matrix_stack) == 0
+    state = t._current_transform
+    assert_array_equal(state._matrix, np.eye(4))
+    assert_array_equal(state._inverse, np.eye(4))
+    assert_array_equal(state._from_pivot, np.eye(4))
+    assert_array_equal(state._to_pivot, np.eye(4))
+    assert_array_equal(state._pivot, Point.zero())
+    assert len(t._transforms_stack) == 0
 
 # Test matrix stack operations
 
 def test_save_state(transformer):
-    original = transformer._current_matrix.copy()
+    original = copy.deepcopy(transformer._current_transform)
     transformer.save_state()
     transformer.translate(10, 0, 0)
-    assert len(transformer._matrix_stack) == 1
-    assert_array_equal(transformer._matrix_stack[0], original)
+
+    transform = transformer._transforms_stack[0]
+    assert len(transformer._transforms_stack) == 1
+    assert_array_equal(transform._matrix, original._matrix)
+    assert_array_equal(transform._inverse, original._inverse)
+    assert_array_equal(transform._from_pivot, original._from_pivot)
+    assert_array_equal(transform._to_pivot, original._to_pivot)
+    assert_array_equal(transform._pivot, original._pivot)
 
 def test_restore_state(transformer):
-    original = transformer._current_matrix.copy()
+    original = copy.deepcopy(transformer._current_transform)
     transformer.save_state()
     transformer.translate(10, 0, 0)
     transformer.restore_state()
-    assert_array_equal(transformer._current_matrix, original)
-    assert len(transformer._matrix_stack) == 0
+
+    state = transformer._current_transform
+    assert_array_equal(state._matrix, original._matrix)
+    assert_array_equal(state._inverse, original._inverse)
+    assert_array_equal(state._from_pivot, original._from_pivot)
+    assert_array_equal(state._to_pivot, original._to_pivot)
+    assert_array_equal(state._pivot, original._pivot)
+    assert len(transformer._transforms_stack) == 0
 
 def test_pop_empty_stack(transformer):
     with pytest.raises(IndexError):
@@ -65,7 +80,7 @@ def test_multiple_push_pop(transformer):
     transformer.rotate(90)
     transformer.restore_state()
     transformer.restore_state()
-    assert_array_equal(transformer._current_matrix, np.eye(4))
+    assert_array_equal(transformer._current_transform._matrix, np.eye(4))
 
 # Test basic transformations
 
@@ -333,7 +348,7 @@ def test_matrix_determinant_stability(transformer):
         transformer.rotate(0.1)
         transformer.scale(0.99)
 
-    determinant = np.linalg.det(transformer._current_matrix)
+    determinant = np.linalg.det(transformer._current_transform._matrix)
     assert determinant != 0  # Matrix should not become singular
 
 # Test error handling

@@ -274,7 +274,8 @@ def test_relative_with_transformations(builder, mock_writer):
 def test_current_transform_context_manager(builder, mock_writer):
     t = builder.transform
     t.save_state()
-    matrix_state = t._copy_state()
+
+    state_copy, stack_copy = t._copy_state()
 
     with builder.current_transform():
         t.save_state()
@@ -288,11 +289,14 @@ def test_current_transform_context_manager(builder, mock_writer):
 
     # Should always revert to previous state
     point2 = t.apply_transform(Point(0, 0, 0))
-    assert_array_equal(matrix_state[0], t._current_matrix)
-    assert_array_equal(matrix_state[1], t._inverse_matrix)
-    assert_array_equal(matrix_state[2], t._matrix_stack)
-    assert_array_equal(matrix_state[3], t._from_pivot)
-    assert_array_equal(matrix_state[4], t._to_pivot)
+
+    state = t._current_transform
+    assert len(t._transforms_stack) == 1
+    assert_array_equal(state_copy._matrix, state._matrix)
+    assert_array_equal(state_copy._inverse, state._inverse)
+    assert_array_equal(state_copy._pivot, state._pivot)
+    assert_array_equal(state_copy._from_pivot, state._from_pivot)
+    assert_array_equal(state_copy._to_pivot, state._to_pivot)
     assert point2 == Point(0, 0, 0)
 
 # Test comments

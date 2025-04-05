@@ -172,6 +172,19 @@ class Point(NamedTuple):
             self.z * scalar
         )
 
+    def __neg__(self) -> 'Point':
+        """Negate the point's coordinates.
+
+        Returns:
+            A new point with negated coordinates.
+        """
+
+        return Point(
+            None if self.x is None else -(self.x or 0),
+            None if self.y is None else -(self.y or 0),
+            None if self.z is None else -(self.z or 0)
+        )
+
     def __truediv__(self, scalar: float) -> 'Point':
         """Divide the point's coordinates by a scalar.
 

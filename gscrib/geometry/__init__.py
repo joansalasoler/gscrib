@@ -10,10 +10,12 @@ transformations to coordinate systems."
 from .point import Point, PointLike
 from .tracer import PathTracer
 from .transformer import CoordinateTransformer
+from .transform import Transform
 
 __all__ = [
     "Point",
     "PointLike",
     "PathTracer",
     "CoordinateTransformer",
+    "Transform",
 ]
