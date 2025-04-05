@@ -48,6 +48,7 @@ class CoordinateTransformer:
     """
 
     __slots__ = (
+        '_named_transforms',
         '_transforms_stack',
         '_current_transform',
     )
@@ -58,6 +59,7 @@ class CoordinateTransformer:
         matrix = np.eye(4)
         pivot = Point.zero()
 
+        self._named_transforms: dict = {}
         self._transforms_stack: List[Transform] = []
         self._current_transform: Transform = Transform(matrix, pivot)
 
@@ -77,33 +79,63 @@ class CoordinateTransformer:
         point = Point(*point)
         self._current_transform._set_pivot(point)
 
-    def save_state(self) -> None:
-        """Save the current transformation state onto the stack.
+    @typechecked
+    def save_state(self, name: str | None = None) -> None:
+        """Save the current transformation state.
 
         This allows for temporary modifications to the transformation
         state, which can later be reverted using `restore_state()`. The
-        cuurrent transformation matrix and pivot point are saved.
+        current transformation matrix and pivot point are saved on the
+        stack if a name is not provided, otherwise the state is saved
+        with that name for later retrieval.
+
+        Args:
+            name: Optional name for the saved state
         """
 
-        transform = copy.deepcopy(self._current_transform)
-        self._transforms_stack.append(transform)
+        if name is not None and len(name.strip()) > 0:
+            transform = copy.deepcopy(self._current_transform)
+            self._named_transforms[name.strip()] = transform
+        else:
+            transform = copy.deepcopy(self._current_transform)
+            self._transforms_stack.append(transform)
 
-    def restore_state(self) -> None:
-        """Restore the last saved transformation state.
+    @typechecked
+    def restore_state(self, name: str | None = None) -> None:
+        """Restore the transformation state.
 
         This reverts the transformation matrix and pivot point to the
-        last saved state. This is useful for undoing temporary
-        transformations or changes made after a `save_state()` call.
+        last saved state if no name is provided. If a name is given, it
+        restores the transformation state associated with that name.
+        This is useful for undoing temporary transformations or changes
+        made after a `save_state()` call.
+
+        Args:
+            name: Optional name of the saved state to restore.
 
         Raises:
             IndexError: If attempting to pop from an empty stack.
+            KeyError: If the named state does not exist.
         """
 
-        if len(self._transforms_stack) < 1:
+        if not name and len(self._transforms_stack) < 1:
             raise IndexError("Cannot restore state: stack is empty")
 
-        transform = self._transforms_stack.pop()
-        self._current_transform = transform
+        if name is not None and len(name.strip()) > 0:
+            transform = self._named_transforms[name.strip()]
+            self._current_transform = transform
+        else:
+            transform = self._transforms_stack.pop()
+            self._current_transform = transform
+
+    def delete_state(self, name: str) -> None:
+        """Delete a named transformation state.
+
+        Raises:
+            KeyError: If the named state does not exist.
+        """
+
+        self._named_transforms.pop(name)
 
     def chain_transform(self, transform_matrix: np.ndarray) -> None:
         """Chain a new transformation with the current matrix.

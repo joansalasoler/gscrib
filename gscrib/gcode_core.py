@@ -370,6 +370,37 @@ class GCodeCore(object):
         finally:
             self.transform._revert_state(state)
 
+    @contextmanager
+    def named_transform(self, name: str):
+        """Temporarily restore a transformation state within a context.
+
+        This context manager allows you to temporarily modify the current
+        coordinate system. Any changes made to the coordinate system
+        within the context will be reverted when exiting the context.
+
+        Args:
+            name: Name of the saved transformation state
+
+        Raises:
+            KeyError: If the named state does not exist
+
+        Returns:
+            CoordinateTransformer: The current transformer instance.
+
+        Example:
+            >>> with g.named_transform("my_transform"):
+            ...     g.move(x=10, y=10)  # Transformed move
+            ... # Transformation state is restored here
+        """
+
+        state = self.transform._copy_state()
+        self.transform.restore_state(name)
+
+        try:
+            yield self.transform
+        finally:
+            self.transform._revert_state(state)
+
     @typechecked
     def to_absolute(self, point: PointLike) -> Point:
         """Convert a point to absolute coordinates.

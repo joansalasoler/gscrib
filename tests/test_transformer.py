@@ -39,6 +39,7 @@ def test_default_initialization():
     assert_array_equal(state._to_pivot, np.eye(4))
     assert_array_equal(state._pivot, Point.zero())
     assert len(t._transforms_stack) == 0
+    assert len(t._named_transforms) == 0
 
 # Test matrix stack operations
 
@@ -69,10 +70,6 @@ def test_restore_state(transformer):
     assert_array_equal(state._pivot, original._pivot)
     assert len(transformer._transforms_stack) == 0
 
-def test_pop_empty_stack(transformer):
-    with pytest.raises(IndexError):
-        transformer.restore_state()
-
 def test_multiple_push_pop(transformer):
     transformer.save_state()
     transformer.translate(10, 0, 0)
@@ -81,6 +78,44 @@ def test_multiple_push_pop(transformer):
     transformer.restore_state()
     transformer.restore_state()
     assert_array_equal(transformer._current_transform._matrix, np.eye(4))
+
+def test_save_named_state(transformer):
+    transformer.translate(1.0, 2.0, 3.0)
+    initial_point = Point(1.0, 1.0, 1.0)
+    transformed_before = transformer.apply_transform(initial_point)
+
+    transformer.save_state("test_state")
+    transformer.translate(10.0, 10.0, 10.0)
+    transformer.restore_state("test_state")
+
+    transformed_after = transformer.apply_transform(initial_point)
+    assert transformed_before == transformed_after
+
+def test_multiple_named_states(transformer):
+    transformer.translate(1.0, 0.0, 0.0)
+    transformer.save_state("state1")
+
+    transformer.translate(0.0, 2.0, 0.0)
+    transformer.save_state("state2")
+
+    transformer.translate(0.0, 0.0, 3.0)
+
+    point = Point(0.0, 0.0, 0.0)
+    transformer.restore_state("state1")
+    transformed1 = transformer.apply_transform(point)
+    assert transformed1 == Point(1.0, 0.0, 0.0)
+
+    transformer.restore_state("state2")
+    transformed2 = transformer.apply_transform(point)
+    assert transformed2 == Point(1.0, 2.0, 0.0)
+
+def test_delete_named_state(transformer):
+    transformer.translate(1.0, 1.0, 1.0)
+    transformer.save_state("to_delete")
+    transformer.delete_state("to_delete")
+
+    with pytest.raises(KeyError):
+        transformer.restore_state("to_delete")
 
 # Test basic transformations
 
@@ -352,6 +387,14 @@ def test_matrix_determinant_stability(transformer):
     assert determinant != 0  # Matrix should not become singular
 
 # Test error handling
+
+def test_invalid_state_name(transformer):
+    with pytest.raises(KeyError):
+        transformer.restore_state("non_existent")
+
+def test_pop_empty_stack(transformer):
+    with pytest.raises(IndexError):
+        transformer.restore_state()
 
 def test_invalid_transform_matrix():
     with pytest.raises(ValueError):

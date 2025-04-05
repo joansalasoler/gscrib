@@ -157,6 +157,21 @@ g.trace.arc(target=(10, 0), center=(5, 0))
 g.transform.restore_state()
 ```
 
+By default, transformations are pushed to and popped from a stack, but
+you can assign names to them to reuse your custom coordinate systems.
+
+```python
+# Save a transformation state with a name
+g.transform.save_state("my_transorm")
+
+# Rotate and scale the coordinate system
+g.transform.rotate(angle=90, axis="z")
+g.transform.scale(2.0)
+
+# Restore the transformation state
+g.transform.restore_state("my_transorm")
+```
+
 ### Context Managers
 
 Gscrib provides several context managers to allow you to modify settings,
@@ -182,6 +197,11 @@ with GCodeBuilder(output="outfile.gcode") as g:
 
     # Temporary transformations
     with g.current_transform():
+        g.transform.rotate(angle=45, axis="z")
+        g.trace.arc(target=(10, 0), center=(5, 0))
+
+    # Temporary restore of named transformations
+    with g.named_transform("my_transorm"):
         g.transform.rotate(angle=45, axis="z")
         g.trace.arc(target=(10, 0), center=(5, 0))
 ```
