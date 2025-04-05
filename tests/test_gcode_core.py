@@ -2,8 +2,8 @@ import pytest
 
 from numpy.testing import assert_array_equal
 
-from gscrib import Point
 from gscrib import GCodeCore
+from gscrib.geometry import Point
 from gscrib.writers import BaseWriter
 
 

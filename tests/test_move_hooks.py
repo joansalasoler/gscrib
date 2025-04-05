@@ -1,7 +1,7 @@
 import math
 import pytest
-from gscrib import GCodeBuilder, GState
-from gscrib import Point, ParamsDict
+from gscrib import GCodeBuilder, GState, ParamsDict
+from gscrib.geometry import Point
 from gscrib.enums import SpinMode
 
 

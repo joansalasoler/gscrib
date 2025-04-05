@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch
 from gscrib import GCodeBuilder
-from gscrib import Point
+from gscrib.geometry import Point
 from gscrib.enums import *
 
 

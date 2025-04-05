@@ -17,7 +17,6 @@ from .gcode_builder import GCodeBuilder
 from .gcode_core import GCodeCore
 from .gcode_state import GState
 from .params import ParamsDict
-from .geometry import Point, PointLike
 
 __version__ = "0.1.0"
 
@@ -27,8 +26,6 @@ __all__ = [
     "GConfig",
     "GState",
     "ParamsDict",
-    "Point",
-    "PointLike",
     "formatters",
     "writers",
     "enums",
