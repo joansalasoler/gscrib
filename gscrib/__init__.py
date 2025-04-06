@@ -9,8 +9,9 @@ for CNC machines, 3D printers, laser cutters, and similar devices
 from . import enums
 from . import excepts
 from . import formatters
-from . import writers
 from . import geometry
+from . import hooks
+from . import writers
 
 from .config import GConfig
 from .gcode_builder import GCodeBuilder
@@ -27,8 +28,9 @@ __all__ = [
     "GState",
     "ParamsDict",
     "formatters",
-    "writers",
     "enums",
     "excepts",
     "geometry",
+    "hooks",
+    "writers",
 ]

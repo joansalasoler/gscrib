@@ -115,4 +115,5 @@ API Reference
    gscrib.excepts
    gscrib.formatters
    gscrib.geometry
+   gscrib.hooks
    gscrib.writers
