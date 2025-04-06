@@ -17,8 +17,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Any
 from typeguard import typechecked
 
+from gscrib.geometry.point import Point
+from gscrib.params import ParamsDict
 from gscrib.excepts import *
 from gscrib.enums import *
 
@@ -32,6 +35,8 @@ class GState:
     """
 
     __slots__ = (
+        "_current_axes",
+        "_current_params",
         "_current_tool_number",
         "_current_tool_power",
         "_current_spin_mode",
@@ -53,6 +58,8 @@ class GState:
     )
 
     def __init__(self) -> None:
+        self._current_axes = Point.zero()
+        self._current_params = ParamsDict()
         self._current_tool_number: int = 0
         self._current_tool_power: float = 0
         self._current_tool_swap_mode = ToolSwapMode.OFF
@@ -71,6 +78,15 @@ class GState:
         self._set_plane(Plane.XY)
         self._set_direction(Direction.CLOCKWISE)
         self._set_resolution(0.1) # mm
+
+    def get_parameter(self, name: str) -> Any:
+        """Current value of a move parameter by name"""
+        return self._current_params.get(name)
+
+    @property
+    def position(self) -> Point:
+        """Current absolute position of the axes."""
+        return self._axes
 
     @property
     def is_coolant_active(self) -> bool:
@@ -161,6 +177,16 @@ class GState:
     def resolution(self) -> float:
         """Get the current resolution for interpolated moves."""
         return self._current_resolution
+
+    def _set_axes(self, axes: Point) -> None:
+        """Set the current axes position."""
+
+        self._current_axes = axes
+
+    def _set_params(self, params: ParamsDict) -> None:
+        """Set the current parameters dictionary."""
+
+        self._current_params = params
 
     @typechecked
     def _set_length_units(self, length_units: LengthUnits) -> None:

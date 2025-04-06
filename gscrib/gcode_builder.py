@@ -515,7 +515,7 @@ class GCodeBuilder(GCodeCore):
         """
 
         if mode == PowerMode.OFF:
-            raise ValueError("Not a valid power mode.")
+            raise ValueError(f"Not a valid power mode: {mode}.")
 
         mode = PowerMode(mode)
         self.state._set_power_mode(mode, power)
@@ -553,6 +553,9 @@ class GCodeBuilder(GCodeCore):
         >>> T<tool_number> M6
         """
 
+        if mode == ToolSwapMode.OFF:
+            raise ValueError(f"Not a valid tool swap mode: {mode}.")
+
         mode = ToolSwapMode(mode)
         self.state._set_tool_number(mode, tool_number)
         change_statement = self._get_statement(mode)
@@ -574,7 +577,7 @@ class GCodeBuilder(GCodeCore):
         """
 
         if mode == CoolantMode.OFF:
-            raise ValueError("Not a valid coolant mode.")
+            raise ValueError(f"Not a valid coolant mode: {mode}.")
 
         mode = CoolantMode(mode)
         self.state._set_coolant_mode(mode)
@@ -607,7 +610,7 @@ class GCodeBuilder(GCodeCore):
         """
 
         if mode == HaltMode.OFF:
-            raise ValueError("Not a valid halt mode.")
+            raise ValueError(f"Not a valid halt mode: {mode}.")
 
         mode = HaltMode(mode)
         self.state._set_halt_mode(mode)
@@ -742,6 +745,21 @@ class GCodeBuilder(GCodeCore):
                 params = hook(origin, target, params, self.state)
 
         return super()._write_move(point, params, comment)
+
+    def _update_axes(self, axes: Point, params: ParamsDict) -> None:
+        """Update the internal state after a movement.
+
+        Updates the current position and movement parameters to reflect
+        the new machine state after executing a move command.
+
+        Args:
+            axes: The new position of all axes
+            params: The movement parameters used in the command
+        """
+
+        super()._update_axes(axes, params)
+        self.state._set_params(self._current_params)
+        self.state._set_axes(self._current_axes)
 
     def _get_statement(self,
         value: BaseEnum, params: dict = {}, comment: str | None = None)-> str:
