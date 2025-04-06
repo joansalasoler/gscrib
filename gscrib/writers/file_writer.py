@@ -109,6 +109,12 @@ class FileWriter(BaseWriter):
         if self._is_terminal:
             self._file.flush()
 
+    def flush(self) -> None:
+        """Flush the output buffer"""
+
+        if self._file is not None:
+            self._file.flush()
+
     def __enter__(self) -> "FileWriter":
         return self.connect()
 

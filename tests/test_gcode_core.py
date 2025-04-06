@@ -46,7 +46,7 @@ def test_default_initialization():
     builder = GCodeCore()
     assert builder.position == Point.unknown()
     assert not builder.distance_mode.is_relative
-    assert len(builder._writers) > 0
+    assert len(builder._writers) == 0
 
 def test_custom_initialization():
     builder = GCodeCore(

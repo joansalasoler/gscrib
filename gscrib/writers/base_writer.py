@@ -37,3 +37,6 @@ class BaseWriter(ABC):
     @abstractmethod
     def write(self, statement: bytes) -> None:
         """Write G-code statement"""
+
+    def flush(self) -> None:
+        """Flush the output buffer"""

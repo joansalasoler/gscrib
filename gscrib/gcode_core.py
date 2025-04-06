@@ -147,10 +147,6 @@ class GCodeCore(object):
             writer = SerialWriter(config.port, config.baudrate)
             self.add_writer(writer)
 
-        if len(self._writers) == 0:
-            writer = FileWriter(self._get_stdout_file())
-            self.add_writer(writer)
-
     def _get_stdout_file(self) -> Any:
         """Get binary or text stdout file."""
 
@@ -646,6 +642,10 @@ class GCodeCore(object):
     def teardown(self, wait: bool = True) -> None:
         """Clean up and disconnect all writers.
 
+        This method should be called to ensure all writers are properly
+        closed and any pending operations are completed. It is typically
+        called when the builder instance is no longer needed.
+
         Args:
             wait (bool): Waits for pending operations to complete
         """
@@ -656,6 +656,23 @@ class GCodeCore(object):
             writer.disconnect(wait)
 
         self._writers.clear()
+
+    def flush(self) -> None:
+        """Forces any buffered data to be written immediately.
+
+        Usually, file writes are buffered to improve performance, reducing
+        the number of disk operations by grouping multiple writes together.
+
+        In most cases, manual flushing is not required, as data is flushed
+        automatically when the buffer is full or the file is closed. Use
+        flush when immediate output is needed, such as for logging or when
+        other processes read the file.
+        """
+
+        self._logger.info("Flush writers")
+
+        for writer in self._writers:
+            writer.flush()
 
     def _write_move(self,
         point: Point, params: ParamsDict, comment: str | None = None) -> ParamsDict:
