@@ -167,9 +167,13 @@ g.transform.save_state("my_transorm")
 # Rotate and scale the coordinate system
 g.transform.rotate(angle=90, axis="z")
 g.transform.scale(2.0)
+g.move(x=10, y=10)
 
 # Restore the transformation state
 g.transform.restore_state("my_transorm")
+
+# Trace an arc in the restored coordinate system
+g.trace.arc(target=(10, 0), center=(5, 0))
 ```
 
 ### Context Managers
@@ -183,36 +187,36 @@ restore the previous state when the context ends.
 with GCodeBuilder(output="outfile.gcode") as g:
     g.move(x=10, y=10)
 
-    # Temporary absolute positioning
-    with g.absolute_mode():
-        g.move(x=10, y=10)
+# Temporary absolute positioning
+with g.absolute_mode():
+    g.move(x=10, y=10)
 
-    # Temporary relative positioning
-    with g.relative_mode():
-        g.move(x=10, y=10)
+# Temporary relative positioning
+with g.relative_mode():
+    g.move(x=10, y=10)
 
-    # Temporary hooks
-    with g.move_hook(temporary_hook):
-        g.move(x=10, y=10)
+# Temporary hooks
+with g.move_hook(temporary_hook):
+    g.move(x=10, y=10)
 
-    # Temporary transformations
-    with g.current_transform():
-        g.transform.rotate(angle=45, axis="z")
-        g.trace.arc(target=(10, 0), center=(5, 0))
+# Temporary transformations
+with g.current_transform():
+    g.transform.rotate(angle=45, axis="z")
+    g.trace.arc(target=(10, 0), center=(5, 0))
 
-    # Temporary restore of named transformations
-    with g.named_transform("my_transorm"):
-        g.transform.rotate(angle=45, axis="z")
-        g.trace.arc(target=(10, 0), center=(5, 0))
+# Temporary restore of named transformations
+with g.named_transform("my_transorm"):
+    g.transform.rotate(angle=45, axis="z")
+    g.trace.arc(target=(10, 0), center=(5, 0))
 ```
 
 ## Projects Using Gscrib
 
-- **Vpype-Gscrib**: A [vpype](https://vpype.readthedocs.io/en/latest/)
-  plugin that extends vpype’s capabilities with a powerful command-line
-  interface for converting SVG files into G-code. It provides a flexible
-  and efficient toolkit for plotter and CNC workflows. See
-  [Vpype-Gscrib's Documentation](https://vpype-gscrib.readthedocs.io/en/latest/)
+**Vpype-Gscrib**: A [vpype](https://vpype.readthedocs.io/en/latest/)
+plugin that extends vpype’s capabilities with a powerful command-line
+interface for converting SVG files into G-code. It provides a flexible
+and efficient toolkit for plotter and CNC workflows. See
+[Vpype-Gscrib's Documentation](https://vpype-gscrib.readthedocs.io/en/latest/)
 
 ## Development setup
 
