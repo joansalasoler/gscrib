@@ -29,7 +29,7 @@ class LogWriter(BaseWriter):
     Example:
         >>> writer = LogWriter()
         >>> writer.set_level("info")
-        >>> writer.write(b"G1 X10 Y10\n")
+        >>> writer.write(b"G1 X10 Y10\\n")
     """
 
     __slots__ = (
