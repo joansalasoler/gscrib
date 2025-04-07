@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import math
-from typing import Any, Callable
+from typing import Any, Callable, Tuple
 from contextlib import contextmanager
 from typeguard import typechecked
 
@@ -761,12 +761,13 @@ class GCodeBuilder(GCodeCore):
         finally:
             self.remove_hook(hook)
 
-    def _write_move(self,
-        point: Point, params: ParamsDict, comment: str | None = None) -> ParamsDict:
-        """Write a linear move statement with the given parameters.
+    def _prepare_move(self,
+        point: Point, params: ParamsDict,
+        comment: str | None = None) -> Tuple[str, ParamsDict]:
+        """Process a linear move statement with the given parameters.
 
-        Applies all registered move hooks before writing the movement
-        command. Each hook can modify the parameters based on the
+        Applies all registered move hooks before returning the movement
+        statement. Each hook can modify the parameters based on the
         movement and current machine state.
 
         Args:
@@ -782,7 +783,7 @@ class GCodeBuilder(GCodeCore):
             for hook in self._hooks:
                 params = hook(origin, target, params, self.state)
 
-        return super()._write_move(point, params, comment)
+        return super()._prepare_move(point, params, comment)
 
     def _update_axes(self, axes: Point, params: ParamsDict) -> None:
         """Update the internal state after a movement.

@@ -58,7 +58,7 @@ def test_hook_context_with_exception(builder):
     # Handler should be removed even if exception occurs
     assert len(builder._hooks) == 0
 
-def test_write_move_with_hook(builder):
+def test_prepare_move_with_hook(builder):
     processed_params = None
 
     def test_hook(origin, target, params, state):
@@ -70,7 +70,7 @@ def test_write_move_with_hook(builder):
     builder.add_hook(test_hook)
     point = Point(10, 20, 0)
     params = ParamsDict(F=2000)
-    builder._write_move(point, params)
+    builder._prepare_move(point, params)
     assert processed_params is not None
     assert processed_params.get('F') == 2000
 
@@ -92,7 +92,7 @@ def test_multiple_hooks(builder):
 
     point = Point(10, 20, 0)
     params = ParamsDict(F=2000)
-    builder._write_move(point, params)
+    builder._prepare_move(point, params)
 
     assert results == [1, 2] # Verify invokation order
     assert params.get('F') == 500  # Last hook's value
@@ -109,13 +109,13 @@ def test_practical_extrusion_hook(builder):
     # Move 10mm in X direction
     point = Point(10, 0, 0)
     params = ParamsDict()
-    builder._write_move(point, params)
+    builder._prepare_move(point, params)
     assert params.get('E') == pytest.approx(1.0)  # 10mm * 0.1
 
     # Diagonal move (10mm, 10mm)
     point = Point(10, 10, 0)
     params = ParamsDict()
-    builder._write_move(point, params)
+    builder._prepare_move(point, params)
     assert params.get('E') == pytest.approx(1.414, rel=1e-3)  # sqrt(200) * 0.1
 
 def test_hook_state_access(builder):
@@ -129,13 +129,13 @@ def test_hook_state_access(builder):
     # Move with tool off
     params = ParamsDict()
     point = Point(10, 0, 0)
-    builder._write_move(point, params)
+    builder._prepare_move(point, params)
     assert params.get('F') == 2000
 
     # Move with tool on
     params = ParamsDict()
     builder._state._set_spin_mode(SpinMode.CLOCKWISE, 100)
-    builder._write_move(point, params)
+    builder._prepare_move(point, params)
     assert params.get('F') == 1000
 
 def test_hook_receives_absolute_coordinates(builder):

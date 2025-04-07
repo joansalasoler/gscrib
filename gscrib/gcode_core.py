@@ -499,8 +499,9 @@ class GCodeCore(object):
 
         point, params, comment = self._process_move_params(point, **kwargs)
         move, target_axes = self._transform_move(point)
-        params = self._write_rapid(move, params, comment)
+        statement, params = self._prepare_rapid(move, params, comment)
         self._update_axes(target_axes, params)
+        self.write(statement)
 
     @typechecked
     def move(self, point: PointLike = None, **kwargs) -> None:
@@ -524,8 +525,9 @@ class GCodeCore(object):
 
         point, params, comment = self._process_move_params(point, **kwargs)
         move, target_axes = self._transform_move(point)
-        params = self._write_move(move, params, comment)
+        statement, params = self._prepare_move(move, params, comment)
         self._update_axes(target_axes, params)
+        self.write(statement)
 
     @typechecked
     def rapid_absolute(self, point: PointLike = None, **kwargs) -> None:
@@ -551,9 +553,9 @@ class GCodeCore(object):
         target_axes = self._current_axes.replace(*move)
 
         with self.absolute_mode():
-            params = self._write_rapid(move, params, comment)
-
-        self._update_axes(target_axes, params)
+            statement, params = self._prepare_rapid(move, params, comment)
+            self._update_axes(target_axes, params)
+            self.write(statement)
 
     @typechecked
     def move_absolute(self, point: PointLike = None, **kwargs) -> None:
@@ -579,9 +581,9 @@ class GCodeCore(object):
         target_axes = self._current_axes.replace(*move)
 
         with self.absolute_mode():
-            params = self._write_move(move, params, comment)
-
-        self._update_axes(target_axes, params)
+            statement, params = self._prepare_move(move, params, comment)
+            self._update_axes(target_axes, params)
+            self.write(statement)
 
     @typechecked
     def comment(self, message: str, *args: Any) -> None:
@@ -674,37 +676,45 @@ class GCodeCore(object):
         for writer in self._writers:
             writer.flush()
 
-    def _write_move(self,
-        point: Point, params: ParamsDict, comment: str | None = None) -> ParamsDict:
-        """Write a linear move statement with the given parameters.
+    def _prepare_move(self,
+        point: Point, params: ParamsDict,
+        comment: str | None = None) -> Tuple[str, ParamsDict]:
+        """Process a linear move statement with the given parameters.
 
         Args:
             point: Target position
             params: Additional movement parameters
             comment: Comment to include in the move
+
+        Returns:
+            Tuple[str, ParamsDict]: A tuple containing:
+                - (str) The formatted G-code statement
+                - (ParamsDict) The updated movement parameters
         """
 
         args = { **params, "X": point.x, "Y": point.y, "Z": point.z }
         statement = self.format.command("G1", args, comment)
-        self.write(statement)
+        return statement, params
 
-        return params
-
-    def _write_rapid(self,
-        point: Point, params: ParamsDict, comment: str | None = None) -> ParamsDict:
-        """Write a rapid move statement with the given parameters.
+    def _prepare_rapid(self,
+        point: Point, params: ParamsDict,
+        comment: str | None = None) -> Tuple[str, ParamsDict]:
+        """Process a rapid move statement with the given parameters.
 
         Args:
             point: Target position
             params: Additional movement parameters
             comment: Comment to include in the move
+
+        Returns:
+            Tuple[str, ParamsDict]: A tuple containing:
+                - (str) The formatted G-code statement
+                - (ParamsDict) The updated movement parameters
         """
 
         args = { **params, "X": point.x, "Y": point.y, "Z": point.z }
         statement = self.format.command("G0", args, comment)
-        self.write(statement)
-
-        return params
+        return statement, params
 
     def _process_move_params(self, point: PointLike, **kwargs) -> ProcessedParams:
         """Extract move parameters from the provided arguments.
