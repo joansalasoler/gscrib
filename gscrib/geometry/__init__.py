@@ -8,6 +8,7 @@ transformations to coordinate systems."
 """
 
 from .point import Point, PointLike
+from .bounds import Bound, BoundManager
 from .tracer import PathTracer
 from .transformer import CoordinateTransformer
 from .transform import Transform
@@ -18,4 +19,6 @@ __all__ = [
     "PathTracer",
     "CoordinateTransformer",
     "Transform",
+    "Bound",
+    "BoundManager",
 ]

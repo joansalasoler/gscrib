@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import math
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, Tuple, TypeAlias, Union
 from contextlib import contextmanager
 from typeguard import typechecked
 
@@ -27,6 +27,8 @@ from .gcode_state import GState
 from .params import ParamsDict
 from .geometry import Point, PointLike, PathTracer
 from .enums import *
+
+Bound: TypeAlias = Union[int, float, PointLike]
 
 
 class GCodeBuilder(GCodeCore):
@@ -153,6 +155,42 @@ class GCodeBuilder(GCodeCore):
 
         if hook in self._hooks:
             self._hooks.remove(hook)
+
+    def set_bounds(self, name: str, min: Bound, max: Bound) -> None:
+        """Set the allowed range (bounds) for a device property.
+
+        Bounds define the minimum and maximum values that a property can
+        accept. This is useful for validation and safety checks, ensuring
+        that any values used during operation stay within a defined and
+        expected range.
+
+        Supported properties:
+            - axes: Position limits (x, y, z)
+            - bed-temperature: Temperature of the bed
+            - chamber-temperature: Temperature of the chamber
+            - hotend-temperature: Temperature of hotend
+            - feed-rate: Movement speed of the tool
+            - tool-number: Tool number range
+            - tool-power: Output power of the tool
+
+        Args:
+            name (str): The name of the property to constrain.
+            min (Bound): The minimum allowed value.
+            max (Bound): The maximum allowed value.
+
+        Raises:
+            ValueError: If bounds are not valid or property is unknown.
+            TypeError: If the type of min/max is incorrect.
+
+        Example:
+            g.set_bounds("feed-rate", min=100, max=1000)
+            g.set_bounds("axes", min=(0, 0, -10), max=(20, 20, 10))
+            g.move(x=-100)  # Raises a ValueError exception
+        """
+
+        min_value = Point(*min).resolve() if name == "axes" else min
+        max_value = Point(*max).resolve() if name == "axes" else max
+        self.state._set_bounds(name, min_value, max_value)
 
     @typechecked
     def set_length_units(self, length_units: LengthUnits | str) -> None:

@@ -204,3 +204,46 @@ class Point(NamedTuple):
             self.y / scalar,
             self.z / scalar
         )
+
+    def __eq__(self, other: 'Point') -> bool:
+        """Equal to operator"""
+
+        return bool(
+            self.x == other.x and
+            self.y == other.y and
+            self.z == other.z
+        )
+
+    def __lt__(self, other: 'Point') -> bool:
+        """Less than operator"""
+
+        return bool(
+            self.x <= other.x and
+            self.y <= other.y and
+            self.z <= other.z and
+            (
+                self.x < other.x or
+                self.y < other.y or
+                self.z < other.z
+            )
+        )
+
+    def __ge__(self, other: 'Point') -> bool:
+        """Greater than or equal operator."""
+
+        return not (self < other)
+
+    def __gt__(self, other: 'Point') -> bool:
+        """Greater than operator."""
+
+        return not (self < other or self == other)
+
+    def __le__(self, other: 'Point') -> bool:
+        """Less than or equal operator."""
+
+        return self < other or self == other
+
+    def __ne__(self, other: 'Point') -> bool:
+        """Not equal operator."""
+
+        return not (self == other)

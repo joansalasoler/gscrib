@@ -103,3 +103,76 @@ def test_operations_create_new_instances():
     result = p1 + p2
     assert id(result) != id(p1)
     assert id(result) != id(p2)
+
+# Test comparison operators
+
+def test_point_equality():
+    p1 = Point(1.0, 2.0, 3.0)
+    p2 = Point(1.0, 2.0, 3.0)
+    assert p1 == p2
+
+    p3 = Point(1.0, 2.0, 4.0)
+    assert p1 != p3
+
+    p4 = Point(None, 2.0, 3.0)
+    p5 = Point(None, 2.0, 3.0)
+    assert p4 == p5
+
+def test_point_less_than():
+    p1 = Point(1.0, 2.0, 3.0)
+    p2 = Point(2.0, 2.0, 3.0)
+    assert p1 < p2
+
+    p3 = Point(1.0, 2.0, 3.0)
+    p4 = Point(1.0, 2.0, 3.0)
+    assert not (p3 < p4)
+
+    p5 = Point(1.0, 2.0, 3.0)
+    p6 = Point(1.0, 3.0, 3.0)
+    assert p5 < p6
+
+def test_point_greater_than():
+    p1 = Point(2.0, 2.0, 3.0)
+    p2 = Point(1.0, 2.0, 3.0)
+    assert p1 > p2
+
+    p3 = Point(1.0, 2.0, 3.0)
+    p4 = Point(1.0, 2.0, 3.0)
+    assert not (p3 > p4)
+
+def test_point_less_than_or_equal():
+    p1 = Point(1.0, 2.0, 3.0)
+    p2 = Point(1.0, 2.0, 3.0)
+    p3 = Point(2.0, 2.0, 3.0)
+
+    assert p1 <= p2
+    assert p1 <= p3
+    assert not (p3 <= p1)
+
+def test_point_greater_than_or_equal():
+    p1 = Point(1.0, 2.0, 3.0)
+    p2 = Point(1.0, 2.0, 3.0)
+    p3 = Point(0.0, 2.0, 3.0)
+
+    assert p1 >= p2
+    assert p1 >= p3
+    assert not (p3 >= p1)
+
+def test_point_comparison_with_none_values():
+    p1 = Point(None, 2.0, 3.0)
+    p2 = Point(None, 2.0, 3.0)
+    p3 = Point(None, 3.0, 3.0)
+
+    assert p1 == p2
+    assert p1 != p3
+
+def test_point_comparison_with_edge_cases():
+    p1 = Point(0.0, 0.0, 0.0)
+    p2 = Point(0.0, 0.0, 0.0)
+    assert p1 == p2
+    assert p1 <= p2
+    assert p1 >= p2
+
+    p3 = Point(-1.0, -2.0, -3.0)
+    p4 = Point(-2.0, -2.0, -3.0)
+    assert p4 < p3

@@ -176,6 +176,31 @@ g.transform.restore_state("my_transorm")
 g.trace.arc(target=(10, 0), center=(5, 0))
 ```
 
+### Enforcing Parameter Limits
+
+You can define safe operating ranges for key machine parameters using
+`set_bounds()`. This helps prevent invalid or potentially dangerous
+values during runtime. Once bounds are set, any command that violates
+them will raise a `ValueError`.
+
+```python
+# Define safety bounds for different machine parameters
+g.set_bounds("bed-temperature", min=0, max=200)
+g.set_bounds("chamber-temperature", min=0, max=60)
+g.set_bounds("hotend-temperature", min=0, max=200)
+g.set_bounds("feed-rate", min=0, max=1000)
+g.set_bounds("tool-number", min=1, max=5)
+g.set_bounds("tool-power", min=0, max=100)
+g.set_bounds("feed-rate", min=100, max=7000)
+
+# You can also constrain motion in 3D space
+g.set_bounds("axes", min=(0, 0, -10), max=(20, 20, 10))
+
+# These will raise exceptions due to being out of bounds
+g.set_feed_rate(10000)    # Exceeds max feed rate
+g.move(x=-100)            # Outside defined X-axis range
+```
+
 ### Context Managers
 
 Gscrib provides several context managers to allow you to modify settings,

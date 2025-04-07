@@ -20,6 +20,7 @@
 from typing import Any
 from typeguard import typechecked
 
+from gscrib.geometry.bounds import Bound, BoundManager
 from gscrib.geometry.point import Point
 from gscrib.params import ParamsDict
 from gscrib.excepts import *
@@ -35,6 +36,7 @@ class GState:
     """
 
     __slots__ = (
+        "_user_bounds",
         "_current_axes",
         "_current_params",
         "_current_tool_number",
@@ -62,6 +64,7 @@ class GState:
     )
 
     def __init__(self) -> None:
+        self._user_bounds = BoundManager()
         self._current_axes = Point.zero()
         self._current_params = ParamsDict()
         self._current_tool_number: int = 0
@@ -87,14 +90,10 @@ class GState:
         self._set_direction(Direction.CLOCKWISE)
         self._set_resolution(0.1) # mm
 
-    def get_parameter(self, name: str) -> Any:
-        """Current value of a move parameter by name"""
-        return self._current_params.get(name)
-
     @property
     def position(self) -> Point:
         """Current absolute position of the axes."""
-        return self._axes
+        return self._current_axes
 
     @property
     def is_coolant_active(self) -> bool:
@@ -206,10 +205,24 @@ class GState:
         """Get the current target chamber temperature."""
         return self._target_chamber_temperature
 
+    def get_parameter(self, name: str) -> Any:
+        """Current value of a move parameter by name"""
+        return self._current_params.get(name)
+
+    def get_bounds(self, name: str) -> Any:
+        """Current user defined bounds for a property"""
+        return self._user_bounds.get_bounds(name)
+
+    def _set_bounds(self, name: str, min: Bound, max: Bound) -> None:
+        """Set the bounds for a property."""
+
+        self._user_bounds.set_bounds(name, min, max)
+
     @typechecked
     def _set_axes(self, axes: Point) -> None:
         """Set the current axes position."""
 
+        self._user_bounds.validate("axes", axes)
         self._current_axes = axes
 
     @typechecked
@@ -451,6 +464,7 @@ class GState:
             temperature (float): The target temperature to set.
         """
 
+        self._user_bounds.validate("hotend-temperature", temperature)
         self._target_hotend_temperature = temperature
 
     @typechecked
@@ -461,6 +475,7 @@ class GState:
             temperature (float): The target temperature to set.
         """
 
+        self._user_bounds.validate("bed-temperature", temperature)
         self._target_bed_temperature = temperature
 
     @typechecked
@@ -471,6 +486,7 @@ class GState:
             temperature (float): The target temperature to set.
         """
 
+        self._user_bounds.validate("chamber-temperature", temperature)
         self._target_chamber_temperature = temperature
 
     def _ensure_tool_is_inactive(self, message: str) -> None:
@@ -488,6 +504,8 @@ class GState:
     def _validate_tool_number(self, number: int) -> None:
         """Validate tool number is within acceptable range."""
 
+        self._user_bounds.validate("tool-number", number)
+
         if not isinstance(number, int) or number < 1:
             message = f"Invalid tool number '{number}'."
             raise ValueError(message)
@@ -495,12 +513,16 @@ class GState:
     def _validate_feed_rate(self, speed: float) -> None:
         """Validate feed rate is within acceptable range."""
 
+        self._user_bounds.validate("feed-rate", speed)
+
         if not isinstance(speed, int | float) or speed < 0.0:
             message = f"Invalid feed rate '{speed}'."
             raise ValueError(message)
 
     def _validate_tool_power(self, power: float) -> None:
         """Validate tool power level is within acceptable range."""
+
+        self._user_bounds.validate("tool-power", power)
 
         if not isinstance(power, int | float) or power < 0.0:
             message = f"Invalid tool power '{power}'."
