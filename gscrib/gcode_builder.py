@@ -183,9 +183,9 @@ class GCodeBuilder(GCodeCore):
             TypeError: If the type of min/max is incorrect.
 
         Example:
-            g.set_bounds("feed-rate", min=100, max=1000)
-            g.set_bounds("axes", min=(0, 0, -10), max=(20, 20, 10))
-            g.move(x=-100)  # Raises a ValueError exception
+            >>> g.set_bounds("feed-rate", min=100, max=1000)
+            >>> g.set_bounds("axes", min=(0, 0, -10), max=(20, 20, 10))
+            >>> g.move(x=-100)  # Raises a ValueError exception
         """
 
         min_value = Point(*min).resolve() if name == "axes" else min
