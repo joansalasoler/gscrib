@@ -153,7 +153,7 @@ g.transform.rotate(angle=45, axis="z")
 # Trace an arc in the transformed coordinate system
 g.trace.arc(target=(10, 0), center=(5, 0))
 
-# Restore original transformation state
+# Restore original state before transformations
 g.transform.restore_state()
 ```
 
@@ -176,12 +176,45 @@ g.transform.restore_state("my_transorm")
 g.trace.arc(target=(10, 0), center=(5, 0))
 ```
 
+### State Tracking And Validation
+
+Easily track and manage the machine's state during operations, including
+tool activity, position, feed rates, and more. The state is updated
+automatically as actions are performed.
+
+```python
+# Set the initial position and feed rate
+g.set_axis(x=0, y=0, z=0)
+g.set_distance_mode("relative")
+g.set_feed_rate(1200)
+
+# Activate the tool and move to a position
+g.tool_on("cw", 1000)
+g.move(x=10, y=10)
+
+# Access and print the current state
+print(f"Tool Active: { g.state.is_tool_active }")    # True
+print(f"Tool Power: { g.state.tool_power }")         # S=1000
+print(f"Feed Rate: { g.state.feed_rate }")           # F=1200
+print(f"Position: { g.state.position }")             # X=10, Y=10, Z=0
+
+# Move again with an updated feed rate
+g.move(x=20, y=20, F=800)
+
+# State automatically reflects the changes
+print(f"Feed Rate: { g.state.feed_rate }")           # F=800
+print(f"Position: { g.state.position }")             # X=30, Y=30, Z=0
+
+# Attempt to change the spindle direction while the tool is active
+g.tool_on("ccw", 2000)    # This will raise a ToolStateError
+```
+
 ### Enforcing Parameter Limits
 
-You can define safe operating ranges for key machine parameters using
+Safe operating ranges for key machine parameters can be set using
 `set_bounds()`. This helps prevent invalid or potentially dangerous
 values during runtime. Once bounds are set, any command that violates
-them will raise a `ValueError`.
+them will raise an exception.
 
 ```python
 # Define safety bounds for different machine parameters
@@ -203,36 +236,42 @@ g.move(x=-100)            # Outside defined X-axis range
 
 ### Context Managers
 
-Gscrib provides several context managers to allow you to modify settings,
-apply transforms, or add hooks for specific operations, and automatically
-restore the previous state when the context ends.
+Context managers provide a convenient way to temporarily modify settings,
+apply transformations, or add hooks during operations, automatically
+restoring the previous state when the context ends.
 
 ```python
-# Automatic teardown (flush and close)
+# Automatically handles teardown (flush and close file)
 with GCodeBuilder(output="outfile.gcode") as g:
+    g.tool_on("cw", 1000)
     g.move(x=10, y=10)
+    g.tool_off()
 
-# Temporary absolute positioning
+# Switch to absolute positioning for a specific operation
 with g.absolute_mode():
-    g.move(x=10, y=10)
+    g.rapid(z=5)
+    g.rapid(x=0, y=0)
 
-# Temporary relative positioning
+# Switch to relative positioning for a specific operation
 with g.relative_mode():
-    g.move(x=10, y=10)
+    g.move(x=10)
+    g.move(y=10)
+    g.move(x=-10)
+    g.move(y=-10)
 
-# Temporary hooks
-with g.move_hook(temporary_hook):
-    g.move(x=10, y=10)
-
-# Temporary transformations
+# Apply a transformation within a specific context
 with g.current_transform():
     g.transform.rotate(angle=45, axis="z")
     g.trace.arc(target=(10, 0), center=(5, 0))
 
-# Temporary restore of named transformations
+# Restore and apply a named transformation
 with g.named_transform("my_transorm"):
     g.transform.rotate(angle=45, axis="z")
     g.trace.arc(target=(10, 0), center=(5, 0))
+
+# Add a custom hook for the duration of the operation
+with g.move_hook(temporary_hook):
+    g.move(x=10, y=10)
 ```
 
 ## Projects Using Gscrib
@@ -292,11 +331,9 @@ for G-code generation originally developed at the
 [Lewis Lab](http://lewisgroup.seas.harvard.edu/) at Harvard University.
 The development of Gscrib was heavily influenced by Mecode’s design, and
 we are grateful for the foundational work done by its original author
-and contributors.
-
-Additionally, Gscrib includes code developed by the authors of
-[Printrun](https://github.com/kliment/Printrun), a Python-based suite
-for controlling 3D printers.
+and contributors. Additionally, Gscrib includes code developed by the
+authors of [Printrun](https://github.com/kliment/Printrun), a Python-based
+suite for controlling 3D printers.
 
 As Gscrib continues to evolve with new features, optimizations, and
 expanded capabilities, we recognize and appreciate the importance of this
