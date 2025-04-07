@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import math
-from typing import Callable
+from typing import Any, Callable
 from contextlib import contextmanager
 from typeguard import typechecked
 
@@ -358,7 +358,7 @@ class GCodeBuilder(GCodeCore):
         self.write(statement)
 
     @typechecked
-    def set_bed_temperature(self, temperature: int) -> None:
+    def set_bed_temperature(self, temperature: float) -> None:
         """Set the temperature of the bed and return immediately.
 
         Different machine controllers interpret the S parameter in M140
@@ -374,10 +374,11 @@ class GCodeBuilder(GCodeCore):
         units = self.state.temperature_units
         bed_units = BedTemperature.from_units(units)
         statement = self._get_statement(bed_units, { "S": temperature })
+        self.state._set_target_bed_temperature(temperature)
         self.write(statement)
 
     @typechecked
-    def set_hotend_temperature(self, temperature: int) -> None:
+    def set_hotend_temperature(self, temperature: float) -> None:
         """Set the temperature of the hotend and return immediately.
 
         Different machine controllers interpret the S parameter in M104
@@ -393,10 +394,11 @@ class GCodeBuilder(GCodeCore):
         units = self.state.temperature_units
         hotend_units = HotendTemperature.from_units(units)
         statement = self._get_statement(hotend_units, { "S": temperature })
+        self.state._set_target_hotend_temperature(temperature)
         self.write(statement)
 
     @typechecked
-    def set_chamber_temperature(self, temperature: int) -> None:
+    def set_chamber_temperature(self, temperature: float) -> None:
         """Set the temperature of the chamber and return immediately.
 
         Different machine controllers interpret the S parameter in M141
@@ -412,6 +414,7 @@ class GCodeBuilder(GCodeCore):
         units = self.state.temperature_units
         chamber_units = ChamberTemperature.from_units(units)
         statement = self._get_statement(chamber_units, { "S": temperature })
+        self.state._set_target_chamber_temperature(temperature)
         self.write(statement)
 
     def set_axis(self, point: PointLike = None, **kwargs) -> None:
@@ -614,7 +617,7 @@ class GCodeBuilder(GCodeCore):
         self.write(statement)
 
     @typechecked
-    def halt(self, mode: HaltMode, **kwargs) -> None:
+    def halt(self, mode: HaltMode | str, **kwargs) -> None:
         """Pause or stop program execution.
 
         Args:
@@ -633,6 +636,22 @@ class GCodeBuilder(GCodeCore):
 
         mode = HaltMode(mode)
         self.state._set_halt_mode(mode)
+
+        # Track temperatures if provided
+
+        keys = ["S", "R"]  # Wait when heating, or wait always
+        temperature = self._get_user_param(keys, kwargs)
+
+        if temperature is not None:
+            if mode == HaltMode.WAIT_FOR_BED:
+                self.state._set_target_bed_temperature(temperature)
+            elif mode == HaltMode.WAIT_FOR_HOTEND:
+                self.state._set_target_hotend_temperature(temperature)
+            elif mode == HaltMode.WAIT_FOR_CHAMBER:
+                self.state._set_target_chamber_temperature(temperature)
+
+        # Output the statement
+
         statement = self._get_statement(mode, kwargs)
         self.write(statement)
 
@@ -789,3 +808,9 @@ class GCodeBuilder(GCodeCore):
         comment = self.format.comment(comment or entry.description)
 
         return f"{command} {comment}"
+
+    def _get_user_param(self, keys: list, params: dict)-> Any:
+        """Retrieve a user-defined parameter value from a dictionary."""
+
+        values = { key.upper(): value for key, value in params.items() }
+        return next((values[key] for key in keys if key in values), None)

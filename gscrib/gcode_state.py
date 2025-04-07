@@ -55,6 +55,9 @@ class GState:
         "_current_resolution",
         "_is_coolant_active",
         "_is_tool_active",
+        "_target_hotend_temperature",
+        "_target_bed_temperature",
+        "_target_chamber_temperature",
     )
 
     def __init__(self) -> None:
@@ -63,6 +66,9 @@ class GState:
         self._current_tool_number: int = 0
         self._current_tool_power: float = 0
         self._current_tool_swap_mode = ToolSwapMode.OFF
+        self._target_hotend_temperature: float = float("-inf")
+        self._target_bed_temperature: float = float("-inf")
+        self._target_chamber_temperature: float = float("-inf")
         self._is_coolant_active: bool = False
         self._is_tool_active: bool = False
         self._set_spin_mode(SpinMode.OFF)
@@ -178,11 +184,28 @@ class GState:
         """Get the current resolution for interpolated moves."""
         return self._current_resolution
 
+    @property
+    def target_hotend_temperature(self) -> float:
+        """Get the current target hotend temperature."""
+        return self._target_hotend_temperature
+
+    @property
+    def target_bed_temperature(self) -> float:
+        """Get the current target bed temperature."""
+        return self._target_bed_temperature
+
+    @property
+    def target_chamber_temperature(self) -> float:
+        """Get the current target chamber temperature."""
+        return self._target_chamber_temperature
+
+    @typechecked
     def _set_axes(self, axes: Point) -> None:
         """Set the current axes position."""
 
         self._current_axes = axes
 
+    @typechecked
     def _set_params(self, params: ParamsDict) -> None:
         """Set the current parameters dictionary."""
 
@@ -398,6 +421,36 @@ class GState:
             self._ensure_coolant_is_inactive("Halt with coolant on.")
 
         self._current_halt_mode = mode
+
+    @typechecked
+    def _set_target_hotend_temperature(self, temperature: float) -> None:
+        """Set the target hotend temperature.
+
+        Args:
+            temperature (float): The target temperature to set.
+        """
+
+        self._target_hotend_temperature = temperature
+
+    @typechecked
+    def _set_target_bed_temperature(self, temperature: float) -> None:
+        """Set the target bed temperature.
+
+        Args:
+            temperature (float): The target temperature to set.
+        """
+
+        self._target_bed_temperature = temperature
+
+    @typechecked
+    def _set_target_chamber_temperature(self, temperature: float) -> None:
+        """Set the target chamber temperature.
+
+        Args:
+            temperature (float): The target temperature to set.
+        """
+
+        self._target_chamber_temperature = temperature
 
     def _ensure_tool_is_inactive(self, message: str) -> None:
         """Raise an exception if tool is active."""
