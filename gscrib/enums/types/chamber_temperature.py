@@ -17,17 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from gscrib.enums.base_enum import BaseEnum
+from gscrib.enums.units import TemperatureUnits
 
 
-class HaltMode(BaseEnum):
-    """Program termination and pause modes."""
+class ChamberTemperature(BaseEnum):
+    """Temperature modes for the chamber."""
 
-    OFF = "off"
-    PAUSE = "pause"
-    OPTIONAL_PAUSE = "optional-pause"
-    END_WITHOUT_RESET = "end-without-reset"
-    END_WITH_RESET = "end-with-reset"
-    PALLET_EXCHANGE = "pallet-exchange"
-    WAIT_FOR_BED = "wait-for-bed"
-    WAIT_FOR_HOTEND = "wait-for-hotend"
-    WAIT_FOR_CHAMBER = "wait-for-chamber"
+    CELSIUS = "celsius"
+    KELVIN = "kelvin"
+
+    @classmethod
+    def from_units(cls, units: TemperatureUnits):
+        return cls(units.value)

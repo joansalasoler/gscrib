@@ -183,6 +183,14 @@ gcode_table = GCodeTable((
         "M104", "Set hotend temperature, kelvin"
     ),
 
+    GCodeEntry(ChamberTemperature.CELSIUS,
+        "M141", "Set chamber temperature, celsius"
+    ),
+
+    GCodeEntry(ChamberTemperature.KELVIN,
+        "M141", "Set chamber temperature, kelvin"
+    ),
+
     # ------------------------------------------------------------------
     # Plane Selection
     # ------------------------------------------------------------------
@@ -241,6 +249,10 @@ gcode_table = GCodeTable((
 
     GCodeEntry(HaltMode.WAIT_FOR_HOTEND,
         "M109", "Wait for hotend to reach temperature"
-    )
+    ),
+
+    GCodeEntry(HaltMode.WAIT_FOR_CHAMBER,
+        "M191", "Wait for chamber to reach temperature"
+    ),
 
 ))

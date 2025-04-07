@@ -162,6 +162,10 @@ def test_set_hotend_temperature(builder, mock_write):
     builder.set_hotend_temperature(60)
     assert mock_write.last_statement.startswith('M104 S60')
 
+def test_set_chamber_temperature(builder, mock_write):
+    builder.set_chamber_temperature(60)
+    assert mock_write.last_statement.startswith('M141 S60')
+
 def test_current_axis_position(builder):
     builder.move(x=10, y=20, z=30)
     assert builder.position.x == 10

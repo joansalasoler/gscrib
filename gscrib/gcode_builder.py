@@ -395,6 +395,25 @@ class GCodeBuilder(GCodeCore):
         statement = self._get_statement(hotend_units, { "S": temperature })
         self.write(statement)
 
+    @typechecked
+    def set_chamber_temperature(self, temperature: int) -> None:
+        """Set the temperature of the chamber and return immediately.
+
+        Different machine controllers interpret the S parameter in M141
+        differently. Use the method `set_temperature_units()` to set the
+        correct temperature units for your specific controller.
+
+        Args:
+            temperature (float): Target temperature
+
+        >>> M141 S<temperature>
+        """
+
+        units = self.state.temperature_units
+        chamber_units = ChamberTemperature.from_units(units)
+        statement = self._get_statement(chamber_units, { "S": temperature })
+        self.write(statement)
+
     def set_axis(self, point: PointLike = None, **kwargs) -> None:
         """Set the current position without moving the head.
 
@@ -606,7 +625,7 @@ class GCodeBuilder(GCodeCore):
             ToolStateError: If attempting to halt with tool active
             CoolantStateError: If attempting to halt with coolant active
 
-        >>> M0|M1|M2|M30|M60|M109|M190 [<param><value> ...]
+        >>> M0|M1|M2|M30|M60|M109|M190|M191 [<param><value> ...]
         """
 
         if mode == HaltMode.OFF:

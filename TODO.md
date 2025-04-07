@@ -8,11 +8,9 @@ or suggest additional ideas to help improve the project.
 
 ## Add Support for More G-code Commands
 
-Enhance G-code compatibility by supporting the following commands:
+Enhance G-code compatibility by supporting more commands, for example:
 
-* G43, G44: Implement Tool Length Compensation
-* M106: Add support for controlling multiple fans.
-* M141: Implement Chamber Temperature control.
+* G43, G44: Tool Length Compensation
 
 ## Ensure Selected Plane Affects Interpolated Paths
 

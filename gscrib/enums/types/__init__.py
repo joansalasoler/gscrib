@@ -9,6 +9,7 @@ control parameters and operational modes.
 
 from .axis import Axis
 from .bed_temperature import BedTemperature
+from .chamber_temperature import ChamberTemperature
 from .coolant_mode import CoolantMode
 from .direction import Direction
 from .distance_mode import DistanceMode
@@ -26,6 +27,7 @@ from .tool_swap_mode import ToolSwapMode
 __all__ = [
     "Axis",
     "BedTemperature",
+    "ChamberTemperature",
     "CoolantMode",
     "Direction",
     "DistanceMode",
