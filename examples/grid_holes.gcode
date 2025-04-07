@@ -1,0 +1,87 @@
+G92 X0 Y0 Z0 ; Set axis position
+G21 ; Set length units, millimeters
+G90 ; Set distance mode, absolute
+F500
+G0 Z10
+S1000 M03 ; Start tool, clockwise
+M08 ; Turn on coolant, flood
+G04 P1 ; Sleep for a while, seconds
+G0 X0 Y0
+G1 Z-5
+G0 Z10
+G0 X0 Y10
+G1 Z-5
+G0 Z10
+G0 X0 Y20
+G1 Z-5
+G0 Z10
+G0 X0 Y30
+G1 Z-5
+G0 Z10
+G0 X0 Y40
+G1 Z-5
+G0 Z10
+G0 X10 Y0
+G1 Z-5
+G0 Z10
+G0 X10 Y10
+G1 Z-5
+G0 Z10
+G0 X10 Y20
+G1 Z-5
+G0 Z10
+G0 X10 Y30
+G1 Z-5
+G0 Z10
+G0 X10 Y40
+G1 Z-5
+G0 Z10
+G0 X20 Y0
+G1 Z-5
+G0 Z10
+G0 X20 Y10
+G1 Z-5
+G0 Z10
+G0 X20 Y20
+G1 Z-5
+G0 Z10
+G0 X20 Y30
+G1 Z-5
+G0 Z10
+G0 X20 Y40
+G1 Z-5
+G0 Z10
+G0 X30 Y0
+G1 Z-5
+G0 Z10
+G0 X30 Y10
+G1 Z-5
+G0 Z10
+G0 X30 Y20
+G1 Z-5
+G0 Z10
+G0 X30 Y30
+G1 Z-5
+G0 Z10
+G0 X30 Y40
+G1 Z-5
+G0 Z10
+G0 X40 Y0
+G1 Z-5
+G0 Z10
+G0 X40 Y10
+G1 Z-5
+G0 Z10
+G0 X40 Y20
+G1 Z-5
+G0 Z10
+G0 X40 Y30
+G1 Z-5
+G0 Z10
+G0 X40 Y40
+G1 Z-5
+G0 Z10
+M05 ; Stop tool
+M09 ; Turn off coolant
+G0 X0 Y0
+M02 ; End of program, no reset
