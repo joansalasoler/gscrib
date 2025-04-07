@@ -333,12 +333,12 @@ class GCodeBuilder(GCodeCore):
         self.write(statement)
 
     @typechecked
-    def set_fan_speed(self, speed: int, fan_number: int = 0) -> None:
+    def set_fan_speed(self, speed: float, fan_number: int = 0) -> None:
         """Set the speed of the main fan.
 
         Args:
             speed (int): Fan speed (must be >= 0 and <= 255)
-            fan_number (int): Fan number (must be >= 0)
+            fan_number (float): Fan number (must be >= 0)
 
         Raises:
             ValueError: If speed is not in the valid range
@@ -595,7 +595,7 @@ class GCodeBuilder(GCodeCore):
         self.write(statement)
 
     @typechecked
-    def halt_program(self, mode: HaltMode, **kwargs) -> None:
+    def halt(self, mode: HaltMode, **kwargs) -> None:
         """Pause or stop program execution.
 
         Args:
@@ -621,14 +621,14 @@ class GCodeBuilder(GCodeCore):
     def pause(self, optional: bool = False) -> None:
         """Pause program execution.
 
-        Invokes `halt_program(HaltMode.OPTIONAL_PAUSE)` if optional is
-        True, otherwise `halt_program(HaltMode.PAUSE)`.
+        Invokes `halt(HaltMode.OPTIONAL_PAUSE)` if optional is
+        True, otherwise `halt(HaltMode.PAUSE)`.
 
         Args:
             optional (bool): If True, pause is optional
         """
 
-        self.halt_program(
+        self.halt(
             HaltMode.OPTIONAL_PAUSE
             if optional is True else
             HaltMode.PAUSE
@@ -638,14 +638,14 @@ class GCodeBuilder(GCodeCore):
     def stop(self, reset: bool = False) -> None:
         """Stop program execution.
 
-        Invokes `halt_program(HaltMode.END_WITH_RESET)` if reset is
-        True, otherwise `halt_program(HaltMode.END_WITHOUT_RESET)`.
+        Invokes `halt(HaltMode.END_WITH_RESET)` if reset is
+        True, otherwise `halt(HaltMode.END_WITHOUT_RESET)`.
 
         Args:
             reset (bool): If True, reset the machine
         """
 
-        self.halt_program(
+        self.halt(
             HaltMode.END_WITH_RESET
             if reset is True else
             HaltMode.END_WITHOUT_RESET
@@ -677,7 +677,7 @@ class GCodeBuilder(GCodeCore):
         self.tool_off()
         self.coolant_off()
         self.comment(f"Emergency halt: {message}")
-        self.halt_program(HaltMode.PAUSE)
+        self.halt(HaltMode.PAUSE)
 
     def write(self, statement: str) -> None:
         """Write a raw G-code statement to all configured writers.
