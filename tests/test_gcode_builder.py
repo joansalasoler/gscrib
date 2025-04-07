@@ -83,6 +83,15 @@ def test_set_tool_power_invalid(builder):
     with pytest.raises(ValueError):
         builder.set_tool_power(-100)
 
+def test_set_feed_rate(builder, mock_write):
+    builder.set_feed_rate(1000.0)
+    assert builder.state.feed_rate == 1000.0
+    assert mock_write.last_statement.startswith('F1000')
+
+def test_set_feed_rate_invalid(builder):
+    with pytest.raises(ValueError):
+        builder.set_feed_rate(-100)
+
 def test_set_fan_speed(builder, mock_write):
     builder.set_fan_speed(255)
     assert mock_write.last_statement.startswith('M106 P0 S255')

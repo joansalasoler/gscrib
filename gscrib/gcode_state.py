@@ -45,6 +45,7 @@ class GState:
         "_current_extrusion_mode",
         "_current_coolant_mode",
         "_current_feed_mode",
+        "_current_feed_rate",
         "_current_tool_swap_mode",
         "_current_halt_mode",
         "_current_length_units",
@@ -65,6 +66,7 @@ class GState:
         self._current_params = ParamsDict()
         self._current_tool_number: int = 0
         self._current_tool_power: float = 0
+        self._current_feed_rate: float = 0
         self._current_tool_swap_mode = ToolSwapMode.OFF
         self._target_hotend_temperature: float = float("-inf")
         self._target_bed_temperature: float = float("-inf")
@@ -113,6 +115,11 @@ class GState:
     def tool_power(self) -> float:
         """Get the current tool power."""
         return self._current_tool_power
+
+    @property
+    def feed_rate(self) -> float:
+        """Get the current feed rate."""
+        return self._current_feed_rate
 
     @property
     def spin_mode(self) -> SpinMode:
@@ -277,6 +284,20 @@ class GState:
             raise ValueError("Resolution must be positive")
 
         self._current_resolution = resolution
+
+    @typechecked
+    def _set_feed_rate(self, speed: float) -> None:
+        """Set the feed rate for subsequent commands.
+
+        Args:
+            speed (float): The speed to set (must be >= 0).
+
+        Raises:
+            ValueError: If speed is negative or not a number.
+        """
+
+        self._validate_feed_rate(speed)
+        self._current_feed_rate = speed
 
     @typechecked
     def _set_tool_power(self, power: float) -> None:
@@ -469,6 +490,13 @@ class GState:
 
         if not isinstance(number, int) or number < 1:
             message = f"Invalid tool number '{number}'."
+            raise ValueError(message)
+
+    def _validate_feed_rate(self, speed: float) -> None:
+        """Validate feed rate is within acceptable range."""
+
+        if not isinstance(speed, int | float) or speed < 0.0:
+            message = f"Invalid feed rate '{speed}'."
             raise ValueError(message)
 
     def _validate_tool_power(self, power: float) -> None:

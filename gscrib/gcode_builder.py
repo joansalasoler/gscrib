@@ -309,6 +309,23 @@ class GCodeBuilder(GCodeCore):
         self.write(statement)
 
     @typechecked
+    def set_feed_rate(self, speed: float) -> None:
+        """Set the feed rate for subsequent commands.
+
+        Args:
+            speed (float): The feed rate in the current units
+
+        Raises:
+            ValueError: If speed is not positive
+
+        >>> F<speed>
+        """
+
+        self.state._set_feed_rate(speed)
+        statement = self.format.parameters({ "F": speed })
+        self.write(statement)
+
+    @typechecked
     def set_tool_power(self, power: float) -> None:
         """Set the power level for the current tool.
 
@@ -783,7 +800,43 @@ class GCodeBuilder(GCodeCore):
             for hook in self._hooks:
                 params = hook(origin, target, params, self.state)
 
+        self._track_move_params(params)
         return super()._prepare_move(point, params, comment)
+
+    def _prepare_rapid(self,
+        point: Point, params: ParamsDict,
+        comment: str | None = None) -> Tuple[str, ParamsDict]:
+        """Process a rapid move statement with the given parameters.
+
+        Args:
+            point: Target position
+            params: Additional movement parameters
+            comment: Comment to include in the move
+
+        Returns:
+            Tuple[str, ParamsDict]: A tuple containing:
+                - (str) The formatted G-code statement
+                - (ParamsDict) The updated movement parameters
+        """
+
+        self._track_move_params(params)
+        return super()._prepare_rapid(point, params, comment)
+
+    def _track_move_params(self, params: ParamsDict) -> None:
+        """Update the current state given the movement parameters.
+
+        Args:
+            params: The current movement parameters
+
+        Returns:
+            ParamsDict: The updated movement parameters
+        """
+
+        if params.get("F") is not None:
+            self.state._set_feed_rate(params.get("F"))
+
+        if params.get("S") is not None:
+            self.state._set_tool_power(params.get("S"))
 
     def _update_axes(self, axes: Point, params: ParamsDict) -> None:
         """Update the internal state after a movement.
