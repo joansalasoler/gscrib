@@ -85,7 +85,7 @@ and run all the tests in the project. You can also run specific tests
 by referring to the [pytest documentation](https://docs.pytest.org/en/stable/).
 
 ```bash
-pytest
+python -m pytest
 ```
 
 ## Extending the Builder

@@ -1,9 +1,35 @@
+[tool.poetry]
+name = "gscrib"
+version = "0.1.0"
+description = "Supercharge G-code with Python"
+authors = ["Joan Sala <contact@joansala.com>"]
+license = "GPL-3.0"
+homepage = "https://github.com/joansalasoler/gscrib"
+repository = "https://github.com/joansalasoler/gscrib"
+documentation = "https://gscrib.readthedocs.io"
+keywords = ["G-code", "Python", "G-code transformer"]
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+numpy = "~2.2.0"
+pydantic = "~2.10.0"
+pyserial = "~3.5.0"
+scipy = "~1.15.0"
+typeguard = "~4.4.0"
+
+[tool.poetry.dev-dependencies]
+mock = "~5.2.0"
+pre-commit = "~4.1.0"
+pylint = "~3.3.0"
+pytest = "~8.3.0"
+
 [build-system]
-requires = ["setuptools", "wheel", "numpy"]
+requires = ["wheel"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 80
-target-version = ["py38", "py39", "py310"]
+target-version = ["py310", "py311", "py312", "py313"]
 
 [tool.isort]
 profile = "black"

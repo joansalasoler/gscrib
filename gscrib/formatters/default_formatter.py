@@ -212,7 +212,7 @@ class DefaultFormatter(BaseFormatter):
         """
 
         space = " "
-        buffer = array('u')
+        buffer = []
         upper_params = { k.upper(): v for k, v in params.items() }
 
         # Handle XYZ axis parameters
@@ -221,9 +221,9 @@ class DefaultFormatter(BaseFormatter):
             param = upper_params[axis]
 
             if isinstance(param, Number):
-                buffer.extend(space)
-                buffer.extend(self._labels[axis])
-                buffer.extend(self.number(param))
+                buffer.append(space)
+                buffer.append(self._labels[axis])
+                buffer.append(self.number(param))
 
         # Handle other parameters
 
@@ -231,11 +231,11 @@ class DefaultFormatter(BaseFormatter):
             param = upper_params[label]
             is_number = isinstance(param, Number)
             value = self.number(param) if is_number else str(param)
-            buffer.extend(space)
-            buffer.extend(label)
-            buffer.extend(value)
+            buffer.append(space)
+            buffer.append(label)
+            buffer.append(value)
 
-        return buffer.tounicode()[1:]
+        return "".join(buffer[1:])
 
     @typechecked
     def _to_comment_template(self, open_symbols: str) -> str:
