@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Supercharge G-code with Python"
 authors = ["Joan Sala <contact@joansala.com>"]
 license = "GPL-3.0"
+readme = "README.md"
 homepage = "https://github.com/joansalasoler/gscrib"
 repository = "https://github.com/joansalasoler/gscrib"
 documentation = "https://gscrib.readthedocs.io"
@@ -24,7 +25,7 @@ pylint = "~3.3.0"
 pytest = "~8.3.0"
 
 [build-system]
-requires = ["wheel"]
+requires = ["poetry-core", "wheel"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.black]
