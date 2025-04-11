@@ -103,13 +103,13 @@ python -m pytest
 extension. At its core, it revolves around two primary classes, `GCodeCore`
 and `GCodeBuilder`:
 
-- `GCodeCore`: The foundational engine for G-code generation. It handles
-  basic movement commands, position tracking, coordinate transformations,
-  and writing output to various destinations.
-- `GCodeBuilder`: The main API for structured and safe G-code generation.
-  Built on top of `GCodeCore`, it adds state tracking, safety checks,
-  path interpolation, tool and temperature control, and custom move hooks.
-  Recommended for most use cases.
+- [GCodeCore](#GCodeCore): The foundational engine for G-code generation.
+  It handles basic movement commands, position tracking, coordinate
+  transformations, and writing output to various destinations.
+- [GCodeBuilder](#GCodeBuilder): The main API for structured and safe
+  G-code generation. Built on top of `GCodeCore`, it adds state tracking,
+  safety checks, path interpolation, tool and temperature control, and
+  custom move hooks. Recommended for most use cases.
 
 In addition to these two core classes, **Gscrib** is composed of modular
 components that extend its functionality:
@@ -133,8 +133,8 @@ replace functionality without altering the core system.
 
 G-code commands define specific machine instructions within the system.
 These commands are implemented using enums and mapped to their
-corresponding G-code instructions. The `GCodeBuilder` class provides
-high-level methods to generate and manage these commands.
+corresponding G-code instructions. The [GCodeBuilder](#GCodeBuilder) class
+provides high-level methods to generate and manage these commands.
 
 The following steps outline how to add a new G-code command.
 
@@ -189,12 +189,12 @@ consistency and correctness.
 
 **Gscrib** uses a stateful approach to track the current context of G-code
 generation. This includes key parameters such as the current units,
-positioning, feed rate, and active tools. The `GState` class is responsible
-for tracking and validating these values.
+positioning, feed rate, and active tools. The [GState](#GState) class is
+responsible for tracking and validating these values.
 
 When adding new commands or features to the library, it's important to
 consider whether they affect the state. If they do, the relevant properties
-within `GState` should be updated This ensures that the state remains
+within `GState` should be updated. This ensures that the state remains
 accurate, preventing potential errors during G-code generation.
 
 Example:
@@ -232,8 +232,9 @@ g.add_writer(ConsoleWriter())  # Register the writer
 
 Formatters control the presentation of G-code statements, including the
 formatting of numbers, comments, and commands. **Gscrib** provides a
-`DefaultFormatter` that should meet most common use cases. However, custom
-formatters can be easily created to cater to specific requirements.
+[DefaultFormatter](#DefaultFormatter) that should meet most common use
+cases. However, custom formatters can be easily created to cater to
+specific requirements.
 
 To create a custom formatter:
 
@@ -255,11 +256,11 @@ g.set_formatter(CustomFormatter())  # Register the formatter
 
 ### Path Interpolation
 
-The `PathTracer` class helps generate motion paths by approximating curves
-with straight lines. The smoothness of the curve can be controlled by
-invoking `set_resolution()` on the G-code builder instance. This determines
-how many segments will be used. Higher resolution gives smoother curves
-but increases the number of generated G-code lines.
+The [PathTracer](#PathTracer) class helps generate motion paths by
+approximating curves with straight lines. The smoothness of the curve can
+be controlled by invoking `set_resolution()` on the G-code builder
+instance. This determines how many segments will be used. Lower resolution
+gives smoother curves but increases the number of generated G-code lines.
 
 Two main methods are provided to make it easier to extend `PathTracer`:
 
@@ -268,7 +269,7 @@ Two main methods are provided to make it easier to extend `PathTracer`:
   curve is described by a simple mathematical function that takes a parameter
   **theta** ranging from 0 at the start to 1 at the end of the curve. The
   function then calculates the position (X, Y, Z) at any point along the
-  curve. It then traces the sampled points with `G1` commands.
+  curve and traces the sampled segments with `G1` commands.
 
 - The `estimate_length` method quickly estimates the length of a curve by
   sampling points along the curve and adding up the distances between them.
@@ -298,11 +299,11 @@ def circle(self, radius: float, **kwargs) -> None:
 
 ### Coordinate Transformations
 
-The `CoordinateTransformer` class provides a flexible and powerful way
-to apply 3D transformations to coordinates using **4x4 matrices**. By
-following a simple pattern of defining a transformation matrix and
-chaining it with `chain_transform()`, new transformations can easily be
-added to the class.
+The [CoordinateTransformer](#CoordinateTransformer) class provides a
+flexible and powerful way to apply 3D transformations to coordinates
+using **4x4 matrices**. By following a simple pattern of defining a
+transformation matrix and chaining it with `chain_transform()`, new
+transformations can easily be added to the class.
 
 The class also supports saving and restoring transformation states using
 the `save_state()` and `restore_state()` methods. This is useful for
