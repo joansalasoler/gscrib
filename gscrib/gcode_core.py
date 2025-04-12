@@ -28,7 +28,8 @@ from .formatters import BaseFormatter, DefaultFormatter
 from .params import ParamsDict
 from .geometry import Point, CoordinateTransformer
 from .types import PointLike, ProcessedParams
-from .writers import BaseWriter, SocketWriter, SerialWriter, FileWriter
+from .writers import BaseWriter, ConsoleWriter, FileWriter
+from .writers import SocketWriter, SerialWriter
 
 
 class GCodeCore(object):
@@ -134,7 +135,7 @@ class GCodeCore(object):
         """Initialize output writers."""
 
         if config.print_lines is True:
-            writer = FileWriter(self._get_stdout_file())
+            writer = ConsoleWriter()
             self.add_writer(writer)
 
         if config.output is not None:
@@ -148,14 +149,6 @@ class GCodeCore(object):
         if config.direct_write == "serial":
             writer = SerialWriter(config.port, config.baudrate)
             self.add_writer(writer)
-
-    def _get_stdout_file(self) -> Any:
-        """Get binary or text stdout file."""
-
-        if hasattr(sys.stdout, 'buffer'):
-            return sys.stdout.buffer
-
-        return sys.stdout
 
     @property
     def transform(self) -> CoordinateTransformer:
