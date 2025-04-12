@@ -1,0 +1,10 @@
+.rst-content code.literal,
+.rst-content tt.literal {
+    color: rgb(11, 88, 99);
+}
+
+a.reference .py-class:not(:has(code)),
+a.reference .py-meth:not(:has(code)) {
+    font-family: monospace;
+    font-size: 90%;
+}

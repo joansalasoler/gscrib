@@ -48,9 +48,9 @@ class GCodeCore(object):
     class instead, which extends this class with a more complete set of
     G-code commands and additional state management capabilities.
 
-    The `teardown()` method must be called when done to properly close
+    The ``teardown()`` method must be called when done to properly close
     connections and clean up resources. Using the class as a context
-    manager with 'with' automatically handles this.
+    manager with automatically handles this.
 
     The current position of X, Y and Z axes is tracked by the `position`
     property. This property reflects the absolute position of all axes
@@ -60,7 +60,7 @@ class GCodeCore(object):
     include additional axes or parameters in move commands, only these
     three primary axes will transformed and tracked by the `position`
     property. All other custom parameters provided to the move methods
-    can be retrieved using the `get_parameter()` method.
+    can be retrieved using the ``get_parameter()`` method.
 
     This class constructor accepts the following configuration options:
 
@@ -175,11 +175,11 @@ class GCodeCore(object):
 
         This method retrieves the last used value for a G-code movement
         parameter. These parameters are stored during move operations and
-        include both standard G-code parameters (like F for feed rate)
+        include both standard G-code parameters (like ``F`` for feed rate)
         and any custom parameters passed to move commands.
 
         Args:
-            name: Name of the parameter (case-insensitive)
+            name (str): Name of the parameter (case-insensitive)
 
         Returns:
             Any: The parameter's value, or None if the parameter hasn't
@@ -287,7 +287,7 @@ class GCodeCore(object):
         """Temporarily set absolute distance mode within a context.
 
         This context manager temporarily switches to absolute positioning
-        mode (G90) and automatically restores the previous mode when
+        mode (``G90``) and automatically restores the previous mode when
         exiting the context.
 
         Example:
@@ -314,7 +314,7 @@ class GCodeCore(object):
         """Temporarily set relative distance mode within a context.
 
         This context manager temporarily switches to relative positioning
-        mode (G91) and automatically restores the previous mode when
+        mode (``G91``) and automatically restores the previous mode when
         exiting the context.
 
         Example:
@@ -398,10 +398,10 @@ class GCodeCore(object):
 
         Calculates the absolute coordinates of a target point based on
         the current position and positioning mode (relative/absolute).
-        Any None coordinates in the current position are first converted
+        Any ``None`` coordinates in the current position are first converted
         to 0.0 to ensure all returned coordinates have numeric values.
 
-        The input is a point-like object containing target coordinates.
+        The input is a point object containing target coordinates.
         In absolute mode, these are the final coordinates. In relative
         mode, these are offsets from the current position.
 
@@ -450,7 +450,7 @@ class GCodeCore(object):
         """Convert an absolute point to match current distance mode.
 
         Calculates the coordinates to use in a move command based on the
-        current positioning mode (relative/absolute). Any None coordinates
+        current positioning mode (relative/absolute). Any ``None`` coordinates
         in the current position or the target point are first converted
         to 0.0 to ensure all returned coordinates have numeric values.
 
@@ -502,10 +502,10 @@ class GCodeCore(object):
     def move(self, point: PointLike = None, **kwargs) -> None:
         """Execute a controlled linear move to the specified location.
 
-        The target position can be specified either as a Point object or
-        as individual x, y, z coordinates. Additional movement parameters
-        can be provided as keyword arguments. The move will be relative
-        or absolute based on the current distance mode.
+        The target position can be specified either as a :class:`geometry.Point`
+        object or as individual x, y, z coordinates. Additional movement
+        parameters can be provided as keyword arguments. The move will be
+        relative or absolute based on the current distance mode.
 
         Args:
             point (Point, optional): Target position as a point
@@ -607,8 +607,8 @@ class GCodeCore(object):
         Direct use of this method is discouraged as it bypasses all state
         management. Using this method may lead to inconsistencies between
         the internal state tracking and the actual machine state. Instead,
-        use the dedicated methods like move(), tool_on(), etc., which
-        properly maintain state and ensure safe operation.
+        use the dedicated methods like ``move()``, ``tool_on()``, etc.,
+        which properly maintain state and ensure safe operation.
 
         Args:
             statement: The raw G-code statement to write

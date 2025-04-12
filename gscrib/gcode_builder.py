@@ -34,9 +34,10 @@ class GCodeBuilder(GCodeCore):
     """G-code generator with complete machine control capabilities.
 
     This class provides comprehensive control over CNC machines and
-    similar devices. It extends GCodeCore to provide a complete machine
-    control solution with state tracking, path interpolation, temperature
-    management, parameter processing, and other advanced features.
+    similar devices. It extends :class:`GCodeCore` to provide a complete
+    machine control solution with state tracking, path interpolation,
+    temperature management, parameter processing, and other advanced
+    features.
 
     This class accepts several configuration parameters in its constructor.
     For a detailed description of basic G-code generation and configuration
@@ -55,11 +56,11 @@ class GCodeBuilder(GCodeCore):
     - Multiple output capabilities
     - Move hooks for custom parameter processing
 
-    The machine state is tracked by the `state` manager, which maintains
+    The machine state is tracked by the ``state`` manager, which maintains
     and validates the state of various machine subsystems to prevent
     invalid operations and ensure proper command sequencing.
 
-    The `trace` property provides access to advanced path interpolation
+    The ``trace`` property provides access to advanced path interpolation
     capabilities, allowing generation of complex toolpaths like circular
     arcs, helixes or splines.
 
@@ -124,10 +125,14 @@ class GCodeBuilder(GCodeCore):
         Hooks are called before each move to process and modify movement
         parameters. Each hook receives these arguments:
 
-        - origin (Point): Absolute coordinates of the origin point
-        - target (Point): Absolute coordinates of the destination point
-        - params (MoveParams): Object containing movement parameters
-        - state (GState): Current machine state
+        - origin (:class:`geometry.Point`):
+            Absolute coordinates of the origin point
+        - target (:class:`geometry.Point`):
+            Absolute coordinates of the destination point
+        - params (:class:`ParamsDict`):
+            A dictionary containing movement parameters
+        - state (:class:`GState`):
+            Current machine state
 
         Args:
             hook: Callable that processes movement parameters
@@ -166,13 +171,13 @@ class GCodeBuilder(GCodeCore):
         expected range.
 
         Supported properties:
-            - axes: Position limits (x, y, z)
-            - bed-temperature: Temperature of the bed
-            - chamber-temperature: Temperature of the chamber
-            - hotend-temperature: Temperature of hotend
-            - feed-rate: Movement speed of the tool
-            - tool-number: Tool number range
-            - tool-power: Output power of the tool
+            - ``axes``: Position limits (x, y, z)
+            - ``bed-temperature``: Temperature of the bed
+            - ``chamber-temperature``: Temperature of the chamber
+            - ``hotend-temperature``: Temperature of hotend
+            - ``feed-rate``: Movement speed of the tool
+            - ``tool-number``: Tool number range
+            - ``tool-power``: Output power of the tool
 
         Args:
             name (str): The name of the property to constrain.
@@ -417,8 +422,8 @@ class GCodeBuilder(GCodeCore):
     def set_bed_temperature(self, temperature: float) -> None:
         """Set the temperature of the bed and return immediately.
 
-        Different machine controllers interpret the S parameter in M140
-        differently. Use the method `set_temperature_units()` to set the
+        Different machine controllers interpret the ``S`` parameter in
+        ``M140`` differently. Use ``set_temperature_units()`` to set the
         correct temperature units for your specific controller.
 
         Args:
@@ -437,8 +442,8 @@ class GCodeBuilder(GCodeCore):
     def set_hotend_temperature(self, temperature: float) -> None:
         """Set the temperature of the hotend and return immediately.
 
-        Different machine controllers interpret the S parameter in M104
-        differently. Use the method `set_temperature_units()` to set the
+        Different machine controllers interpret the ``S`` parameter in
+        ``M104`` differently. Use ``set_temperature_units()`` to set the
         correct temperature units for your specific controller.
 
         Args:
@@ -457,9 +462,9 @@ class GCodeBuilder(GCodeCore):
     def set_chamber_temperature(self, temperature: float) -> None:
         """Set the temperature of the chamber and return immediately.
 
-        Different machine controllers interpret the S parameter in M141
-        differently. Use the method `set_temperature_units()` to set the
-        correct temperature units for your specific controller.
+        Different machine controllers interpret the ``S`` parameter in
+        ``M141`` differently. Use the method ``set_temperature_units()``
+        to set the correct temperature units for your specific controller.
 
         Args:
             temperature (float): Target temperature
@@ -505,9 +510,9 @@ class GCodeBuilder(GCodeCore):
         """Pause program execution for the specified duration.
 
         Generates a dwell command that pauses program execution.
-        Different machine controllers interpret the P parameter in G4
-        differently. Use the method `set_time_units()` to set the
-        correct time units for your specific controller.
+        Different machine controllers interpret the ``P`` parameter in
+        ``G4`` differently. Use ``set_time_units()`` to set the correct
+        time units for your specific controller.
 
         Args:
             duration (float): Sleep duration in time units
@@ -620,7 +625,7 @@ class GCodeBuilder(GCodeCore):
         conditions are met before proceeding.
 
         Args:
-            mode (ToolChangeMode | str): Tool change mode to execute
+            mode (ToolSwapMode | str): Tool change mode to execute
             tool_number (int): Tool number to select (must be positive)
 
         Raises:
@@ -715,11 +720,11 @@ class GCodeBuilder(GCodeCore):
     def pause(self, optional: bool = False) -> None:
         """Pause program execution.
 
-        Invokes `halt(HaltMode.OPTIONAL_PAUSE)` if optional is
-        True, otherwise `halt(HaltMode.PAUSE)`.
+        Invokes ``halt(HaltMode.OPTIONAL_PAUSE)`` if optional is
+        ``True``, otherwise ``halt(HaltMode.PAUSE)``.
 
         Args:
-            optional (bool): If True, pause is optional
+            optional (bool): If ``True``, pause is optional
         """
 
         self.halt(
@@ -732,11 +737,11 @@ class GCodeBuilder(GCodeCore):
     def stop(self, reset: bool = False) -> None:
         """Stop program execution.
 
-        Invokes `halt(HaltMode.END_WITH_RESET)` if reset is
-        True, otherwise `halt(HaltMode.END_WITHOUT_RESET)`.
+        Invokes ``halt(HaltMode.END_WITH_RESET)`` if reset is
+        ``True``, otherwise ``halt(HaltMode.END_WITHOUT_RESET)``.
 
         Args:
-            reset (bool): If True, reset the machine
+            reset (bool): If ``True``, reset the machine
         """
 
         self.halt(
@@ -779,8 +784,8 @@ class GCodeBuilder(GCodeCore):
         Direct use of this method is discouraged as it bypasses all state
         management. Using this method may lead to inconsistencies between
         the internal state tracking and the actual machine state. Instead,
-        use the dedicated methods like move(), tool_on(), etc., which
-        properly maintain state and ensure safe operation.
+        use the dedicated methods like ``move()``, ``tool_on()``, etc.,
+        which properly maintain state and ensure safe operation.
 
         Args:
             statement: The raw G-code statement to write

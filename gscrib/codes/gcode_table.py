@@ -26,10 +26,10 @@ from .gcode_entry import GCodeEntry
 class GCodeTable:
     """Mapping table for G-Code instructions.
 
-    This class maintains a collection of GCodeEntry objects, providing
-    a way to store and retrieve G-Code instructions and their descriptions
-    based on our internal enum representations. Each entry is uniquely
-    identified by a combination of its enum type and value.
+    This class maintains a collection of :class:`GCodeEntry` objects,
+    providing a way to store and retrieve G-Code instructions and their
+    descriptions based on the internal enum representations. Each entry
+    is uniquely identified by a combination of its enum type and value.
     """
 
     @typechecked

@@ -85,7 +85,7 @@ class CoordinateTransformer:
         """Save the current transformation state.
 
         This allows for temporary modifications to the transformation
-        state, which can later be reverted using `restore_state()`. The
+        state, which can later be reverted using ``restore_state()``. The
         current transformation matrix and pivot point are saved on the
         stack if a name is not provided, otherwise the state is saved
         with that name for later retrieval.
@@ -109,7 +109,7 @@ class CoordinateTransformer:
         last saved state if no name is provided. If a name is given, it
         restores the transformation state associated with that name.
         This is useful for undoing temporary transformations or changes
-        made after a `save_state()` call.
+        made after a ``save_state()`` call.
 
         Args:
             name: Optional name of the saved state to restore.
