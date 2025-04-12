@@ -31,9 +31,9 @@ class GConfig():
 
     Example:
         >>> g = GCodeCore({
-        ...     output: "filename.gcode",
-        ...     decimal_places: 5,
-        ...     comment_symbols: ";",
+        ...     "output": "filename.gcode",
+        ...     "decimal_places": 5,
+        ...     "comment_symbols": ";",
         ... })
     """
 
