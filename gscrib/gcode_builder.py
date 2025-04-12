@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import math
-from typing import Any, Callable, Tuple, TypeAlias, Union
+from typing import Any, Callable, Tuple
 from contextlib import contextmanager
 from typeguard import typechecked
 
@@ -25,10 +25,9 @@ from .codes import gcode_table
 from .gcode_core import GCodeCore
 from .gcode_state import GState
 from .params import ParamsDict
-from .geometry import Point, PointLike, PathTracer
+from .geometry import Point, PathTracer
+from .types import Bound, PointLike
 from .enums import *
-
-Bound: TypeAlias = Union[int, float, PointLike]
 
 
 class GCodeBuilder(GCodeCore):
@@ -39,7 +38,9 @@ class GCodeBuilder(GCodeCore):
     control solution with state tracking, path interpolation, temperature
     management, parameter processing, and other advanced features.
 
-    See GCodeCore for basic G-code generation and configuration options.
+    This class accepts several configuration parameters in its constructor.
+    For a detailed description of basic G-code generation and configuration
+    options, refer to the :class:`GCodeCore` class.
 
     Key features:
 
@@ -98,8 +99,8 @@ class GCodeBuilder(GCodeCore):
         "_hooks",
     )
 
-    def __init__(self, **kwargs) -> None:
-        super().__init__(**kwargs)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self._state: GState = GState()
         self._tracer: PathTracer = PathTracer(self)
         self._hooks = []
@@ -296,7 +297,7 @@ class GCodeBuilder(GCodeCore):
         """Set the positioning mode for subsequent commands.
 
         Args:
-            mode (DistanceMode): The distance mode to use
+            mode (DistanceMode | str): The distance mode to use
 
         Raises:
             ValueError: If distance mode is not valid
@@ -315,7 +316,7 @@ class GCodeBuilder(GCodeCore):
         """Set the extrusion mode for subsequent commands.
 
         Args:
-            mode (ExtrusionMode): The extrusion mode to use
+            mode (ExtrusionMode | str): The extrusion mode to use
 
         Raises:
             ValueError: If extrusion mode is not valid
@@ -333,7 +334,7 @@ class GCodeBuilder(GCodeCore):
         """Set the feed rate mode for subsequent commands.
 
         Args:
-            mode (FeedMode): The feed rate mode to use
+            mode (FeedMode | str): The feed rate mode to use
 
         Raises:
             ValueError: If feed mode is not valid
@@ -481,7 +482,7 @@ class GCodeBuilder(GCodeCore):
         reset axis positions.
 
         Args:
-            point (optional): New axis position as a point
+            point (Point, optional): New axis position as a point
             x (float, optional): New X-axis position value
             y (float, optional): New Y-axis position value
             z (float, optional): New Z-axis position value
@@ -538,7 +539,7 @@ class GCodeBuilder(GCodeCore):
         - Spindle rotation speed in RPM
 
         Args:
-            mode (SpinMode): Direction of tool rotation (CW/CCW)
+            mode (SpinMode | str): Direction of tool rotation (CW/CCW)
             speed (float): Speed for the tool (must be >= 0.0)
 
         Raises:
@@ -580,7 +581,7 @@ class GCodeBuilder(GCodeCore):
         - Other similar power settings
 
         Args:
-            mode (PowerMode): Power mode of the tool
+            mode (PowerMode | str): Power mode of the tool
             power (float): Power level for the tool (must be >= 0.0)
 
         Raises:
@@ -619,7 +620,7 @@ class GCodeBuilder(GCodeCore):
         conditions are met before proceeding.
 
         Args:
-            mode (ToolChangeMode): Tool change mode to execute
+            mode (ToolChangeMode | str): Tool change mode to execute
             tool_number (int): Tool number to select (must be positive)
 
         Raises:
@@ -645,7 +646,7 @@ class GCodeBuilder(GCodeCore):
         """Activate coolant system with the specified mode.
 
         Args:
-            mode (CoolantMode): Coolant operation mode to activate
+            mode (CoolantMode | str): Coolant operation mode to activate
 
         Raises:
             ValueError: If mode is OFF or was already active
@@ -676,7 +677,7 @@ class GCodeBuilder(GCodeCore):
         """Pause or stop program execution.
 
         Args:
-            mode (HaltMode): Type of halt to perform
+            mode (HaltMode | str): Type of halt to perform
             **kwargs: Arbitrary command parameters
 
         Raises:

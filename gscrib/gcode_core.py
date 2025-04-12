@@ -18,7 +18,7 @@
 
 import sys, logging
 from contextlib import contextmanager
-from typing import Any, List, Sequence, Tuple, TypeAlias
+from typing import Any, List, Sequence, Tuple
 from typeguard import typechecked
 
 from .config import GConfig
@@ -26,10 +26,9 @@ from .enums import Axis, DistanceMode, Direction
 from .excepts import DeviceError
 from .formatters import BaseFormatter, DefaultFormatter
 from .params import ParamsDict
-from .geometry import Point, PointLike, CoordinateTransformer
+from .geometry import Point, CoordinateTransformer
+from .types import PointLike, ProcessedParams
 from .writers import BaseWriter, SocketWriter, SerialWriter, FileWriter
-
-ProcessedParams: TypeAlias = Tuple[Point, ParamsDict, str | None]
 
 
 class GCodeCore(object):
@@ -44,8 +43,8 @@ class GCodeCore(object):
     - Basic movement operations (linear and rapid moves)
     - Multiple output methods (file, serial, network socket)
 
-    For general use, it is recommended to use the `GCodeBuilder` class
-    instead, which extends `GCodeCore` with a more complete set of
+    For general use, it is recommended to use the :class:`GCodeBuilder`
+    class instead, which extends this class with a more complete set of
     G-code commands and additional state management capabilities.
 
     The `teardown()` method must be called when done to properly close
@@ -98,12 +97,15 @@ class GCodeCore(object):
         ...     g.rapid(z=5)        # Rapid move up to Z=5
     """
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, *args, **kwargs: Any) -> None:
         """Initialize G-code generator with configuration.
 
         Args:
             **kwargs: Configuration parameters
         """
+
+        if args and isinstance(args[0], dict):
+            kwargs = {**args[0], **kwargs}
 
         config: GConfig = GConfig(**kwargs)
 
@@ -234,7 +236,7 @@ class GCodeCore(object):
         """Set the positioning mode for subsequent commands.
 
         Args:
-            mode (DistanceMode): The distance mode (absolute/relative)
+            mode (DistanceMode | str): The distance mode (absolute/relative)
 
 
         Raises:
@@ -260,7 +262,7 @@ class GCodeCore(object):
         reset axis positions.
 
         Args:
-            point (optional): New axis position as a point
+            point (Point, optional): New axis position as a point
             x (float, optional): New X-axis position value
             y (float, optional): New Y-axis position value
             z (float, optional): New Z-axis position value
@@ -411,7 +413,7 @@ class GCodeCore(object):
         mode, these are offsets from the current position.
 
         Args:
-            point: Absolute target or relative offset
+            point (Point): Absolute target or relative offset
 
         Returns:
             Point: The absolute target position
@@ -430,7 +432,7 @@ class GCodeCore(object):
         """Convert a sequence of points to absolute coordinates.
 
         Args:
-            points: Absolute targets or relative offsets
+            points (Sequence[Point]): Absolute targets or relative offsets
 
         Returns:
             Point: A tuple of absolute target positions
@@ -463,7 +465,7 @@ class GCodeCore(object):
         In relative mode, returns the offset from current position.
 
         Args:
-            point: Target point in absolute coordinates
+            point (Point): Target point in absolute coordinates
 
         Returns:
             Point: Coordinates matching current positioning mode
@@ -487,7 +489,7 @@ class GCodeCore(object):
         positioning or tool changes.
 
         Args:
-            point (optional): Target position as a point
+            point (Point, optional): Target position as a point
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
@@ -513,7 +515,7 @@ class GCodeCore(object):
         or absolute based on the current distance mode.
 
         Args:
-            point (optional): Target position as a point
+            point (Point, optional): Target position as a point
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
@@ -539,7 +541,7 @@ class GCodeCore(object):
         positioning mode if relative mode is active.
 
         Args:
-            point (optional): Target position as a point
+            point (Point, optional): Target position as a point
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
@@ -567,7 +569,7 @@ class GCodeCore(object):
         positioning mode if relative mode is active.
 
         Args:
-            point (optional): Target position as a point
+            point (Point, optional): Target position as a point
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
@@ -726,7 +728,7 @@ class GCodeCore(object):
         movement parameters (including X, Y and Z).
 
         Args:
-            point (optional): Target position as a point
+            point (Point, optional): Target position as a point
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position

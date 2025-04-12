@@ -116,4 +116,5 @@ API Reference
    gscrib.formatters
    gscrib.geometry
    gscrib.hooks
+   gscrib.types
    gscrib.writers

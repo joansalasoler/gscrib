@@ -16,14 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import NamedTuple, TypeAlias
-from typing import Sequence, Union
+from typing import NamedTuple
 
 import numpy as np
-from gscrib.params import ParamsDict
 
-OptFloat: TypeAlias = float | None
-PointLike: TypeAlias = Union['Point', Sequence[float | None], np.ndarray, None]
+from gscrib.params import ParamsDict
+from gscrib.types import OptFloat
 
 
 class Point(NamedTuple):

@@ -23,7 +23,19 @@ from .enums import DirectWrite
 
 @dataclass
 class GConfig():
-    """Configuration settings for the G-code builders."""
+    """Configuration settings for the G-code builders.
+
+    This class holds various configuration options for controlling the
+    behavior of G-code generation. See :class:`GCodeCore` for details on
+    how these settings are used in the G-code generation process.
+
+    Example:
+        >>> g = GCodeCore({
+        ...     output: "filename.gcode",
+        ...     decimal_places: 5,
+        ...     comment_symbols: ";",
+        ... })
+    """
 
     # Output settings
     output: str | TextIO | BinaryIO | None = field(default=None)

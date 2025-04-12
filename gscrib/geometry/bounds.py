@@ -16,11 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import TypeAlias, Union, Tuple
+from typing import Union, Tuple
 from typeguard import typechecked
+
+from gscrib.types import Bound
 from .point import Point
 
-Bound: TypeAlias = Union[int, float, Point]
 
 
 VALID_PROPERTIES = (

@@ -25,7 +25,8 @@ from scipy.spatial.transform import Rotation
 from scipy import linalg
 
 from gscrib.enums import Axis, Plane
-from .point import Point, PointLike
+from gscrib.types import PointLike
+from .point import Point
 from .transform import Transform
 
 

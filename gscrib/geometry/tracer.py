@@ -23,9 +23,9 @@ from scipy.interpolate import CubicSpline
 from typeguard import typechecked
 
 from gscrib.enums import Direction
-from .point import Point, PointLike
+from gscrib.types import PathFn, PointLike
 
-PathFn: TypeAlias = Callable[[np.ndarray], np.ndarray]
+from .point import Point
 
 
 class PathTracer:

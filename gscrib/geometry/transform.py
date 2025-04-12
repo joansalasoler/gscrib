@@ -20,7 +20,8 @@ import numpy as np
 from scipy import linalg
 from typeguard import typechecked
 
-from .point import Point, PointLike
+from gscrib.types import PointLike
+from .point import Point
 
 
 class Transform:
