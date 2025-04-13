@@ -33,36 +33,55 @@ from .writers import SocketWriter, SerialWriter
 
 
 class GCodeCore(object):
-    """Core G-code generation functionality.
+    """Core class for generating G-code output.
 
-    This class provides the fundamental building blocks for G-code
-    generation, including:
+    This class provides the fundamental components for generating and
+    outputting G-code, including formatting, coordinate transformations,
+    and support for various output destinations.
 
-    - G-code formatting and output writing
-    - Coordinate system transformations
-    - Position tracking and distance mode management
-    - Basic movement operations (linear and rapid moves)
-    - Multiple output methods (file, serial, network socket)
+    It offers the core functionality necessary for G-code generation and
+    is designed to be extended when building custom G-code builders. For
+    most purposes, it is recommended to use :class:`GCodeBuilder` instead,
+    as it extends this base class with a more comprehensive set of G-code
+    commands and enhanced state management features.
 
-    For general use, it is recommended to use the :class:`GCodeBuilder`
-    class instead, which extends this class with a more complete set of
-    G-code commands and additional state management capabilities.
+    Key responsibilities of this class include:
 
-    The ``teardown()`` method must be called when done to properly close
-    connections and clean up resources. Using the class as a context
-    manager with automatically handles this.
+    - Formatting and writing G-code instructions.
+    - Basic movement commands (linear and rapid moves).
+    - Position tracking and distance mode management.
+    - Coordinate system transformations (rotation, scaling, etc).
+    - Support for multiple output methods (file, serial, network, etc).
 
-    The current position of X, Y and Z axes is tracked by the `position`
-    property. This property reflects the absolute position of all axes
-    in the original coordinate system (without transforms).
+    Basic movement methods include ``move()`` and ``rapid()`` for linear
+    and rapid moves, respectively. These methods automatically apply any
+    active transformations before outputting the corresponding G-code.
+    To bypass transformations when moving to absolute coordinates the
+    ``move_absolute()`` and ``rapid_absolute()`` methods may be used.
 
-    Transformations are limited to the X, Y, and Z axes. While you can
-    include additional axes or parameters in move commands, only these
-    three primary axes will transformed and tracked by the `position`
-    property. All other custom parameters provided to the move methods
-    can be retrieved using the ``get_parameter()`` method.
+    Movement coordinates can be provided as individual X, Y, Z parameters
+    to this methods or as a :class:`geometry.Point` object. Additionally,
+    all movement methods accept extra G-code parameters as keyword
+    arguments and support an optional ``comment`` for annotation.
 
-    This class constructor accepts the following configuration options:
+    The ``transform`` property gives access to the coordinate transformer,
+    enabling operations such as translation, rotation, and scaling of the
+    coordinate system. Note that transformations only apply to the X, Y,
+    and Z axes. While custom axes or parameters may be included in the
+    movement commands, transformations and tracking will be limited to
+    the X, Y, and Z axes. Any other custom parameters can be retrieved
+    via the ``get_parameter()`` method.
+
+    The ``position`` property tracks the current positions of the X, Y,
+    and Z axes, reflecting their absolute positions in the original
+    coordinate system (without any transformations).
+
+    The ``teardown()`` method should be called when done to properly
+    close connections and clean up resources. However, using the class
+    as a context manager automatically handles this.
+
+    This class constructor accepts the following configuration options,
+    which can be provided as keyword arguments or as a dictionary:
 
     - output (str | TextIO | BinaryIO ):
         Path or file-like object where the generated G-Code will be

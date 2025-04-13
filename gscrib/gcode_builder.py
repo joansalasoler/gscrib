@@ -33,46 +33,46 @@ from .enums import *
 class GCodeBuilder(GCodeCore):
     """G-code generator with complete machine control capabilities.
 
-    This class provides comprehensive control over CNC machines and
-    similar devices. It extends :class:`GCodeCore` to provide a complete
-    machine control solution with state tracking, path interpolation,
-    temperature management, parameter processing, and other advanced
-    features.
+    This class extends :class:`GCodeCore` to offer comprehensive control
+    over CNC machines and similar devices. It provides a complete machine
+    control solution with advanced features such as state tracking, path
+    interpolation, temperature management and parameter processing.
 
-    This class accepts several configuration parameters in its constructor.
-    For a detailed description of basic G-code generation and configuration
-    options, refer to the :class:`GCodeCore` class.
+    Key features iclude:
 
-    Key features:
-
-    - Machine state tracking and validation
-    - Coordinate system transformations
-    - Unit and coordinate system management
-    - Tool control (spindle, laser, etc.)
-    - Temperature and cooling management
-    - Basic movement commands
-    - Path interpolation (arcs, splines, helixes, etc.)
-    - Emergency stop procedures
-    - Multiple output capabilities
-    - Move hooks for custom parameter processing
+    - Machine state tracking and validation.
+    - Coordinate system transformations (rotation, scaling, etc.).
+    - Unit and coordinate system management.
+    - Tool control (spindle, laser, etc.).
+    - Temperature and cooling system management.
+    - Basic movement commands (linear, rapid, etc.).
+    - Advanced path interpolation (arcs, splines, helixes, etc.).
+    - Emergency stop procedures.
+    - Multiple output capabilities (file, serial, network).
+    - Move hooks for custom parameter processing.
 
     The machine state is tracked by the ``state`` manager, which maintains
     and validates the state of various machine subsystems to prevent
     invalid operations and ensure proper command sequencing.
 
     The ``trace`` property provides access to advanced path interpolation
-    capabilities, allowing generation of complex toolpaths like circular
-    arcs, helixes or splines.
+    capabilities, supporting complex toolpaths like circular arcs, helixes
+    or splines.
 
     Move hooks can be registered to process and modify movement commands
-    before they are written. Each hook receives the origin and target
-    points, along with current machine state, allowing for:
+    before they are written. Each hook has access to the origin and target
+    points of a move, as well as the current machine state, enabling
+    operations such as:
 
-    - Parameter validation and modification
-    - Feed rate limiting or scaling
-    - Automatic parameter calculations
-    - State-based parameter adjustments
-    - Safety checks and constraints
+    - Parameter validation and modification.
+    - Feed rate limiting or scaling.
+    - Automatic parameter calculations.
+    - State-based adjustments (e.g., temperature, tool settings).
+    - Safety checks and constraint enforcement.
+
+    This class constructor accepts several configuration options. For a
+    detailed description of basic G-code generation and configuration
+    options, refer to the :class:`GCodeCore` class documentation.
 
     Example:
         >>> with GCodeMachine(output="outfile.gcode") as g:
