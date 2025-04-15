@@ -4,7 +4,7 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/gscrib.svg)](https://pypi.org/project/gscrib/)
 [![Downloads](https://pepy.tech/badge/gscrib/month)](https://pepy.tech/project/gscrib)
 [![codecov](https://codecov.io/gh/joansalasoler/gscrib/branch/main/graph/badge.svg)](https://codecov.io/gh/joansalasoler/gscrib)
-[![License](https://img.shields.io/pypi/l/gscrib.svg)](https://pypi.org/project/gscrib/)
+[![License](https://img.shields.io/pypi/l/gscrib.svg?color=brightgreen)](https://www.gnu.org/licenses/gpl-3.0.html)
 
 # Supercharge G-code with Python
 
