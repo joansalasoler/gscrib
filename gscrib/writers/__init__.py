@@ -8,6 +8,7 @@ including files, network sockets, and serial connections.
 """
 
 from .base_writer import BaseWriter
+from .console_writer import ConsoleWriter
 from .log_writer import LogWriter
 from .printrun_writer import PrintrunWriter
 from .socket_writer import SocketWriter
@@ -16,6 +17,7 @@ from .file_writer import FileWriter
 
 __all__ = [
     "BaseWriter",
+    "ConsoleWriter",
     "LogWriter",
     "PrintrunWriter",
     "SocketWriter",

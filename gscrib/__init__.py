@@ -11,6 +11,7 @@ from . import excepts
 from . import formatters
 from . import geometry
 from . import hooks
+from . import types
 from . import writers
 
 from .config import GConfig
@@ -32,5 +33,6 @@ __all__ = [
     "excepts",
     "geometry",
     "hooks",
+    "types",
     "writers",
 ]

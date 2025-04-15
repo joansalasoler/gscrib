@@ -94,6 +94,7 @@ for generating G-code programs.
    :caption: Contents
 
    Home <self>
+   Quick-Start Guide <user-guide>
    Development Guide <dev-guide>
    G-Code Mappings Table <gcode-table>
    Module Index <modindex>
@@ -116,4 +117,5 @@ API Reference
    gscrib.formatters
    gscrib.geometry
    gscrib.hooks
+   gscrib.types
    gscrib.writers

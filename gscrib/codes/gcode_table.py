@@ -26,10 +26,10 @@ from .gcode_entry import GCodeEntry
 class GCodeTable:
     """Mapping table for G-Code instructions.
 
-    This class maintains a collection of GCodeEntry objects, providing
-    a way to store and retrieve G-Code instructions and their descriptions
-    based on our internal enum representations. Each entry is uniquely
-    identified by a combination of its enum type and value.
+    This class maintains a collection of :class:`GCodeEntry` objects,
+    providing a way to store and retrieve G-Code instructions and their
+    descriptions based on the internal enum representations. Each entry
+    is uniquely identified by a combination of its enum type and value.
     """
 
     @typechecked
@@ -110,11 +110,10 @@ class GCodeTable:
             "     - Description",
         ]
 
-        for entry in self._entries.values():
-            modules = entry.enum.__module__.split(".")
-            module = ".".join(modules[:-1])
+        sort_fn = lambda entry: entry.enum.__class__.__name__
 
-            table.append(f"   * - :obj:`{module}.{entry.enum}`")
+        for entry in sorted(self._entries.values(), key=sort_fn):
+            table.append(f"   * - :obj:`{entry.enum}`")
             table.append(f"     - {entry.enum.value}")
             table.append(f"     - {entry.instruction}")
             table.append(f"     - {entry.description}")

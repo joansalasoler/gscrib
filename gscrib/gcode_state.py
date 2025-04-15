@@ -421,7 +421,7 @@ class GState:
         """Set the current tool number and swap mode.
 
         Args:
-            mode (ToolChangeMode): The tool swap mode to set.
+            mode (ToolSwapMode): The tool swap mode to set.
             tool_number (int): The tool number to select.
 
         Raises:

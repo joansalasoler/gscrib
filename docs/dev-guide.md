@@ -100,14 +100,14 @@ python -m pytest
 ### Overview of Components
 
 **Gscrib**'s architecture is designed for clarity, modularity, and ease of
-extension. At its core, it revolves around two primary classes, `GCodeCore`
-and `GCodeBuilder`:
+extension. At its core, it revolves around two primary classes,
+[GCodeCore](#GCodeCore) and [GCodeBuilder](#GCodeBuilder):
 
-- [GCodeCore](#GCodeCore): The foundational engine for G-code generation.
+- [**GCodeCore**](#GCodeCore): The foundational engine for G-code generation.
   It handles basic movement commands, position tracking, coordinate
   transformations, and writing output to various destinations.
-- [GCodeBuilder](#GCodeBuilder): The main API for structured and safe
-  G-code generation. Built on top of `GCodeCore`, it adds state tracking,
+- [**GCodeBuilder**](#GCodeBuilder): The main API for structured and safe
+  G-code generation. Built on top of [GCodeCore](#GCodeCore), it adds state tracking,
   safety checks, path interpolation, tool and temperature control, and
   custom move hooks. Recommended for most use cases.
 
@@ -132,16 +132,16 @@ replace functionality without altering the core system.
 ### Adding G-code Commands
 
 G-code commands define specific machine instructions within the system.
-These commands are implemented using enums and mapped to their
-corresponding G-code instructions. The [GCodeBuilder](#GCodeBuilder) class
-provides high-level methods to generate and manage these commands.
+These commands are implemented using enums and mapped to their corresponding
+G-code instructions. The [GCodeBuilder](#GCodeBuilder) class provides
+high-level methods to generate and manage these commands.
 
 The following steps outline how to add a new G-code command.
 
 **Define the Command:**
 
 1. Create a new enum for the command inside `gscrib/enums/`.
-2. Make sure the enum extends `BaseEnum`.
+2. Make sure the enum extends [`BaseEnum`](#BaseEnum).
 
 ```python
 from gscrib.enums import BaseEnum
@@ -169,7 +169,8 @@ gcode_table = GCodeTable((
 **Implement the Command:**
 
 1. Open `gscrib/gcode_builder.py`.
-2. Modify `GCodeBuilder` to support the new command by adding a new method.
+2. Modify [`GCodeBuilder`](#GCodeBuilder) to support the new command by
+   adding a new method.
 3. Use `self._get_statement()` to build the G-code statement.
 4. Write the G-code statement using `self.write(statement)`.
 
@@ -194,8 +195,8 @@ responsible for tracking and validating these values.
 
 When adding new commands or features to the library, it's important to
 consider whether they affect the state. If they do, the relevant properties
-within `GState` should be updated. This ensures that the state remains
-accurate, preventing potential errors during G-code generation.
+within [GState](#GState) should be updated. This ensures that the state
+remains accurate, preventing potential errors during G-code generation.
 
 Example:
 
@@ -210,11 +211,11 @@ def set_units(self, length_units: LengthUnits) -> None:
 
 Writers let the user control exactly where and how G-code is sent, whether
 it's to a file, network, or any other destination. Multiple writers can
-be register within the `GCodeCore` instance.
+be register within the [GCodeCore](#GCodeCore) instance.
 
 To implement a custom writer:
 
-1. Create a new class that inherits from `BaseWriter`.
+1. Create a new class that inherits from [`BaseWriter`](#BaseWriter).
 2. Implement the required `write()` method.
 3. Register the writer in the builder instance.
 
@@ -238,7 +239,7 @@ specific requirements.
 
 To create a custom formatter:
 
-1. Create a class that inherits from `BaseFormatter`.
+1. Create a class that inherits from [`BaseFormatter`](#BaseFormatter).
 2. Implement the required methods, such as `command()` or `number()`.
 3. Register the formatter in the builder instance.
 
@@ -258,28 +259,32 @@ g.set_formatter(CustomFormatter())  # Register the formatter
 
 The [PathTracer](#PathTracer) class helps generate motion paths by
 approximating curves with straight lines. The smoothness of the curve can
-be controlled by invoking `set_resolution()` on the G-code builder
-instance. This determines how many segments will be used. Lower resolution
-gives smoother curves but increases the number of generated G-code lines.
+be controlled by invoking [set_resolution()](#GCodeBuilder.set_resolution())
+on the G-code builder instance. This determines how many segments will
+be used. Lower resolution gives smoother curves but increases the number
+of generated G-code lines.
 
-Two main methods are provided to make it easier to extend `PathTracer`:
+Two main methods are provided to make it easier to extend
+[PathTracer](#PathTracer):
 
-- The `parametric` method is the core of how the `PathTracer` interpolates
-  curves. It uses a **parametric** approach to define curves, meaning the
-  curve is described by a simple mathematical function that takes a parameter
-  **theta** ranging from 0 at the start to 1 at the end of the curve. The
-  function then calculates the position (X, Y, Z) at any point along the
-  curve and traces the sampled segments with `G1` commands.
+- The [parametric()](#PathTracer.parametric) method is the core of how
+  the [PathTracer](#PathTracer) interpolates curves. It uses a **parametric**
+  approach to define curves, meaning the curve is described by a simple
+  mathematical function that takes a parameter `theta` ranging from 0 at
+  the start to 1 at the end of the curve. The function then calculates the
+  position (X, Y, Z) at any point along the curve and traces the sampled
+  segments with `G1` commands.
 
-- The `estimate_length` method quickly estimates the length of a curve by
-  sampling points along the curve and adding up the distances between them.
-  It's fast and good enough for rough estimates, but if precision is
-  required, it's better to calculate the exact length.
+- The [estimate_length()](#PathTracer.estimate_length) method quickly estimates
+  the length of a curve by sampling points along the curve and adding up
+  the distances between them. It's fast and good enough for rough estimates,
+  but if precision is required, it's better to calculate the exact length.
 
-Many of the path methods in the `PathTracer` rely on the `parametric`
-method to approximate complex curves. On the other hand, `estimate_length`
-should only be used when computing the exact length of the curve is
-difficult or computationally expensive.
+Many of the path methods in the [PathTracer](#PathTracer) rely on the
+[parametric()](#PathTracer.parametric) method to approximate complex curves.
+On the other hand, [estimate_length()](#PathTracer.estimate_length) should
+only be used when computing the exact length of the curve is difficult or
+computationally expensive.
 
 Example:
 
@@ -302,24 +307,28 @@ def circle(self, radius: float, **kwargs) -> None:
 The [CoordinateTransformer](#CoordinateTransformer) class provides a
 flexible and powerful way to apply 3D transformations to coordinates
 using **4x4 matrices**. By following a simple pattern of defining a
-transformation matrix and chaining it with `chain_transform()`, new
+transformation matrix and chaining it with
+[chain_transform()](#CoordinateTransformer.chain_transform()), new
 transformations can easily be added to the class.
 
 The class also supports saving and restoring transformation states using
-the `save_state()` and `restore_state()` methods. This is useful for
-temporarily modifying the transformation and then reverting to the previous
-state. By default, the states are stored on a stack.
+the [save_state()](#CoordinateTransformer.save_state()) and
+[restore_state()](#CoordinateTransformer.restore_state()) methods. This
+is useful for temporarily modifying the transformation and then reverting
+to the previous state. By default, the states are stored on a stack.
 
-When generating G-code commands, `GCodeCore` applies the transformations
-to the user-provided coordinates. For example, the `move()` method, which
-accepts coordinates as a `Point` or individual X, Y, Z values, applies the
-current transformation to these coordinates before generating the
-corresponding G-code commands.
+When generating G-code commands, [GCodeCore](#GCodeCore) applies the
+transformations to the user-provided coordinates. For example, the
+[move()](#GCodeCore.move()) method, which accepts coordinates as a
+[Point](#Point) or individual X, Y, Z values, applies the current
+transformation to these coordinates before generating the corresponding
+G-code commands.
 
 To add a new transformation method:
 
 1. Define the transformation matrix.
-2. Use the `chain_transform()` to apply the new matrix.
+2. Use the [`chain_transform()`](#CoordinateTransformer.chain_transform())
+   method to apply the new matrix.
 
 Example:
 

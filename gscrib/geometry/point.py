@@ -16,18 +16,52 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import NamedTuple, TypeAlias
-from typing import Sequence, Union
+from typing import NamedTuple
 
 import numpy as np
-from gscrib.params import ParamsDict
 
-OptFloat: TypeAlias = float | None
-PointLike: TypeAlias = Union['Point', Sequence[float | None], np.ndarray, None]
+from gscrib.params import ParamsDict
+from gscrib.types import OptFloat
 
 
 class Point(NamedTuple):
-    """A point in a 3D space."""
+    """A point in a 3D space.
+
+    This class represents a point in 3D space, where each coordinate
+    (x, y, z) can be either a ``float`` value or ``None``. None values
+    indicate unknown or unspecified coordinates.
+
+    Most methods in :class:`gscrib.GCodeCore` and :class:`gscrib.GCodeBuilder`
+    that accept ``Point`` objects are designed to work with point-like
+    values, which can be a ``Point`` object or a sequence containing the
+    (x, y, z) coordinates as numeric values.
+
+    The class supports basic arithmetic operations, that raise ``TypeError``
+    if any coordinates of the points are unknown. The method ``resolve``
+    can be used to create a new ``Point`` with any unknown coordinates
+    set to zero.
+
+    Examples:
+        >>> #Create points using different constructors:
+        >>> p1 = Point(1.0, 2.0, 3.0)      # All coordinates specified
+        >>> p2 = Point(x=1.0, z=3.0)       # Y coordinate is None
+        >>> p3 = Point.zero()              # Point at origin (0, 0, 0)
+        >>> p4 = Point.unknown()           # All coordinates are None
+        >>>
+        >>> # Using PointLike values
+        >>> g.move([1.0, 2.0, 3.0])        # Using a list
+        >>> g.move(point=(1.0, 2.0, 3.0))  # Using a tuple
+        >>> g.move(Point(1.0, 2.0, 3.0))   # Using a Point object
+        >>> g.move(x=1.0, y=2.0, z=3.0)    # Individual coordinates
+        >>>
+        >>> # Arithmetic operations
+        >>> p1 = Point(1.0, 2.0, 3.0)
+        >>> p2 = Point(2.0, 3.0, 4.0)
+        >>> p3 = p1 + p2  # Point(3.0, 5.0, 7.0)
+        >>> p4 = p2 - p1  # Point(1.0, 1.0, 1.0)
+        >>> p5 = p1 * 2   # Point(2.0, 4.0, 6.0)
+        >>> p6 = p1 / 2   # Point(0.5, 1.0, 1.5)
+    """
 
     x: OptFloat = None
     y: OptFloat = None

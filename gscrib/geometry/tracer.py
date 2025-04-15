@@ -16,16 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Callable, Sequence, TypeAlias
+from typing import Sequence
 
 import numpy as np
 from scipy.interpolate import CubicSpline
 from typeguard import typechecked
 
 from gscrib.enums import Direction
-from .point import Point, PointLike
+from gscrib.types import PathFn, PointLike
 
-PathFn: TypeAlias = Callable[[np.ndarray], np.ndarray]
+from .point import Point
 
 
 class PathTracer:
@@ -43,7 +43,7 @@ class PathTracer:
     use the transformation methods provided by the builder (translate,
     rotate, scale, etc).
 
-    For complex transformations, the `GCodeCore.transform` property can
+    For complex transformations, the ``GCodeCore.transform`` property can
     be used as a context manager to ensure proper matrix stack handling.
     Transformations can be combined and will affect all subsequent path
     operations until the context is exited.
@@ -80,8 +80,8 @@ class PathTracer:
         arc will perform helical interpolation.
 
         Args:
-            target: Absolute or relative destination point (x, y, [z])
-            center: Center point (x, y) relative to the current position
+            target (Point): Absolute or relative destination point (x, y, [z])
+            center (Point): Center point (x, y) relative to the current position
             **kwargs: Additional G-code parameters (added to each move)
 
         Raises:
@@ -149,8 +149,8 @@ class PathTracer:
         arc will perform helical interpolation.
 
         Args:
-            target: Absolute or relative destination point (x, y, [z])
-            radius: Radius (positive for shorter arc, negative for longer)
+            target (Point): Absolute or relative destination point (x, y, [z])
+            radius (float): Radius (positive for shorter arc, negative for longer)
             **kwargs: Additional G-code parameters (added to each move)
 
         Raises:
@@ -207,7 +207,7 @@ class PathTracer:
         set_direction().
 
         Args:
-            center: Center point (x, y) relative to the current position
+            center (Point): Center point (x, y) relative to the current position
             **kwargs: Additional G-code parameters (added to each move)
 
         Example:
@@ -229,7 +229,7 @@ class PathTracer:
         resolution setting.
 
         Args:
-            points: Sequence of control points (x, y, [z])
+            targets (Sequence[Point]): Sequence of control points (x, y, [z])
             **kwargs: Additional G-code parameters (added to each move)
 
         Raises:
@@ -287,9 +287,9 @@ class PathTracer:
         by a center point and the number of complete revolutions.
 
         Args:
-            target: Absolute or relative destination point (x, y, [z])
-            center: Center point (x, y) relative to the current position
-            turns: Number of complete revolutions to make (default: 1)
+            target (Point): Absolute or relative destination point (x, y, [z])
+            center (Point): Center point (x, y) relative to the current position
+            turns (int): Number of complete revolutions to make (default: 1)
             **kwargs: Additional G-code parameters (added to each move)
 
         Raises:
@@ -347,8 +347,8 @@ class PathTracer:
         from the current position to the target Z height and the pitch.
 
         Args:
-            target: Absolute or relative destination point (x, y, [z])
-            pitch: Distance between turns in Z axis
+            target (Point): Absolute or relative destination point (x, y, [z])
+            pitch (float): Distance between turns in Z axis
             **kwargs: Additional G-code parameters (added to each move)
 
         Raises:
@@ -374,8 +374,8 @@ class PathTracer:
         target point, the spiral will perform helical interpolation.
 
         Args:
-            target: Absolute or relative destination point (x, y, [z])
-            turns: Number of complete revolutions to make (default: 1)
+            target (Point): Absolute or relative destination point (x, y, [z])
+            turns (int): Number of complete revolutions to make (default: 1)
             **kwargs: Additional G-code parameters (added to each move)
 
         Raises:
@@ -392,7 +392,7 @@ class PathTracer:
         points, starting from the current position.
 
         Args:
-            points: Sequence of control points (x, y, [z])
+            targets (Sequence[Point]): Sequence of control points (x, y, [z])
             **kwargs: Additional G-code parameters (added to each move)
 
         Raises:

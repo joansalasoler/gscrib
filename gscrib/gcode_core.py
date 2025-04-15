@@ -16,9 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, logging
+import logging
 from contextlib import contextmanager
-from typing import Any, List, Sequence, Tuple, TypeAlias
+from typing import Any, List, Sequence, Tuple
 from typeguard import typechecked
 
 from .config import GConfig
@@ -26,43 +26,62 @@ from .enums import Axis, DistanceMode, Direction
 from .excepts import DeviceError
 from .formatters import BaseFormatter, DefaultFormatter
 from .params import ParamsDict
-from .geometry import Point, PointLike, CoordinateTransformer
-from .writers import BaseWriter, SocketWriter, SerialWriter, FileWriter
-
-ProcessedParams: TypeAlias = Tuple[Point, ParamsDict, str | None]
+from .geometry import Point, CoordinateTransformer
+from .types import PointLike, ProcessedParams
+from .writers import BaseWriter, ConsoleWriter, FileWriter
+from .writers import SocketWriter, SerialWriter
 
 
 class GCodeCore(object):
-    """Core G-code generation functionality.
+    """Core class for generating G-code output.
 
-    This class provides the fundamental building blocks for G-code
-    generation, including:
+    This class provides the fundamental components for generating and
+    outputting G-code, including formatting, coordinate transformations,
+    and support for various output destinations.
 
-    - G-code formatting and output writing
-    - Coordinate system transformations
-    - Position tracking and distance mode management
-    - Basic movement operations (linear and rapid moves)
-    - Multiple output methods (file, serial, network socket)
+    It offers the core functionality necessary for G-code generation and
+    is designed to be extended when building custom G-code builders. For
+    most purposes, it is recommended to use :class:`GCodeBuilder` instead,
+    as it extends this base class with a more comprehensive set of G-code
+    commands and enhanced state management features.
 
-    For general use, it is recommended to use the `GCodeBuilder` class
-    instead, which extends `GCodeCore` with a more complete set of
-    G-code commands and additional state management capabilities.
+    Key responsibilities of this class include:
 
-    The `teardown()` method must be called when done to properly close
-    connections and clean up resources. Using the class as a context
-    manager with 'with' automatically handles this.
+    - Formatting and writing G-code instructions.
+    - Basic movement commands (linear and rapid moves).
+    - Position tracking and distance mode management.
+    - Coordinate system transformations (rotation, scaling, etc).
+    - Support for multiple output methods (file, serial, network, etc).
 
-    The current position of X, Y and Z axes is tracked by the `position`
-    property. This property reflects the absolute position of all axes
-    in the original coordinate system (without transforms).
+    Basic movement methods include ``move()`` and ``rapid()`` for linear
+    and rapid moves, respectively. These methods automatically apply any
+    active transformations before outputting the corresponding G-code.
+    To bypass transformations when moving to absolute coordinates the
+    ``move_absolute()`` and ``rapid_absolute()`` methods may be used.
 
-    Transformations are limited to the X, Y, and Z axes. While you can
-    include additional axes or parameters in move commands, only these
-    three primary axes will transformed and tracked by the `position`
-    property. All other custom parameters provided to the move methods
-    can be retrieved using the `get_parameter()` method.
+    Movement coordinates can be provided as individual X, Y, Z parameters
+    to this methods or as a :class:`geometry.Point` object. Additionally,
+    all movement methods accept extra G-code parameters as keyword
+    arguments and support an optional ``comment`` for annotation.
 
-    This class constructor accepts the following configuration options:
+    The ``transform`` property gives access to the coordinate transformer,
+    enabling operations such as translation, rotation, and scaling of the
+    coordinate system. Note that transformations only apply to the X, Y,
+    and Z axes. While custom axes or parameters may be included in the
+    movement commands, transformations and tracking will be limited to
+    the X, Y, and Z axes. Any other custom parameters can be retrieved
+    via the ``get_parameter()`` method.
+
+    The ``position`` property tracks the current positions of the X, Y,
+    and Z axes, reflecting their absolute positions in the original
+    coordinate system (without any transformations).
+
+    The ``teardown()`` method should be called when done to properly
+    close connections and clean up resources. However, using the class
+    as a context manager automatically handles this.
+
+    This class constructor accepts the following configuration options,
+    which can be provided as keyword arguments or as a dictionary:
 
     - output (str | TextIO | BinaryIO ):
         Path or file-like object where the generated G-Code will be
@@ -98,12 +117,15 @@ class GCodeCore(object):
         ...     g.rapid(z=5)        # Rapid move up to Z=5
     """
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, *args, **kwargs: Any) -> None:
         """Initialize G-code generator with configuration.
 
         Args:
             **kwargs: Configuration parameters
         """
+
+        if args and isinstance(args[0], dict):
+            kwargs = {**args[0], **kwargs}
 
         config: GConfig = GConfig(**kwargs)
 
@@ -132,7 +154,7 @@ class GCodeCore(object):
         """Initialize output writers."""
 
         if config.print_lines is True:
-            writer = FileWriter(self._get_stdout_file())
+            writer = ConsoleWriter()
             self.add_writer(writer)
 
         if config.output is not None:
@@ -146,14 +168,6 @@ class GCodeCore(object):
         if config.direct_write == "serial":
             writer = SerialWriter(config.port, config.baudrate)
             self.add_writer(writer)
-
-    def _get_stdout_file(self) -> Any:
-        """Get binary or text stdout file."""
-
-        if hasattr(sys.stdout, 'buffer'):
-            return sys.stdout.buffer
-
-        return sys.stdout
 
     @property
     def transform(self) -> CoordinateTransformer:
@@ -180,11 +194,11 @@ class GCodeCore(object):
 
         This method retrieves the last used value for a G-code movement
         parameter. These parameters are stored during move operations and
-        include both standard G-code parameters (like F for feed rate)
+        include both standard G-code parameters (like ``F`` for feed rate)
         and any custom parameters passed to move commands.
 
         Args:
-            name: Name of the parameter (case-insensitive)
+            name (str): Name of the parameter (case-insensitive)
 
         Returns:
             Any: The parameter's value, or None if the parameter hasn't
@@ -234,7 +248,7 @@ class GCodeCore(object):
         """Set the positioning mode for subsequent commands.
 
         Args:
-            mode (DistanceMode): The distance mode (absolute/relative)
+            mode (DistanceMode | str): The distance mode (absolute/relative)
 
 
         Raises:
@@ -260,7 +274,7 @@ class GCodeCore(object):
         reset axis positions.
 
         Args:
-            point (optional): New axis position as a point
+            point (Point, optional): New axis position as a point
             x (float, optional): New X-axis position value
             y (float, optional): New Y-axis position value
             z (float, optional): New Z-axis position value
@@ -292,7 +306,7 @@ class GCodeCore(object):
         """Temporarily set absolute distance mode within a context.
 
         This context manager temporarily switches to absolute positioning
-        mode (G90) and automatically restores the previous mode when
+        mode (``G90``) and automatically restores the previous mode when
         exiting the context.
 
         Example:
@@ -319,7 +333,7 @@ class GCodeCore(object):
         """Temporarily set relative distance mode within a context.
 
         This context manager temporarily switches to relative positioning
-        mode (G91) and automatically restores the previous mode when
+        mode (``G91``) and automatically restores the previous mode when
         exiting the context.
 
         Example:
@@ -403,15 +417,15 @@ class GCodeCore(object):
 
         Calculates the absolute coordinates of a target point based on
         the current position and positioning mode (relative/absolute).
-        Any None coordinates in the current position are first converted
+        Any ``None`` coordinates in the current position are first converted
         to 0.0 to ensure all returned coordinates have numeric values.
 
-        The input is a point-like object containing target coordinates.
+        The input is a point object containing target coordinates.
         In absolute mode, these are the final coordinates. In relative
         mode, these are offsets from the current position.
 
         Args:
-            point: Absolute target or relative offset
+            point (Point): Absolute target or relative offset
 
         Returns:
             Point: The absolute target position
@@ -430,7 +444,7 @@ class GCodeCore(object):
         """Convert a sequence of points to absolute coordinates.
 
         Args:
-            points: Absolute targets or relative offsets
+            points (Sequence[Point]): Absolute targets or relative offsets
 
         Returns:
             Point: A tuple of absolute target positions
@@ -455,7 +469,7 @@ class GCodeCore(object):
         """Convert an absolute point to match current distance mode.
 
         Calculates the coordinates to use in a move command based on the
-        current positioning mode (relative/absolute). Any None coordinates
+        current positioning mode (relative/absolute). Any ``None`` coordinates
         in the current position or the target point are first converted
         to 0.0 to ensure all returned coordinates have numeric values.
 
@@ -463,7 +477,7 @@ class GCodeCore(object):
         In relative mode, returns the offset from current position.
 
         Args:
-            point: Target point in absolute coordinates
+            point (Point): Target point in absolute coordinates
 
         Returns:
             Point: Coordinates matching current positioning mode
@@ -487,7 +501,7 @@ class GCodeCore(object):
         positioning or tool changes.
 
         Args:
-            point (optional): Target position as a point
+            point (Point, optional): Target position as a point
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
@@ -507,13 +521,13 @@ class GCodeCore(object):
     def move(self, point: PointLike = None, **kwargs) -> None:
         """Execute a controlled linear move to the specified location.
 
-        The target position can be specified either as a Point object or
-        as individual x, y, z coordinates. Additional movement parameters
-        can be provided as keyword arguments. The move will be relative
-        or absolute based on the current distance mode.
+        The target position can be specified either as a :class:`geometry.Point`
+        object or as individual x, y, z coordinates. Additional movement
+        parameters can be provided as keyword arguments. The move will be
+        relative or absolute based on the current distance mode.
 
         Args:
-            point (optional): Target position as a point
+            point (Point, optional): Target position as a point
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
@@ -539,7 +553,7 @@ class GCodeCore(object):
         positioning mode if relative mode is active.
 
         Args:
-            point (optional): Target position as a point
+            point (Point, optional): Target position as a point
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
@@ -567,7 +581,7 @@ class GCodeCore(object):
         positioning mode if relative mode is active.
 
         Args:
-            point (optional): Target position as a point
+            point (Point, optional): Target position as a point
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position
@@ -612,8 +626,8 @@ class GCodeCore(object):
         Direct use of this method is discouraged as it bypasses all state
         management. Using this method may lead to inconsistencies between
         the internal state tracking and the actual machine state. Instead,
-        use the dedicated methods like move(), tool_on(), etc., which
-        properly maintain state and ensure safe operation.
+        use the dedicated methods like ``move()``, ``tool_on()``, etc.,
+        which properly maintain state and ensure safe operation.
 
         Args:
             statement: The raw G-code statement to write
@@ -726,7 +740,7 @@ class GCodeCore(object):
         movement parameters (including X, Y and Z).
 
         Args:
-            point (optional): Target position as a point
+            point (Point, optional): Target position as a point
             x (float, optional): Target X-axis position
             y (float, optional): Target Y-axis position
             z (float, optional): Target Z-axis position

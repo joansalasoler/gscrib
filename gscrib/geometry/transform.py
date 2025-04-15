@@ -20,7 +20,8 @@ import numpy as np
 from scipy import linalg
 from typeguard import typechecked
 
-from .point import Point, PointLike
+from gscrib.types import PointLike
+from .point import Point
 
 
 class Transform:
@@ -79,7 +80,7 @@ class Transform:
         """Transform the coordinates of a point.
 
         Args:
-            point: A Point or point-like object.
+            point (Point): A Point or point-like object.
 
         Returns:
             A Point with the transformed (x, y, z) coordinates.
@@ -94,7 +95,7 @@ class Transform:
         """Invert he transformed coordinates of a point.
 
         Args:
-            point: A Point or point-like object.
+            point (Point): A Point or point-like object.
 
         Returns:
             A Point with the inverted (x, y, z) coordinates.
