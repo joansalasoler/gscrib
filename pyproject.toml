@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gscrib"
-version = "1.0.0"
+version = "1.0.1"
 description = "Supercharge G-code with Python"
 authors = ["Joan Sala <contact@joansala.com>"]
 license = "GPL-3.0"
