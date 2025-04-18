@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import threading
 import logging, time, signal
 
 from gscrib.enums import DirectWrite
@@ -125,6 +126,7 @@ class PrintrunWriter(BaseWriter):
 
         try:
             self._device = self._create_device()
+            self._device.loud = True
             self._wait_for_connection()
         except Exception as e:
             if self._device:
@@ -182,6 +184,7 @@ class PrintrunWriter(BaseWriter):
             command = statement.decode("utf-8").strip()
             self._logger.info("Send command: %s", command)
             self._device.send(command)
+            self._wait_for_acknowledgment()
         except Exception as e:
             raise DeviceWriteError(
                 f"Failed to send command: {str(e)}") from e
@@ -250,6 +253,37 @@ class PrintrunWriter(BaseWriter):
             time.sleep(POLLING_INTERVAL)
 
         self._logger.info("Device connected")
+
+    def _wait_for_acknowledgment(self) -> None:
+        """Wait until machine responds with acknowledgment or error.
+
+        Raises:
+            DeviceConnectionError: Shutdown requested while waiting
+            DeviceTimeoutError: Response not received within timeout
+        """
+
+        self._logger.info("Wait for acknowledgment")
+        original_callback = self._device.recvcb
+        response = []
+
+        def receive_callback(line):
+            message = line.strip().lower()
+
+            if message.startswith("ok") or "error" in message:
+                response.append(message)
+
+        try:
+            self._device.recvcb = receive_callback
+
+            while not len(response):
+                if self._shutdown_requested:
+                    raise DeviceConnectionError("Shutdown requested")
+
+                time.sleep(POLLING_INTERVAL)
+
+            self._logger.info(f"Acknowledgment: {response[0]}")
+        finally:
+            self._device.recvcb = original_callback
 
     def _handle_shutdown(self, signum, frame):
         """Handle shutdown signals by disconnecting cleanly."""
