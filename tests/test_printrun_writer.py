@@ -24,21 +24,27 @@ def mock_printcore():
 
 @pytest.fixture
 def serial_writer():
-    return PrintrunWriter(
+    writer = PrintrunWriter(
         mode=DirectWrite.SERIAL,
         host="none",
         port="/dev/ttyUSB0",
         baudrate=115200
     )
 
+    writer._wait_for_acknowledgment = Mock()
+    return writer
+
 @pytest.fixture
 def scoket_writer():
-    return PrintrunWriter(
+    writer = PrintrunWriter(
         mode=DirectWrite.SOCKET,
         host="testhost",
         port="8888",
         baudrate=0
     )
+
+    writer._wait_for_acknowledgment = Mock()
+    return writer
 
 
 # --------------------------------------------------------------------
