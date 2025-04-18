@@ -80,7 +80,7 @@ class LogWriter(BaseWriter):
             logging.basicConfig(level=logging.INFO)
 
         statement_str = statement.decode("utf-8")
-        self._logger.info(statement_str)
+        self._logger.info(statement_str.strip())
 
     def __enter__(self) -> "LogWriter":
         return self.connect()
