@@ -107,6 +107,8 @@ class printcore():
     """
 
     def __init__(self, port = None, baud = None, dtr=None):
+        self._logger = logging.getLogger(__name__)
+
         self.baud = None
         self.dtr = None
         self.port = None
@@ -155,7 +157,7 @@ class printcore():
         self.event_handler = []
         for handler in self.event_handler:
             try: handler.on_init()
-            except: logging.error(traceback.format_exc())
+            except: self._logger.error(traceback.format_exc())
         if port is not None and baud is not None:
             self.connect(port, baud)
         self.xy_feedrate = None
@@ -172,12 +174,12 @@ class printcore():
     def logError(self, error):
         for handler in self.event_handler:
             try: handler.on_error(error)
-            except: logging.error(traceback.format_exc())
+            except: self._logger.error(traceback.format_exc())
         if self.errorcb:
             try: self.errorcb(error)
-            except: logging.error(traceback.format_exc())
+            except: self._logger.error(traceback.format_exc())
         else:
-            logging.error(error)
+            self._logger.error(error)
 
     @locked
     def disconnect(self):
@@ -200,7 +202,7 @@ class printcore():
                 pass
         for handler in self.event_handler:
             try: handler.on_disconnect()
-            except: logging.error(traceback.format_exc())
+            except: self._logger.error(traceback.format_exc())
         self.printer = None
         self.online = False
         self.printing = False
@@ -229,7 +231,7 @@ class printcore():
                 return
             for handler in self.event_handler:
                 try: handler.on_connect()
-                except: logging.error(traceback.format_exc())
+                except: self._logger.error(traceback.format_exc())
             self.stop_read_thread = False
             self.read_thread = threading.Thread(target = self._listen,
                                                 name='read thread')
@@ -261,11 +263,11 @@ class printcore():
                 self.log.append(line)
                 for handler in self.event_handler:
                     try: handler.on_recv(line)
-                    except: logging.error(traceback.format_exc())
+                    except: self._logger.error(traceback.format_exc())
                 if self.recvcb:
                     try: self.recvcb(line)
                     except: self.logError(traceback.format_exc())
-                if self.loud: logging.info("RECV: %s" % line.rstrip())
+                if self.loud: self._logger.info("RECV: %s" % line.rstrip())
             return line
         except UnicodeDecodeError:
             msg = ("Got rubbish reply from {0} at baudrate {1}:\n"
@@ -287,7 +289,7 @@ class printcore():
         while not self.online and self._listen_can_continue():
             self._send("M105")
             if self.writefailures >= 4:
-                logging.error(_("Aborting connection attempt after 4 failed writes."))
+                self._logger.error(_("Aborting connection attempt after 4 failed writes."))
                 return
             empty_lines = 0
             while self._listen_can_continue():
@@ -311,7 +313,7 @@ class printcore():
                     self.online = True
                     for handler in self.event_handler:
                         try: handler.on_online()
-                        except: logging.error(traceback.format_exc())
+                        except: self._logger.error(traceback.format_exc())
                     if self.onlinecb:
                         try: self.onlinecb()
                         except: self.logError(traceback.format_exc())
@@ -326,7 +328,7 @@ class printcore():
         while self._listen_can_continue():
             line = self._readline()
             if line is None:
-                logging.debug('_readline() is None, exiting _listen()')
+                self._logger.debug('_readline() is None, exiting _listen()')
                 break
             if line.startswith('DEBUG_'):
                 continue
@@ -335,7 +337,7 @@ class printcore():
             if line.startswith('ok') and "T:" in line:
                 for handler in self.event_handler:
                     try: handler.on_temp(line)
-                    except: logging.error(traceback.format_exc())
+                    except: self._logger.error(traceback.format_exc())
                 if self.tempcb:
                     # callback for temp, status, whatever
                     try: self.tempcb(line)
@@ -357,7 +359,7 @@ class printcore():
                         pass
                 self.clear = True
         self.clear = True
-        logging.debug('Exiting read thread')
+        self._logger.debug('Exiting read thread')
 
     def _start_sender(self):
         self.stop_send_thread = False
@@ -571,7 +573,7 @@ class printcore():
         try:
             for handler in self.event_handler:
                 try: handler.on_start(resuming)
-                except: logging.error(traceback.format_exc())
+                except: self._logger.error(traceback.format_exc())
             if self.startcb:
                 # callback for printing started
                 try: self.startcb(resuming)
@@ -585,7 +587,7 @@ class printcore():
             self.sent = []
             for handler in self.event_handler:
                 try: handler.on_end()
-                except: logging.error(traceback.format_exc())
+                except: self._logger.error(traceback.format_exc())
             if self.endcb:
                 # callback for printing done
                 try: self.endcb()
@@ -634,7 +636,7 @@ class printcore():
                 if prev_layer != layer:
                     for handler in self.event_handler:
                         try: handler.on_layerchange(layer)
-                        except: logging.error(traceback.format_exc())
+                        except: self._logger.error(traceback.format_exc())
             if self.layerchangecb and self.queueindex > 0:
                 (prev_layer, prev_line) = self.mainqueue.idxs(self.queueindex - 1)
                 if prev_layer != layer:
@@ -642,7 +644,7 @@ class printcore():
                     except: self.logError(traceback.format_exc())
             for handler in self.event_handler:
                 try: handler.on_preprintsend(gline, self.queueindex, self.mainqueue)
-                except: logging.error(traceback.format_exc())
+                except: self._logger.error(traceback.format_exc())
             if self.preprintsendcb:
                 if self.mainqueue.has_index(self.queueindex + 1):
                     (next_layer, next_line) = self.mainqueue.idxs(self.queueindex + 1)
@@ -668,7 +670,7 @@ class printcore():
                 self.lineno += 1
                 for handler in self.event_handler:
                     try: handler.on_printsend(gline)
-                    except: logging.error(traceback.format_exc())
+                    except: self._logger.error(traceback.format_exc())
                 if self.printsendcb:
                     try: self.printsendcb(gline)
                     except: self.logError(traceback.format_exc())
@@ -697,14 +699,14 @@ class printcore():
             try:
                 gline = self.analyzer.append(command, store = False)
             except:
-                logging.warning(_("Could not analyze command %s:") % command +
+                self._logger.warning(_("Could not analyze command %s:") % command +
                                 "\n" + traceback.format_exc())
             if self.loud:
-                logging.info("SENT: %s" % command)
+                self._logger.info("SENT: %s" % command)
 
             for handler in self.event_handler:
                 try: handler.on_send(command, gline)
-                except: logging.error(traceback.format_exc())
+                except: self._logger.error(traceback.format_exc())
             if self.sendcb:
                 try: self.sendcb(command, gline)
                 except: self.logError(traceback.format_exc())
