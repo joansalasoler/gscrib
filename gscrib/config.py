@@ -45,7 +45,7 @@ class GConfig():
     print_lines: bool | str = field(default=False)
 
     # Direct write settings
-    direct_write: str | DirectWrite = field(default='DirectWrite.OFF')
+    direct_write: str | DirectWrite = field(default=DirectWrite.OFF)
     host: str = field(default="localhost")
     port: int = field(default=8000)
     baudrate: int = field(default=250000)
