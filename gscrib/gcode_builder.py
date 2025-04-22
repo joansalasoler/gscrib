@@ -716,6 +716,20 @@ class GCodeBuilder(GCodeCore):
         statement = self._get_statement(mode, kwargs)
         self.write(statement)
 
+    def wait(self) -> None:
+        """Wait for all pending moves to complete.
+
+        Invokes ``halt(HaltMode.WAIT_FOR_MOTION)``.
+
+        This ensures all queued motion commands have been executed before
+        proceeding with subsequent commands. Useful for synchronization
+        points where precise positioning is required.
+
+        >>> M400
+        """
+
+        self.halt(HaltMode.WAIT_FOR_MOTION)
+
     @typechecked
     def pause(self, optional: bool = False) -> None:
         """Pause program execution.
@@ -725,6 +739,8 @@ class GCodeBuilder(GCodeCore):
 
         Args:
             optional (bool): If ``True``, pause is optional
+
+        >>> M00|M01
         """
 
         self.halt(
@@ -742,6 +758,8 @@ class GCodeBuilder(GCodeCore):
 
         Args:
             reset (bool): If ``True``, reset the machine
+
+        >>> M02|M30
         """
 
         self.halt(

@@ -255,4 +255,8 @@ gcode_table = GCodeTable((
         "M191", "Wait for chamber to reach temperature"
     ),
 
+    GCodeEntry(HaltMode.WAIT_FOR_MOTION,
+        "M400", "Wait for all moves to finish"
+    ),
+
 ))

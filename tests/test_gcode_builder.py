@@ -175,6 +175,26 @@ def test_set_chamber_temperature(builder, mock_write):
     builder.set_chamber_temperature(60)
     assert mock_write.last_statement.startswith('M141 S60')
 
+def test_pause_forced(builder, mock_write):
+    builder.pause()
+    assert mock_write.last_statement.startswith('M00')
+
+def test_pause_optional(builder, mock_write):
+    builder.pause(optional=True)
+    assert mock_write.last_statement.startswith('M01')
+
+def test_stop_without_reset(builder, mock_write):
+    builder.stop()
+    assert mock_write.last_statement.startswith('M02')
+
+def test_stop_with_reset(builder, mock_write):
+    builder.stop(reset=True)
+    assert mock_write.last_statement.startswith('M30')
+
+def test_wait(builder, mock_write):
+    builder.wait()
+    assert mock_write.last_statement.startswith('M400')
+
 def test_current_axis_position(builder):
     builder.move(x=10, y=20, z=30)
     assert builder.position.x == 10

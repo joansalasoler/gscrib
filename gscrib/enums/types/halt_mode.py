@@ -31,3 +31,4 @@ class HaltMode(BaseEnum):
     WAIT_FOR_BED = "wait-for-bed"
     WAIT_FOR_HOTEND = "wait-for-hotend"
     WAIT_FOR_CHAMBER = "wait-for-chamber"
+    WAIT_FOR_MOTION = "wait-for-motion"
