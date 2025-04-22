@@ -21,6 +21,7 @@ import logging, time, signal
 
 from gscrib.enums import DirectWrite
 from gscrib.printrun import printcore
+from gscrib.excepts import DeviceError
 from gscrib.excepts import DeviceWriteError
 from gscrib.excepts import DeviceConnectionError
 from gscrib.excepts import DeviceTimeoutError
@@ -29,6 +30,8 @@ from .base_writer import BaseWriter
 
 DEFAULT_TIMEOUT = 30.0  # seconds
 POLLING_INTERVAL = 0.1  # seconds
+SUCCESS_PREFIXES = ('ok',)
+ERROR_PREFIXES = ('error', 'alarm', '!!')
 
 
 class PrintrunWriter(BaseWriter):
@@ -260,6 +263,7 @@ class PrintrunWriter(BaseWriter):
         Raises:
             DeviceConnectionError: Shutdown requested while waiting
             DeviceTimeoutError: Response not received within timeout
+            DeviceError: If device replied with an error
         """
 
         self._logger.info("Wait for acknowledgment")
@@ -269,7 +273,9 @@ class PrintrunWriter(BaseWriter):
         def receive_callback(line):
             message = line.strip().lower()
 
-            if message.startswith("ok") or "error" in message:
+            if message.startswith(SUCCESS_PREFIXES):
+                response.append(message)
+            elif message.startswith(ERROR_PREFIXES):
                 response.append(message)
 
         try:
@@ -281,7 +287,11 @@ class PrintrunWriter(BaseWriter):
 
                 time.sleep(POLLING_INTERVAL)
 
-            self._logger.info(f"Acknowledgment: {response[0]}")
+            message = response[0] if len(response) else "None"
+            self._logger.info(f"Acknowledgment: {message}")
+
+            if message.startswith(ERROR_PREFIXES):
+                raise DeviceError(message)
         finally:
             self._device.recvcb = original_callback
 
