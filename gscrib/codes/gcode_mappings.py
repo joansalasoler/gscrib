@@ -44,6 +44,26 @@ gcode_table = GCodeTable((
     ),
 
     # ------------------------------------------------------------------
+    # Probing
+    # ------------------------------------------------------------------
+
+    GCodeEntry(ProbingMode.TOWARDS,
+        "G38.2", "Probe towards"
+    ),
+
+    GCodeEntry(ProbingMode.TOWARDS_NO_ERROR,
+        "G38.3", "Probe towards, no error"
+    ),
+
+    GCodeEntry(ProbingMode.AWAY,
+        "G38.4", "Probe away"
+    ),
+
+    GCodeEntry(ProbingMode.AWAY_NO_ERROR,
+        "G38.5", "Probe away, no error"
+    ),
+
+    # ------------------------------------------------------------------
     # Length Units
     # ------------------------------------------------------------------
 

@@ -25,6 +25,7 @@ from .types import HaltMode
 from .types import HotendTemperature
 from .types import Plane
 from .types import PositioningMode
+from .types import ProbingMode
 from .types import PowerMode
 from .types import SpinMode
 from .types import ToolSwapMode
@@ -48,6 +49,7 @@ __all__ = [
     "HotendTemperature",
     "Plane",
     "PositioningMode",
+    "ProbingMode",
     "PowerMode",
     "SpinMode",
     "ToolSwapMode",

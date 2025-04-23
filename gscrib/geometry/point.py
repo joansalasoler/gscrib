@@ -124,6 +124,30 @@ class Point(NamedTuple):
             self.z if z is None else z
         )
 
+    def mask(self,
+        x: OptFloat = None, y: OptFloat = None, z: OptFloat = None) -> 'Point':
+        """Create a new point with coordinates set to None if specified.
+
+        This method creates a new point where coordinates are set to
+        ``None`` if their corresponding parameter is not ``None``. This
+        is useful for marking coordinates as unknown when they are
+        involved in an operation.
+
+        Args:
+            x: Set X to `None` if not `None`
+            y: Set Y to `None` if not `None`
+            z: Set Z to `None` if not `None`
+
+        Returns:
+            A new point with the specified coordinates.
+        """
+
+        return Point(
+            self.x if x is None else None,
+            self.y if y is None else None,
+            self.z if z is None else None
+        )
+
     def combine(self, o: 'Point', t: 'Point', m: 'Point') -> 'Point':
         """Update coordinates based on position changes.
 

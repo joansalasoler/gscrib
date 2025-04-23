@@ -796,6 +796,47 @@ class GCodeBuilder(GCodeCore):
         self.comment(f"Emergency halt: {message}")
         self.halt(HaltMode.PAUSE)
 
+    @typechecked
+    def probe(self,
+        mode: ProbingMode | str, point: PointLike = None, **kwargs) -> None:
+        """Execute a probe move to the specified location.
+
+        A probe move will continue until contact is made or the target
+        point is reached. Since the actual stopping point depends on when
+        contact occurs, the current position is set to unknown (``None``)
+        for any axis involved in the movement.
+
+        Args:
+            mode (ProbingMode | str): Type of probe to perform
+            point (Point, optional): Target position as a point
+            x (float, optional): Target X-axis position
+            y (float, optional): Target Y-axis position
+            z (float, optional): Target Z-axis position
+            comment (str, optional): Comment to include in the move
+            **kwargs: Additional G-code parameters
+
+        >>> G38.2|G38.3|G38.4|G38.5 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
+        """
+
+        mode = ProbingMode(mode)
+        point, params, comment = self._process_move_params(point, **kwargs)
+        move, target_axes = self._transform_move(point)
+
+        # Prepare the G-code statement parameters
+
+        args = { **params, "X": move.x, "Y": move.y, "Z": move.z }
+        statement = self._get_statement(mode, args, comment)
+
+        # Set position to unknown for any axis involved
+
+        target_axes = target_axes.mask(move.x, move.y, move.z)
+
+        # Track parameters and write the statement
+
+        self._update_axes(target_axes, params)
+        self._track_move_params(params)
+        self.write(statement)
+
     def write(self, statement: str) -> None:
         """Write a raw G-code statement to all configured writers.
 

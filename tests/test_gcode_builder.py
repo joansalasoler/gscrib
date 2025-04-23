@@ -204,3 +204,21 @@ def test_current_axis_position(builder):
 def test_emergency_halt(builder, mock_write):
     builder.emergency_halt('Test emergency')
     assert mock_write.last_statement.startswith('M00')
+
+@pytest.mark.parametrize("mode,code", [
+    ("towards", "G38.2"),
+    ("away", "G38.4"),
+    ("towards-no-error", "G38.3"),
+    ("away-no-error", "G38.5"),
+])
+def test_probe_modes(mode, code, builder, mock_write):
+    builder.move(x=10, y=20, z=30)
+
+    builder.probe(mode, x=10, F=100)
+    assert builder.position == Point(None, 20, 30)
+    assert mock_write.last_statement.startswith(code)
+    assert builder.state.feed_rate == 100
+
+    builder.probe(mode, [100, 200])
+    assert builder.position == Point(None, None, 30)
+    assert mock_write.last_statement.startswith(code)

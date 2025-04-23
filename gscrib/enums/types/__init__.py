@@ -20,6 +20,7 @@ from .halt_mode import HaltMode
 from .hotend_temperature import HotendTemperature
 from .plane import Plane
 from .positioning_mode import PositioningMode
+from .probing_mode import ProbingMode
 from .power_mode import PowerMode
 from .spin_mode import SpinMode
 from .tool_swap_mode import ToolSwapMode
@@ -38,6 +39,7 @@ __all__ = [
     "HotendTemperature",
     "Plane",
     "PositioningMode",
+    "ProbingMode",
     "PowerMode",
     "SpinMode",
     "ToolSwapMode",
