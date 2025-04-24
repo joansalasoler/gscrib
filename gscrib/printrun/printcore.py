@@ -163,6 +163,9 @@ class printcore():
         self.xy_feedrate = None
         self.z_feedrate = None
 
+        # GRBL does not support setting line numbers (M110)
+        self._send_line_numbers = True
+
     def addEventHandler(self, handler):
         '''
         Adds an event handler.
@@ -287,7 +290,7 @@ class printcore():
 
     def _listen_until_online(self):
         while not self.online and self._listen_can_continue():
-            self._send("M105")
+            self._send("G4 P0")  # It was M105, which Grbl doesn't like
             if self.writefailures >= 4:
                 self._logger.error(_("Aborting connection attempt after 4 failed writes."))
                 return
@@ -308,6 +311,10 @@ class printcore():
                     empty_lines += 1
                     if empty_lines == 15: break
                 else: empty_lines = 0
+
+                if line.startswith("Grbl"):
+                    self._send_line_numbers = False
+
                 if line.startswith(tuple(self.greetings)) \
                    or line.startswith('ok') or "T:" in line:
                     self.online = True
@@ -418,13 +425,9 @@ class printcore():
         self.queueindex = startindex
         self.mainqueue = gcode
         self.printing = True
-        self.lineno = 0
         self.resendfrom = -1
-        if not gcode or not gcode.lines:
-            return True
-
         self.clear = False
-        self._send("M110 N-1", -1, True)
+        self._reset_line_numbers()
 
         resuming = (startindex != 0)
         self.print_thread = threading.Thread(target = self._print,
@@ -682,16 +685,16 @@ class printcore():
             self.clear = True
             if not self.paused:
                 self.queueindex = 0
-                self.lineno = 0
-                self._send("M110 N-1", -1, True)
+                self._reset_line_numbers()
 
     def _send(self, command, lineno = 0, calcchecksum = False):
         # Only add checksums if over serial (tcp does the flow control itself)
-        if calcchecksum and not self.printer.has_flow_control:
-            prefix = "N" + str(lineno) + " " + command
-            command = prefix + "*" + str(self._checksum(prefix))
-            if "M110" not in command:
-                self.sentlines[lineno] = command
+        if self._send_line_numbers:
+            if calcchecksum and not self.printer.has_flow_control:
+                prefix = "N" + str(lineno) + " " + command
+                command = prefix + "*" + str(self._checksum(prefix))
+                if "M110" not in command:
+                    self.sentlines[lineno] = command
         if self.printer:
             self.sent.append(command)
             # run the command through the analyzer
@@ -717,3 +720,9 @@ class printcore():
                 self.logError("Can't write to printer (disconnected?)"
                               "{0}".format(e))
                 self.writefailures += 1
+
+    def _reset_line_numbers(self):
+        self.lineno = 0
+
+        if self._send_line_numbers:
+            self._send("M110 N-1", -1, True)

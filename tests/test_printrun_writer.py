@@ -32,6 +32,8 @@ def serial_writer():
     )
 
     writer._wait_for_acknowledgment = Mock()
+    writer._wait_for_connection = Mock()
+
     return writer
 
 @pytest.fixture
@@ -44,6 +46,8 @@ def scoket_writer():
     )
 
     writer._wait_for_acknowledgment = Mock()
+    writer._wait_for_connection = Mock()
+
     return writer
 
 
@@ -170,11 +174,18 @@ def test_connect_failure(serial_writer, mock_printcore):
 
     assert not serial_writer.is_connected
 
-def test_connect_timeout(serial_writer, mock_printcore):
+def test_connect_timeout(mock_printcore):
+    serial_writer = PrintrunWriter(
+        mode=DirectWrite.SERIAL,
+        host="none",
+        port="/dev/ttyUSB0",
+        baudrate=115200
+    )
+
     mock_device = Mock()
     mock_device.online = False
     mock_printcore.return_value = mock_device
-    serial_writer._timeout = 0.1
+    serial_writer.set_timeout(0.1)
 
     with pytest.raises(DeviceConnectionError):
         serial_writer.connect()

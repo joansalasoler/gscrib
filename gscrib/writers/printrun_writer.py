@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import threading
 import logging, time, signal
 
 from gscrib.enums import DirectWrite
@@ -40,17 +41,6 @@ class PrintrunWriter(BaseWriter):
     using `printrun` core.
     """
 
-    __slots__ = (
-        "_mode",
-        "_device",
-        "_host",
-        "_port",
-        "_baudrate",
-        "_timeout",
-        "_logger",
-        "_shutdown_requested"
-    )
-
     def __init__(self, mode: DirectWrite, host: str, port: str, baudrate: int):
         """Initialize the printrun writer.
 
@@ -68,14 +58,22 @@ class PrintrunWriter(BaseWriter):
         self._baudrate = baudrate
         self._timeout = DEFAULT_TIMEOUT
         self._logger = logging.getLogger(__name__)
+        self._setup_device_events()
         self._setup_signal_handlers()
+
+    def _setup_device_events(self):
+        """Set up device synchronization events."""
+
+        self._device_error = None
+        self._ack_event = threading.Event()
+        self._online_event = threading.Event()
 
     def _setup_signal_handlers(self):
         """Set up signal handlers for graceful shutdown."""
 
         self._shutdown_requested = False
-        signal.signal(signal.SIGTERM, self._handle_shutdown)
-        signal.signal(signal.SIGINT, self._handle_shutdown)
+        signal.signal(signal.SIGTERM, self._on_shutdown_signal)
+        signal.signal(signal.SIGINT, self._on_shutdown_signal)
 
     @property
     def is_connected(self) -> bool:
@@ -127,8 +125,9 @@ class PrintrunWriter(BaseWriter):
             return self
 
         try:
+            self._device_error = None
             self._device = self._create_device()
-            self._device.loud = True
+            self._connect_device(self._device)
             self._wait_for_connection()
             self._start_print_thread()
         except Exception as e:
@@ -162,6 +161,7 @@ class PrintrunWriter(BaseWriter):
             if self._device:
                 self._device.cancelprint()
                 self._device.disconnect()
+                self._online_event.clear()
                 self._device = None
 
         self._logger.info("Disconnect successful")
@@ -185,35 +185,37 @@ class PrintrunWriter(BaseWriter):
             self.connect()
 
         try:
-            command = statement.decode("utf-8").strip()
-            self._logger.info("Send command: %s", command)
-            self._device.send(command)
+            self._send_statement(statement)
             self._wait_for_acknowledgment()
         except Exception as e:
             raise DeviceWriteError(
                 f"Failed to send command: {str(e)}") from e
 
-    def _create_socket_device(self):
-        """Create socket connection."""
-
-        socket_url = f"{self._host}:{self._port}"
-        self._logger.info("Connect to socket: %s", socket_url)
-        return printcore(socket_url, 0)
-
-    def _create_serial_device(self):
-        """Create serial connection."""
-
-        self._logger.info("Connect to serial: %s", self._port)
-        return printcore(self._port, self._baudrate)
+        self._abort_on_device_error()
 
     def _create_device(self):
         """Create serial or socket connection."""
 
-        return (
-            self._create_socket_device()
-            if self._mode == DirectWrite.SOCKET
-            else self._create_serial_device()
-        )
+        device = printcore()
+        device.loud = True
+        device.onlinecb = lambda: self._on_device_online()
+        device.errorcb = lambda error: self._on_printrun_error(error)
+        device.recvcb = lambda line: self._on_device_message(line)
+
+        return device
+
+    def _connect_device(self, device: printcore) -> None:
+        """Connect to the device."""
+
+        self._online_event.clear()
+
+        if self._mode == DirectWrite.SOCKET:
+            socket_url = f"{self._host}:{self._port}"
+            self._logger.info("Connect to socket: %s", socket_url)
+            device.connect(socket_url, 0)
+        else:
+            self._logger.info("Connect to serial: %s", self._port)
+            device.connect(self._port, self._baudrate)
 
     def _start_print_thread(self) -> None:
         """Starts the print process in a separate thread.
@@ -224,99 +226,133 @@ class PrintrunWriter(BaseWriter):
         """
 
         if self.is_connected and not self.is_printing:
+            self._logger.info("Starting print thread")
             self._device.startprint(gcoder.GCode([]))
-            self._logger.info("Print thread started")
+            self._wait_for_pending_operations()
 
-    def _wait_for_pending_operations(self) -> None:
-        """Wait for pending operations to complete.
+    def _send_statement(self, statement: bytes) -> None:
+        """Send a command to the device."""
 
-        Raises:
-            DeviceConnectionError: Shutdown requested or connection
-                is lost while waiting
-        """
+        command = statement.decode("utf-8").strip()
+        self._logger.info("Send command: %s", command)
 
-        self._logger.info("Wait for pending operations")
-
-        while self.has_pending_operations:
-            if self._shutdown_requested:
-                raise DeviceConnectionError("Shutdown requested")
-
-            if not self.is_connected:
-                raise DeviceConnectionError("Connection lost")
-
-            time.sleep(POLLING_INTERVAL)
-
-        self._logger.info("Pending operations completed")
+        self._ack_event.clear()
+        self._device.send(command)
 
     def _wait_for_connection(self) -> None:
         """Wait for the connection to be established.
 
         Raises:
-            DeviceConnectionError: Shutdown requested while waiting
+            DeviceError: If device reported an error
+            DeviceConnectionError: Shutdown requested or connection lost
             DeviceTimeoutError: Connection not established within timeout
         """
 
         self._logger.info("Wait for device connection")
-        start_time = time.time()
 
-        while not self.is_connected:
-            if self._shutdown_requested:
-                raise DeviceConnectionError("Shutdown requested")
+        if self._device.printer is None:
+            raise DeviceConnectionError("Could not connect to device")
 
-            if time.time() - start_time > self._timeout:
-                raise DeviceTimeoutError(f"Operation timed out")
+        if not self._online_event.wait(timeout=self._timeout):
+            raise DeviceTimeoutError("Connection timed out")
 
-            time.sleep(POLLING_INTERVAL)
-
+        self._abort_on_device_error()
         self._logger.info("Device connected")
 
-    def _wait_for_acknowledgment(self) -> None:
-        """Wait until machine responds with acknowledgment or error.
+    def _wait_for_pending_operations(self) -> None:
+        """Wait for pending operations to complete.
 
         Raises:
-            DeviceConnectionError: Shutdown requested while waiting
-            DeviceTimeoutError: Response not received within timeout
-            DeviceError: If device replied with an error
+            DeviceError: If device reported an error
+            DeviceConnectionError: Shutdown requested or connection lost
         """
 
+        self._logger.info("Wait for pending operations")
+
+        while self.has_pending_operations:
+            self._abort_on_device_error()
+            time.sleep(POLLING_INTERVAL)
+
+        self._logger.info("Pending operations completed")
+
+    def _wait_for_acknowledgment(self) -> None:
+        """Wait for an acknowledgment from the device."""
+
         self._logger.info("Wait for acknowledgment")
-        original_callback = self._device.recvcb
-        response = []
+        self._ack_event.wait()
 
-        def receive_callback(line):
-            message = line.strip().lower()
+    def _on_device_online(self) -> None:
+        """Callback to handle device online event."""
 
-            if message.startswith(SUCCESS_PREFIXES):
-                response.append(message)
-            elif message.startswith(ERROR_PREFIXES):
-                response.append(message)
+        self._logger.info("Device online")
+        self._online_event.set()
 
-        try:
-            self._device.recvcb = receive_callback
+    def _on_printrun_error(self, message: str) -> None:
+        """Callback to handle errors reported by printrun."""
 
-            while not len(response):
-                if self._shutdown_requested:
-                    raise DeviceConnectionError("Shutdown requested")
+        self._logger.error("Error: %s", message)
+        self._device_error = message
+        self._ack_event.set()
 
-                time.sleep(POLLING_INTERVAL)
+    def _on_device_message(self, message: str) -> None:
+        """Callback to handle messages from the device."""
 
-            message = response[0] if len(response) else "None"
-            self._logger.info(f"Acknowledgment: {message}")
+        message = message.strip()
+        lower_message = message.lower()
 
-            if message.startswith(ERROR_PREFIXES):
-                raise DeviceError(message)
-        finally:
-            self._device.recvcb = original_callback
+        self._logger.debug("Device message: %s", message)
 
-    def _handle_shutdown(self, signum, frame):
+        if lower_message.startswith(SUCCESS_PREFIXES):
+            self._ack_event.set()
+        elif lower_message.startswith(ERROR_PREFIXES):
+            self._device_error = self._format_error(message)
+            self._ack_event.set()
+
+    def _on_shutdown_signal(self, signum, frame):
         """Handle shutdown signals by disconnecting cleanly."""
 
         try:
             self._logger.info("Shutdown requested")
             self._shutdown_requested = True
+            self._online_event.set()
+            self._ack_event.set()
             self.disconnect(False)
         except Exception as e:
             self._logger.exception("Error during shutdown: %s", e)
+
+    def _abort_on_device_error(self) -> None:
+        """Check for errors in the device state.
+
+        Raises:
+            DeviceError: If device reported an error
+            DeviceConnectionError: If shutdown is requested
+            DeviceConnectionError: If connection is lost
+        """
+
+        if not self.is_connected:
+            raise DeviceConnectionError("Connection lost")
+
+        if self._shutdown_requested:
+            raise DeviceConnectionError("Shutdown requested")
+
+        if self._device_error is not None:
+            raise DeviceError(self._device_error)
+
+    def _format_error(self, message: str) -> str:
+        """Format an error message from the device.
+
+        Override this method to customize error formatting. This is
+        useful for translating or modifying error messages received from
+        the device to be more user-friendly.
+
+        Args:
+            message (str): The error message from the device.
+
+        Returns:
+            str: Formatted error message.
+        """
+
+        return message
 
     def __enter__(self) -> "PrintrunWriter":
         return self.connect()
