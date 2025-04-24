@@ -16,11 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import threading
 import logging, time, signal
 
 from gscrib.enums import DirectWrite
-from gscrib.printrun import printcore
+from gscrib.printrun import printcore, gcoder
 from gscrib.excepts import DeviceError
 from gscrib.excepts import DeviceWriteError
 from gscrib.excepts import DeviceConnectionError
@@ -131,6 +130,7 @@ class PrintrunWriter(BaseWriter):
             self._device = self._create_device()
             self._device.loud = True
             self._wait_for_connection()
+            self._start_print_thread()
         except Exception as e:
             if self._device:
                 self._device.disconnect()
@@ -160,6 +160,7 @@ class PrintrunWriter(BaseWriter):
                 self._wait_for_pending_operations()
         finally:
             if self._device:
+                self._device.cancelprint()
                 self._device.disconnect()
                 self._device = None
 
@@ -213,6 +214,18 @@ class PrintrunWriter(BaseWriter):
             if self._mode == DirectWrite.SOCKET
             else self._create_serial_device()
         )
+
+    def _start_print_thread(self) -> None:
+        """Starts the print process in a separate thread.
+
+        This initiates the print operation using a dedicated thread to
+        improve reliability. It enables features like line numbering,
+        checksums, resends, acknowledgment-based flow control, etc.
+        """
+
+        if self.is_connected and not self.is_printing:
+            self._device.startprint(gcoder.GCode([]))
+            self._logger.info("Print thread started")
 
     def _wait_for_pending_operations(self) -> None:
         """Wait for pending operations to complete.
