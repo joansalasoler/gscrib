@@ -222,6 +222,22 @@ class GCodeCore(object):
         self._formatter = formatter
 
     @typechecked
+    def get_writer(self, index: int = 0) -> BaseWriter:
+        """Get a writer by index.
+
+        Args:
+            index (int): Index of the writer to retrieve
+
+        Returns:
+            BaseWriter: The writer at the specified index
+
+        Raises:
+            IndexError: If the index is out of range
+        """
+
+        return self._writers[index]
+
+    @typechecked
     def add_writer(self, writer: BaseWriter) -> None:
         """Add a new writer to the list of writers.
 
