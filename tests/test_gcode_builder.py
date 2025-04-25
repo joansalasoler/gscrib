@@ -156,12 +156,7 @@ def test_sleep(builder, mock_write):
 
 def test_sleep_invalid_duration(builder):
     with pytest.raises(ValueError):
-        builder.sleep(0.0005)  # Less than 1ms
-
-    builder.set_time_units(TimeUnits.MILLISECONDS)
-
-    with pytest.raises(ValueError):
-        builder.sleep(0)  # Less than 1ms
+        builder.sleep(-0.0005)  # Less than 0
 
 def test_set_bed_temperature(builder, mock_write):
     builder.set_bed_temperature(60)

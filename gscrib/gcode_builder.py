@@ -518,19 +518,15 @@ class GCodeBuilder(GCodeCore):
             duration (float): Sleep duration in time units
 
         Raises:
-            ValueError: If duration is less than 1 ms
+            ValueError: If duration is less than zero
 
         >>> G4 P<seconds|milliseconds>
         """
 
+        if duration < 0:
+            raise ValueError(f"Invalid sleep time '{duration}'.")
+
         units = self.state.time_units
-
-        if units == TimeUnits.SECONDS and duration < 0.001:
-            raise ValueError(f"Invalid sleep time '{duration}'.")
-
-        if units == TimeUnits.MILLISECONDS and duration < 1:
-            raise ValueError(f"Invalid sleep time '{duration}'.")
-
         statement = self._get_statement(units, { "P": duration })
         self.write(statement)
 
