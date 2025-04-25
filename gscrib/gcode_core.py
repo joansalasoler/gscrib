@@ -162,11 +162,11 @@ class GCodeCore(object):
             self.add_writer(writer)
 
         if config.direct_write == "socket":
-            writer = SocketWriter(config.host, config.port)
+            writer = SocketWriter(config.host, int(config.port))
             self.add_writer(writer)
 
         if config.direct_write == "serial":
-            writer = SerialWriter(config.port, config.baudrate)
+            writer = SerialWriter(str(config.port), config.baudrate)
             self.add_writer(writer)
 
     @property

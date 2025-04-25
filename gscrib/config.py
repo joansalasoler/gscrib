@@ -47,7 +47,7 @@ class GConfig():
     # Direct write settings
     direct_write: str | DirectWrite = field(default=DirectWrite.OFF)
     host: str = field(default="localhost")
-    port: int = field(default=8000)
+    port: int | str = field(default=8000)
     baudrate: int = field(default=250000)
 
     # Axis naming settings
