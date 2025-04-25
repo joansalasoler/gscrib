@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import threading
+import re, threading
 import logging, time, signal
 
 from gscrib.enums import DirectWrite
@@ -25,6 +25,8 @@ from gscrib.excepts import DeviceError
 from gscrib.excepts import DeviceWriteError
 from gscrib.excepts import DeviceConnectionError
 from gscrib.excepts import DeviceTimeoutError
+from gscrib.params import ParamsDict
+
 from .base_writer import BaseWriter
 
 
@@ -32,6 +34,8 @@ DEFAULT_TIMEOUT = 30.0  # seconds
 POLLING_INTERVAL = 0.1  # seconds
 SUCCESS_PREFIXES = ('ok',)
 ERROR_PREFIXES = ('error', 'alarm', '!!')
+AXES = ("X", "Y", "Z", "A", "B", "C")
+VALUE_PATTERN = re.compile(r'([A-Za-z0-9]+):([-\d\.]+(?:,[-\d\.]+)*)')
 
 
 class PrintrunWriter(BaseWriter):
@@ -57,6 +61,8 @@ class PrintrunWriter(BaseWriter):
         self._port = port
         self._baudrate = baudrate
         self._timeout = DEFAULT_TIMEOUT
+        self._reported_params = set()
+        self._current_params = ParamsDict()
         self._logger = logging.getLogger(__name__)
         self._setup_device_events()
         self._setup_signal_handlers()
@@ -94,6 +100,22 @@ class PrintrunWriter(BaseWriter):
             not self._device.clear or
             not self._device.priqueue.empty()
         )
+
+    def get_parameter(self, name: str) -> float:
+        """Get the last reading for a parameter by name.
+
+        This method retrieves the last reported value for a device
+        parameter. These parameters are stored and updated each time
+        the device reports a new value for them.
+
+        Args:
+            name (str): Name of the parameter (case-insensitive)
+
+        Returns:
+            float: Last value read for the parameter or None
+        """
+
+        return self._current_params.get(name)
 
     def set_timeout(self, timeout: float) -> None:
         """Set the timeout for waiting for device operations.
@@ -304,9 +326,13 @@ class PrintrunWriter(BaseWriter):
 
         if lower_message.startswith(SUCCESS_PREFIXES):
             self._ack_event.set()
+            return
         elif lower_message.startswith(ERROR_PREFIXES):
             self._device_error = self._format_error(message)
             self._ack_event.set()
+            return
+
+        self._parse_message(message)
 
     def _on_shutdown_signal(self, signum, frame):
         """Handle shutdown signals by disconnecting cleanly."""
@@ -337,6 +363,35 @@ class PrintrunWriter(BaseWriter):
 
         if self._device_error is not None:
             raise DeviceError(self._device_error)
+
+    def _parse_message(self, message: str) -> None:
+        """Extract paramter readings from a device message."""
+
+        self._reported_params.clear()
+
+        for key, value in VALUE_PATTERN.findall(message):
+            try:
+                if len(key) == 1 and key.isalnum():
+                    self._update_param(key, float(value))
+                elif key == "FS" and message.startswith("<"):
+                    feed, speed = value.split(",")
+                    self._update_param("F", float(feed))
+                    self._update_param("S", float(speed))
+                elif key in ("MPos", "WPos", "PRB"):
+                    coords = map(float, value.split(","))
+
+                    for axis, coord in zip(AXES, coords):
+                        self._update_param(axis, coord)
+            except Exception as e:
+                self._logger.exception("Error parsing value: %s", e)
+
+    def _update_param(self, key: str, value: float) -> None:
+        """Update a parameter value if it hasn't been processed."""
+
+        if key not in self._reported_params:
+            self._reported_params.add(key)
+            self._current_params[key] = value
+            self._logger.debug("Set '%s' to %s", key, value)
 
     def _format_error(self, message: str) -> str:
         """Format an error message from the device.

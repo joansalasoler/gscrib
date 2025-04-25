@@ -64,6 +64,22 @@ class SerialWriter(BaseWriter):
         """Check if the device is currently printing."""
         return self._writer_delegate.is_printing
 
+    def get_parameter(self, name: str) -> float:
+        """Get the last reading for a parameter by name.
+
+        This method retrieves the last reported value for a device
+        parameter. These parameters are stored and updated each time
+        the device reports a new value for them.
+
+        Args:
+            name (str): Name of the parameter (case-insensitive)
+
+        Returns:
+            float: Last value read for the parameter or None
+        """
+
+        return self._writer_delegate.get_parameter(name)
+
     def set_timeout(self, timeout: float) -> None:
         """Set the timeout for waiting for device operations.
 
