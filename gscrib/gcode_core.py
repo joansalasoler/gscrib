@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from dataclasses import asdict
 from contextlib import contextmanager
 from typing import Any, List, Sequence, Tuple
 from typeguard import typechecked
@@ -123,6 +124,9 @@ class GCodeCore(object):
         Args:
             **kwargs: Configuration parameters
         """
+
+        if args and isinstance(args[0], GConfig):
+            kwargs = {**asdict(args[0]), **kwargs}
 
         if args and isinstance(args[0], dict):
             kwargs = {**args[0], **kwargs}
