@@ -45,17 +45,17 @@ class PrintrunWriter(BaseWriter):
     using `printrun` core.
     """
 
-    def __init__(self, mode: DirectWrite, host: str, port: str, baudrate: int):
+    def __init__(self, mode: DirectWrite | str, host: str, port: str, baudrate: int):
         """Initialize the printrun writer.
 
         Args:
-            mode (DirectWrite): Connection mode (socket or serial).
+            mode (DirectWrite | str): Connection mode (socket or serial).
             host (str): The hostname or IP address of the remote machine.
             port (int): The TCP or serial port identifier
             baudrate (int): Communication speed in bauds
         """
 
-        self._mode = mode
+        self._mode = DirectWrite(mode)
         self._device = None
         self._host = host
         self._port = port
