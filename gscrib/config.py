@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import BinaryIO, TextIO
 from .enums import DirectWrite
 
@@ -54,3 +54,21 @@ class GConfig():
     x_axis: str = field(default="X")
     y_axis: str = field(default="Y")
     z_axis: str = field(default="Z")
+
+
+    @classmethod
+    def from_object(cls, config) -> "GConfig":
+        """Create a GConfig instance from an object with attributes.
+
+        Args:
+            config: Any object that supports attribute access
+
+        Returns:
+            GConfig: A new configuration instance
+        """
+
+        return cls(**{
+            field.name: getattr(config, field.name)
+            for field in fields(cls)
+            if hasattr(config, field.name)
+        })
