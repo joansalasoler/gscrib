@@ -114,6 +114,10 @@ class BoundManager:
 
         min_value, max_value = self._bounds.get(name)
 
-        if not (min_value <= value <= max_value):
+        if isinstance(value, Point):
+            if not value.within_bounds(min_value, max_value):
+                raise ValueError(
+                    f"Point {value} is out of bounds for '{name}'")
+        elif not (min_value <= value <= max_value):
             raise ValueError(
                 f"Value {value} is out of bounds for '{name}'")

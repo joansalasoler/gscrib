@@ -173,6 +173,32 @@ class Point(NamedTuple):
 
         return Point(x, y, z)
 
+    def within_bounds(self, min_point: 'Point', max_point: 'Point') -> bool:
+        """Check if point lies within bounds defined by two points.
+
+        Coordinates that are ``None`` in either self, min_point, or
+        max_point points are ignored in the comparison.
+
+        Args:
+            min_point: The minimum boundary point
+            max_point: The maximum boundary point
+
+        Returns:
+            True if all known coordinates are within bounds
+        """
+
+        def in_range(value, min_bound, max_bound):
+            return (
+                (None in (value, min_bound, max_bound)) or
+                (min_bound <= value <= max_bound)
+            )
+
+        return (
+            in_range(self.x, min_point.x, max_point.x) and
+            in_range(self.y, min_point.y, max_point.y) and
+            in_range(self.z, min_point.z, max_point.z)
+        )
+
     def __add__(self, other: 'Point') -> 'Point':
         """Add two points.
 
@@ -263,17 +289,15 @@ class Point(NamedTuple):
             self.z / scalar
         )
 
-    def __eq__(self, other: 'Point') -> bool:
-        """Equal to operator"""
-
-        return bool(
-            self.x == other.x and
-            self.y == other.y and
-            self.z == other.z
-        )
-
     def __lt__(self, other: 'Point') -> bool:
-        """Less than operator"""
+        """Less than operator
+
+        Args:
+            other: Point to compare with this point.
+
+        Raises:
+            TypeError: If any of the point coordinates are None.
+        """
 
         return bool(
             self.x <= other.x and
@@ -284,6 +308,15 @@ class Point(NamedTuple):
                 self.y < other.y or
                 self.z < other.z
             )
+        )
+
+    def __eq__(self, other: 'Point') -> bool:
+        """Equal to operator"""
+
+        return bool(
+            self.x == other.x and
+            self.y == other.y and
+            self.z == other.z
         )
 
     def __ge__(self, other: 'Point') -> bool:
