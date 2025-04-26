@@ -140,7 +140,7 @@ class Device():
             return True
         return False
 
-    def readline(self) -> bytes:
+    def readline(self) -> bytes | None:  # May return READ_EOF == None
         """Read one line from the device stream.
 
         Returns
