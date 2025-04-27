@@ -58,14 +58,21 @@ class GConfig():
 
     @classmethod
     def from_object(cls, config) -> "GConfig":
-        """Create a GConfig instance from an object with attributes.
+        """Instantiate from an object or dictionary.
 
         Args:
-            config: Any object that supports attribute access
+            config: Any object with attributes or a dictionary
 
         Returns:
             GConfig: A new configuration instance
         """
+
+        if isinstance(config, dict):
+            return cls(**{
+                field.name: config.get(field.name)
+                for field in fields(cls)
+                if field.name in config
+            })
 
         return cls(**{
             field.name: getattr(config, field.name)
