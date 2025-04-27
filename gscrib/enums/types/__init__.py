@@ -22,6 +22,7 @@ from .plane import Plane
 from .positioning_mode import PositioningMode
 from .probing_mode import ProbingMode
 from .power_mode import PowerMode
+from .query_mode import QueryMode
 from .spin_mode import SpinMode
 from .tool_swap_mode import ToolSwapMode
 
@@ -41,6 +42,7 @@ __all__ = [
     "PositioningMode",
     "ProbingMode",
     "PowerMode",
+    "QueryMode",
     "SpinMode",
     "ToolSwapMode",
 ]

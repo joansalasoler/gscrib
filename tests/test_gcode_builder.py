@@ -190,6 +190,14 @@ def test_wait(builder, mock_write):
     builder.wait()
     assert mock_write.last_statement.startswith('M400')
 
+def test_query_temperature(builder, mock_write):
+    builder.query("temperature")
+    assert mock_write.last_statement.startswith('M105')
+
+def test_query_position(builder, mock_write):
+    builder.query("position")
+    assert mock_write.last_statement.startswith('M114')
+
 def test_current_axis_position(builder):
     builder.move(x=10, y=20, z=30)
     assert builder.position.x == 10

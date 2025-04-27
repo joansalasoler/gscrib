@@ -865,6 +865,23 @@ class GCodeBuilder(GCodeCore):
         self._track_move_params(params)
         self.write(statement)
 
+    @typechecked
+    def query(self, mode: QueryMode | str) -> None:
+        """Query the machine for its current state.
+
+        This command is used to request information from the machine
+        about its current state, such as position or temperatures.
+
+        Args:
+            mode (QueryMode | str): The state to query
+
+        >>> M105|M114
+        """
+
+        mode = QueryMode(mode)
+        statement = self._get_statement(mode)
+        self.write(statement)
+
     def write(self, statement: str) -> None:
         """Write a raw G-code statement to all configured writers.
 

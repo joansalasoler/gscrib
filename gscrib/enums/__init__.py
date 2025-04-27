@@ -27,6 +27,7 @@ from .types import Plane
 from .types import PositioningMode
 from .types import ProbingMode
 from .types import PowerMode
+from .types import QueryMode
 from .types import SpinMode
 from .types import ToolSwapMode
 from .units import LengthUnits
@@ -51,6 +52,7 @@ __all__ = [
     "PositioningMode",
     "ProbingMode",
     "PowerMode",
+    "QueryMode",
     "SpinMode",
     "ToolSwapMode",
     "LengthUnits",
