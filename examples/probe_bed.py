@@ -5,10 +5,11 @@
 # probes the bed in a grid pattern, moving to each point on the machine
 # bed and recording the Z height at each point.
 
-import logging
+import logging, sys
 from argparse import ArgumentParser
 from collections import namedtuple
 from gscrib import GConfig, GCodeBuilder
+from gscrib.excepts import DeviceError
 
 
 Option = namedtuple('Option', ['type', 'name', 'default', 'help'])
@@ -30,6 +31,7 @@ options = (
     Option(int, "width", 400, "Grid width"),
     Option(int, "height", 400, "Grid height"),
     Option(int, "spacing", 50, "Grid spacing"),
+    Option(str, "log-level", "critical", "Print debug information"),
 )
 
 
@@ -82,21 +84,30 @@ def execute_probing_program(ctx):
 
     # Create the grid points in a zig-zag pattern
 
-    for i, y in enumerate(range(0, ctx.height, ctx.spacing)):
-        row = [(x, y) for x in range(0, ctx.width, ctx.spacing)]
+    for i, y in enumerate(range(0, ctx.height + 1, ctx.spacing)):
+        row = [(x, y) for x in range(0, ctx.width + 1, ctx.spacing)]
         row = reversed(row) if i % 2 else row
         grid_points.extend(row)
 
     # Probe the grid points
 
-    # TODO: In some controllers M114 may need to be sent to get the Z
-    # height and M400 to sync the machine. This is not implemented yet.
-
     for x, y in grid_points:
         g.rapid(point=(x, y))
-        g.halt("pause") # Pause for user to move the probe
-        g.probe("towards", Z=ctx.probe_z, F=ctx.probe_speed)
-        g.sleep(0) # Sync with the machine
+        g.pause() # Pause for user to move the probe
+
+        try:
+            g.probe("towards", Z=ctx.probe_z, F=ctx.probe_speed)
+        except DeviceError as e:
+            print("Probe failed. Exiting now.", file=sys.stderr)
+            g.teardown()
+            sys.exit(1)
+
+        try:
+            g.sleep(0) # Sync with the machine
+            g.wait() # Ensure probe is done
+            g.query("position")
+        except DeviceError as e:
+            logging.warning("Warning: %s", e)
 
         nz = w.get_parameter("z")
         results.append((x, y, nz))
@@ -122,8 +133,8 @@ def execute_probing_program(ctx):
 # ----------------------------------------------------------------------
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     context = parse_command_line_options()
+    logging.basicConfig(level=context.log_level.upper())
     results = execute_probing_program(context)
 
     for x, y, z in results:
