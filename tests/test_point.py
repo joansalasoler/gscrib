@@ -89,6 +89,21 @@ def test_subtraction():
     assert result == Point(3.0, 3.0, 3.0)
     assert isinstance(result, Point)
 
+def test_multiply():
+    p1 = Point(1.0, 2.0, 3.0)
+    result = 2 * p1
+    assert result == Point(2.0, 4.0, 6.0)
+    assert isinstance(result, Point)
+    result = p1 * 2
+    assert result == Point(2.0, 4.0, 6.0)
+    assert isinstance(result, Point)
+
+def test_divide():
+    p1 = Point(2.0, 4.0, 6.0)
+    result = p1 / 2
+    assert result == Point(1.0, 2.0, 3.0)
+    assert isinstance(result, Point)
+
 # Test immutability
 
 def test_immutability():

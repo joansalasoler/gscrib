@@ -46,6 +46,10 @@ def test_validate_within_bounds(manager):
 
 # Error handling tests
 
+def test_get_bounds_invalid_property(manager):
+    with pytest.raises(ValueError):
+        manager.get_bounds("invalid-property")
+
 def test_set_bounds_invalid_property(manager):
     with pytest.raises(ValueError):
         manager.set_bounds("invalid-property", 0, 100)

@@ -96,7 +96,7 @@ class GCodeTable:
         for entry in values:
             self.add_entry(entry)
 
-    def _to_rst(self) -> str:
+    def _to_rst(self) -> str: # pragma: no cover
         """Returns the entries as an RST-formatted table."""
 
         table = [

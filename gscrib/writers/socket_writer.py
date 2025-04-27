@@ -55,16 +55,16 @@ class SocketWriter(BaseWriter):
         )
 
     @property
-    def is_connected(self) -> bool:
+    def is_connected(self) -> bool: # pragma: no cover
         """Check if device is currently connected."""
         return self._writer_delegate.is_connected
 
     @property
-    def is_printing(self) -> bool:
+    def is_printing(self) -> bool: # pragma: no cover
         """Check if the device is currently printing."""
         return self._writer_delegate.is_printing
 
-    def get_parameter(self, name: str) -> float:
+    def get_parameter(self, name: str) -> float: # pragma: no cover
         """Get the last reading for a parameter by name.
 
         This method retrieves the last reported value for a device
@@ -80,7 +80,7 @@ class SocketWriter(BaseWriter):
 
         return self._writer_delegate.get_parameter(name)
 
-    def set_timeout(self, timeout: float) -> None:
+    def set_timeout(self, timeout: float) -> None: # pragma: no cover
         """Set the timeout for waiting for device operations.
 
         Args:
@@ -89,7 +89,7 @@ class SocketWriter(BaseWriter):
 
         self._writer_delegate.set_timeout(timeout)
 
-    def connect(self) -> "SocketWriter":
+    def connect(self) -> "SocketWriter": # pragma: no cover
         """Establish the socket connection to the device.
 
         Creates a `printcore` object with the configured host and
@@ -105,7 +105,7 @@ class SocketWriter(BaseWriter):
 
         return self._writer_delegate.connect()
 
-    def disconnect(self, wait: bool = True) -> None:
+    def disconnect(self, wait: bool = True) -> None: # pragma: no cover
         """Close the socket connection if it exists.
 
         Args:
@@ -117,7 +117,7 @@ class SocketWriter(BaseWriter):
 
         self._writer_delegate.disconnect()
 
-    def write(self, statement: bytes) -> None:
+    def write(self, statement: bytes) -> None: # pragma: no cover
         """Send a G-code statement through the socket connection.
 
         Args:

@@ -256,6 +256,21 @@ class Point(NamedTuple):
             self.z * scalar
         )
 
+    def __rmul__(self, scalar: float) -> 'Point':
+        """Multiply the point's coordinates by a scalar.
+
+        Args:
+            scalar: The scalar value to multiply by.
+
+        Raises:
+            TypeError: If any of the point coordinates are None.
+
+        Returns:
+            A new point with the coordinates multiplied by the scalar.
+        """
+
+        return self.__mul__(scalar)
+
     def __neg__(self) -> 'Point':
         """Negate the point's coordinates.
 
