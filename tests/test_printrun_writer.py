@@ -160,11 +160,15 @@ def test_write_error(serial_writer, mock_printcore):
     with pytest.raises(DeviceWriteError):
         serial_writer.write(b"G1 X10 Y10\n")
 
+    assert serial_writer._device_error is None
+
 def test_write_connect_failure(serial_writer, mock_printcore):
     mock_printcore.side_effect = Exception("Connection failed")
 
     with pytest.raises(DeviceConnectionError):
         serial_writer.write(b"G1 X10 Y10\n")
+
+    assert serial_writer._device_error is None
 
 def test_connect_failure(serial_writer, mock_printcore):
     mock_printcore.side_effect = Exception("Connection failed")
@@ -173,6 +177,7 @@ def test_connect_failure(serial_writer, mock_printcore):
         serial_writer.connect()
 
     assert not serial_writer.is_connected
+    assert serial_writer._device_error is None
 
 def test_connect_timeout(mock_printcore):
     serial_writer = PrintrunWriter(
@@ -189,3 +194,5 @@ def test_connect_timeout(mock_printcore):
 
     with pytest.raises(DeviceConnectionError):
         serial_writer.connect()
+
+    assert serial_writer._device_error is None

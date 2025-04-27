@@ -362,7 +362,9 @@ class PrintrunWriter(BaseWriter):
             raise DeviceConnectionError("Shutdown requested")
 
         if self._device_error is not None:
-            raise DeviceError(self._device_error)
+            error_message = self._device_error
+            self._device_error = None
+            raise DeviceError(error_message)
 
     def _parse_message(self, message: str) -> None:
         """Extract paramter readings from a device message."""
