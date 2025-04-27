@@ -43,6 +43,10 @@ gcode_table = GCodeTable((
         "G92", "Set axis position"
     ),
 
+    GCodeEntry(PositioningMode.HOME,
+        "G28", "Auto-home axes"
+    ),
+
     # ------------------------------------------------------------------
     # Probing
     # ------------------------------------------------------------------

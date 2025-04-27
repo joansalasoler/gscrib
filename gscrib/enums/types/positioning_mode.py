@@ -25,3 +25,4 @@ class PositioningMode(BaseEnum):
     RAPID = "rapid"
     LINEAR = "linear"
     OFFSET = "offset"
+    HOME = "home"

@@ -217,3 +217,25 @@ def test_probe_modes(mode, code, builder, mock_write):
     builder.probe(mode, [100, 200])
     assert builder.position == Point(None, None, 30)
     assert mock_write.last_statement.startswith(code)
+
+def test_auto_home_all_axes(builder, mock_write):
+    builder.set_axis(X=5, y=5, z=5)
+    builder.auto_home()
+    assert mock_write.last_statement.startswith("G28")
+    assert builder.position == Point(None, None, None)
+
+def test_auto_home_specific_axes(builder, mock_write):
+    builder.set_axis(X=5, y=5, z=5)
+    builder.auto_home(x=10, y=20)
+    assert builder.position.x == None
+    assert builder.position.y == None
+    assert builder.position.z == 5
+    assert mock_write.last_statement.startswith("G28 X10 Y20 ;")
+
+def test_auto_home_with_point(builder, mock_write):
+    point = Point(5, 5, 5)
+    builder.auto_home(point)
+    assert builder.position.x == None
+    assert builder.position.y == None
+    assert builder.position.z == None
+    assert mock_write.last_statement.startswith("G28 X5 Y5 Z5 ;")

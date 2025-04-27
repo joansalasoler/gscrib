@@ -505,6 +505,38 @@ class GCodeBuilder(GCodeCore):
         self._update_axes(target_axes, params)
         self.write(statement)
 
+    def auto_home(self, point: PointLike = None, **kwargs) -> None:
+        """Move the machine to the home position.
+
+        Homes the specified axes (or all axes if none are given) by moving
+        them until they reach their endstops, which are physical switches
+        or sensors marking the machine's limits.
+
+        * The coordinates provided are always interpreted as absolute in
+          relation to the point where the endstops are triggered.
+        * Since the actual stopping point depends on when contact occurs,
+          the current position is set to ``None`` for any axis involved.
+
+        Args:
+            point (Point, optional): New axis position as a point
+            x (float, optional): New X-axis position value
+            y (float, optional): New Y-axis position value
+            z (float, optional): New Z-axis position value
+            comment (str, optional): Optional comment to add
+            **kwargs: Additional axis positions
+
+        >>> G28 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
+        """
+
+        mode = PositioningMode.HOME
+        point, params, comment = self._process_move_params(point, **kwargs)
+        point = Point.zero() if point == Point.unknown() else point
+        target_axes = self._current_axes.mask(point.x, point.y, point.z)
+        statement = self._get_statement(mode, params, comment)
+
+        self._update_axes(target_axes, params)
+        self.write(statement)
+
     @typechecked
     def sleep(self, duration: float) -> None:
         """Pause program execution for the specified duration.
