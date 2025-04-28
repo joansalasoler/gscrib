@@ -362,6 +362,38 @@ with g.move_hook(hook_function)
     g.move(x=10, y=0)
 ```
 
+## Read Device Sensors
+
+In **direct write mode**, machine data such as position, temperature, and
+other sensor values can be read directly from the connected device. This
+allows the program to be dynamically adjusted based on the current state
+of the machine.
+
+```python
+g = GCodeBuilder(direct_write="socket")
+writer = g.get_writer()
+
+g.query("position")             # Request position data
+X = writer.get_parameter("X")   # Get X position
+Y = writer.get_parameter("Y")   # Get Y position
+Z = writer.get_parameter("Z")   # Get Z position
+E = writer.get_parameter("E")   # Get extruder position
+
+g.query("temperature")          # Request temperature data
+T = writer.get_parameter("T")   # Get tool temperature
+B = writer.get_parameter("B")   # Get bed temperature
+
+g.probe("towards", Z=0, F=100)  # Probe towards Z=0
+g.sleep(duration=0)             # Wait for probe to complete
+g.query("position")             # Request position
+Z = writer.get_parameter("Z")   # Get Z position after probing
+```
+
+Some controllers, like Grbl, may not support the ``g.query()`` command.
+In such cases, these controllers may automatically report data like
+position in real-time without needing a specific query, or raw G-code
+such as ``g.write("?")`` can be used to query the position.
+
 ### Context Managers
 
 Context managers help you write cleaner, safer code by providing a

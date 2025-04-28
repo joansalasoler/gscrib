@@ -37,6 +37,8 @@ complexity. Here's how it makes G-code creation easier and more efficient:
   controllers, 3D printers, and more) for a fully customized solution.
 - **Automate tasks**: Easily generate complex toolpaths like arcs,
   splines, and spirals, without manually calculating each point.
+- **Device Sensors**: Read real-time machine data such as position,
+  temperature, and other sensor values directly from connected devices.
 - **Add custom logic**: Modify your G-code on the fly with hooks for
   real-time adjustments, such as adding extrusion or managing speeds.
 - **Effortless Transformations**: Apply translations, rotations, and
