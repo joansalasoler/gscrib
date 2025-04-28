@@ -20,7 +20,7 @@ from .gcode_core import GCodeCore
 from .gcode_state import GState
 from .params import ParamsDict
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 __all__ = [
     "GCodeCore",
