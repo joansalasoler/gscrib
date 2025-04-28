@@ -247,7 +247,7 @@ g.move(x=5, y=5, F=10)    # Below min feed rate
 g.move(x=-100)            # Outside defined X-axis range
 ```
 
-## Read Device Sensors for Adaptive G-code Generation
+### Read Device Sensors for Adaptive G-code Generation
 
 In **direct write mode**, machine data such as temperature, position,
 and other sensor values can be read from the device. This enables G-code

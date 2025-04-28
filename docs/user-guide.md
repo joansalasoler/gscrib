@@ -362,7 +362,7 @@ with g.move_hook(hook_function)
     g.move(x=10, y=0)
 ```
 
-## Read Device Sensors
+### Read Device Sensors
 
 In **direct write mode**, machine data such as position, temperature, and
 other sensor values can be read directly from the connected device. This
