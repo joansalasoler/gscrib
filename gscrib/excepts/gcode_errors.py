@@ -16,8 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from .gscrib_errors import GscribError
 
-class GCodeError(Exception):
+
+class GCodeError(GscribError):
     """Base exception for G-code related errors."""
 
 

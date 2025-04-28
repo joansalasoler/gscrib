@@ -41,9 +41,6 @@ class SocketWriter(BaseWriter):
             port (int): The TCP port number to connect to.
         """
 
-        if not host:
-            raise ValueError("Host must be specified")
-
         if not isinstance(port, int) or port <= 0 or port > 65535:
             raise ValueError("Port number is not valid.")
 

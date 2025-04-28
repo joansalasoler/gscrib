@@ -21,6 +21,7 @@ import logging, time, signal
 
 from gscrib.enums import DirectWrite
 from gscrib.printrun import printcore, gcoder
+from gscrib.excepts import GscribError
 from gscrib.excepts import DeviceError
 from gscrib.excepts import DeviceWriteError
 from gscrib.excepts import DeviceConnectionError
@@ -55,12 +56,23 @@ class PrintrunWriter(BaseWriter):
             baudrate (int): Communication speed in bauds
         """
 
+        if not isinstance(host, str) or host.strip() == "":
+            raise ValueError("Host must be specified")
+
+        if not isinstance(port, str) or port.strip() == "":
+            raise ValueError("Port must be specified")
+
+        if not isinstance(baudrate, int) or baudrate < 0:
+            raise ValueError("Baudrate must be positive")
+
         self._mode = DirectWrite(mode)
         self._device = None
         self._host = host
         self._port = port
         self._baudrate = baudrate
         self._timeout = DEFAULT_TIMEOUT
+        self._device_error = None
+        self._shutdown_requested = False
         self._reported_params = set()
         self._current_params = ParamsDict()
         self._logger = logging.getLogger(__name__)
@@ -70,14 +82,12 @@ class PrintrunWriter(BaseWriter):
     def _setup_device_events(self):
         """Set up device synchronization events."""
 
-        self._device_error = None
         self._ack_event = threading.Event()
         self._online_event = threading.Event()
 
     def _setup_signal_handlers(self):
         """Set up signal handlers for graceful shutdown."""
 
-        self._shutdown_requested = False
         signal.signal(signal.SIGTERM, self._on_shutdown_signal)
         signal.signal(signal.SIGINT, self._on_shutdown_signal)
 
@@ -313,26 +323,31 @@ class PrintrunWriter(BaseWriter):
         """Callback to handle errors reported by printrun."""
 
         self._logger.error("Error: %s", message)
-        self._device_error = message
+        self._device_error = DeviceError(message)
         self._ack_event.set()
 
     def _on_device_message(self, message: str) -> None:
         """Callback to handle messages from the device."""
 
-        message = message.strip()
-        lower_message = message.lower()
+        try:
+            message = message.strip()
+            lower_message = message.lower()
 
-        self._logger.debug("Device message: %s", message)
+            self._logger.debug("Device message: %s", message)
 
-        if lower_message.startswith(SUCCESS_PREFIXES):
-            self._ack_event.set()
-            return
-        elif lower_message.startswith(ERROR_PREFIXES):
-            self._device_error = self._format_error(message)
-            self._ack_event.set()
-            return
+            if lower_message.startswith(SUCCESS_PREFIXES):
+                self._ack_event.set()
+                return
+            elif lower_message.startswith(ERROR_PREFIXES):
+                error_message = self._format_error(message)
+                self._device_error = DeviceError(error_message)
+                self._ack_event.set()
+                return
 
-        self._parse_message(message)
+            self._parse_message(message)
+        except Exception as e:
+            self._logger.exception("Cannot process message: %s", message)
+            self._device_error = GscribError(f"Internal error: {str(e)}")
 
     def _on_shutdown_signal(self, signum, frame):
         """Handle shutdown signals by disconnecting cleanly."""
@@ -343,8 +358,15 @@ class PrintrunWriter(BaseWriter):
             self._online_event.set()
             self._ack_event.set()
             self.disconnect(False)
+        except DeviceError:
+            raise
         except Exception as e:
-            self._logger.exception("Error during shutdown: %s", e)
+            message = f"Error during shutdown: {str(e)}"
+            self._logger.exception(message)
+            raise GscribError(message) from e
+        finally:
+            self._online_event.set()
+            self._ack_event.set()
 
     def _abort_on_device_error(self) -> None:
         """Check for errors in the device state.
@@ -355,16 +377,16 @@ class PrintrunWriter(BaseWriter):
             DeviceConnectionError: If connection is lost
         """
 
+        if self._device_error is not None:
+            exception = self._device_error
+            self._device_error = None
+            raise exception
+
         if not self.is_connected:
             raise DeviceConnectionError("Connection lost")
 
         if self._shutdown_requested:
             raise DeviceConnectionError("Shutdown requested")
-
-        if self._device_error is not None:
-            error_message = self._device_error
-            self._device_error = None
-            raise DeviceError(error_message)
 
     def _parse_message(self, message: str) -> None:
         """Extract paramter readings from a device message."""

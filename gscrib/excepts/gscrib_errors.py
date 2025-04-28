@@ -16,20 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from .gscrib_errors import GscribError
 
-
-class DeviceError(GscribError):
-    """Base exception for device-related errors."""
-
-
-class DeviceTimeoutError(DeviceError):
-    """Raised when a device operation times out."""
-
-
-class DeviceConnectionError(DeviceError):
-    """Raised when a device connection fails."""
-
-
-class DeviceWriteError(DeviceError):
-    """Raised when a sending data to a device fails."""
+class GscribError(Exception):
+    """Base exception for all Gscrib errors."""

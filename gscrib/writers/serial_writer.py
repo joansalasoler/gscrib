@@ -41,10 +41,7 @@ class SerialWriter(BaseWriter):
             baudrate (int): Communication speed in bauds
         """
 
-        if not port:
-            raise ValueError("Port must be specified")
-
-        if baudrate <= 0:
+        if not isinstance(baudrate, int) or baudrate <= 0:
             raise ValueError("Baudrate must be positive")
 
         self._writer_delegate = PrintrunWriter(

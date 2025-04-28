@@ -24,7 +24,7 @@ from typeguard import typechecked
 
 from .config import GConfig
 from .enums import Axis, DistanceMode, Direction
-from .excepts import DeviceError
+from .excepts import DeviceError, GCodeError, GscribError
 from .formatters import BaseFormatter, DefaultFormatter
 from .params import ParamsDict
 from .geometry import Point, CoordinateTransformer
@@ -653,6 +653,7 @@ class GCodeCore(object):
             statement: The raw G-code statement to write
 
         Raises:
+            GCodeError: If the internal state is inconsistent
             DeviceError: If writing to any output fails
 
         Example:
@@ -670,9 +671,13 @@ class GCodeCore(object):
             for writer in self._writers:
                 self._logger.debug("Write to %s", writer)
                 writer.write(line_bytes)
+        except GCodeError:
+            raise
+        except DeviceError:
+            raise
         except Exception as e:
             self._logger.exception("Failed to write statement: %s", e)
-            raise DeviceError("Failed to write statement") from e
+            raise GscribError("Internal error") from e
 
     @typechecked
     def teardown(self, wait: bool = True) -> None:
