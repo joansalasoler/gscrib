@@ -57,13 +57,6 @@ Extend support to additional axes (e.g., A, B, C, U, V, W) beyond the
 currently supported X, Y, and Z. While additional axes can be set as
 keyword parameters, they are not fully integrated into the system.
 
-## Read Machine Sensors for Adaptive G-code Generation
-
-When direct write is enabled, implement functionality to read machine
-sensors (e.g., temperature, fan speeds, etc.). This feature will allow
-dynamic adjustment of G-code, ensuring more precise control over the
-machine's operations by reacting to real-time sensor readings.
-
 ## HeightMap Integration
 
 Explore the feasibility of integrating heightmaps into the system to

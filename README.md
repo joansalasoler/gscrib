@@ -27,6 +27,8 @@ customizable G-code programs.
 - **Transformation Utilities**: Apply rotations, scaling, reflections,
   and more.
 - **Customizable Hooks**: Add custom logic to modify parameters dynamically.
+- **Live Sensor Data**: Read temperatures, positions, and more from
+  connected devices.
 - **Multiple Output Options**: Write G-code to files, serial ports,
   or network sockets.
 - **Error Handling**: Built-in validation and error handling.
@@ -243,6 +245,24 @@ g.set_bounds("axes", min=(0, 0, -10), max=(20, 20, 10))
 g.set_feed_rate(10000)    # Exceeds max feed rate
 g.move(x=5, y=5, F=10)    # Below min feed rate
 g.move(x=-100)            # Outside defined X-axis range
+```
+
+## Read Device Sensors for Adaptive G-code Generation
+
+In **direct write mode**, machine data such as temperature, position,
+and other sensor values can be read from the device. This enables G-code
+to be adjusted based on the latest readings.
+
+```python
+g.query("position")             # Request position data
+X = writer.get_parameter("X")   # Get X position
+Y = writer.get_parameter("Y")   # Get Y position
+Z = writer.get_parameter("Z")   # Get Z position
+E = writer.get_parameter("E")   # Get extruder position
+
+g.query("temperature")          # Request temperature data
+T = writer.get_parameter("T")   # Get tool temperature
+B = writer.get_parameter("B")   # Get bed temperature
 ```
 
 ### Context Managers
