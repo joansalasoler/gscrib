@@ -55,8 +55,9 @@ def mock_sttyhup(cls):
     """Fake stty control"""
     # Needed to avoid error:
     # "stty: /mocked/port: No such file or directory"
-    cls.enterClassContext(
-        mock.patch("gscrib.printrun.device.Device._disable_ttyhup"))
+    patcher = mock.patch("gscrib.printrun.device.Device._disable_ttyhup")
+    patcher.start()
+    cls.addClassCleanup(patcher.stop)
 
 
 def mock_serial(test, read_function=slow_printer):
@@ -65,7 +66,12 @@ def mock_serial(test, read_function=slow_printer):
     instance_mock = class_mock.return_value
     instance_mock.readline.side_effect = read_function
     instance_mock.is_open = True
-    return test.enterContext(mock.patch("serial.Serial", class_mock))
+
+    patcher = mock.patch("serial.Serial", class_mock)
+    mocked_serial = patcher.start()
+    test.addCleanup(patcher.stop)
+
+    return mocked_serial
 
 
 def mock_socket(test, read_function=slow_printer):
@@ -76,10 +82,13 @@ def mock_socket(test, read_function=slow_printer):
     selector_mock.return_value.register = mock.Mock()
     selector_mock.return_value.select = mock.Mock(return_value=True)
 
-    test.enterContext(mock.patch(
+    patcher = mock.patch(
         'selectors.DefaultSelector',
-        return_value=selector_mock.return_value)
+        return_value=selector_mock.return_value
     )
+
+    patcher.start()
+    test.addCleanup(patcher.stop)
 
     # Then mock the socket
     class_mock = mock.create_autospec(socket.socket)
@@ -87,7 +96,11 @@ def mock_socket(test, read_function=slow_printer):
     socket_file = instance_mock.makefile.return_value
     socket_file.read.side_effect = read_function
 
-    return test.enterContext(mock.patch("socket.socket", class_mock))
+    patcher = mock.patch("socket.socket", class_mock)
+    mocked_socket = patcher.start()
+    test.addCleanup(patcher.stop)
+
+    return mocked_socket
 
 
 def add_mocked_handler(core):
@@ -104,7 +117,11 @@ def mock_callback(test, core, callback, **kwargs):
     #   test: unittest.TestCase instance
     #   core: printrun.printcore instance
     #   callback: string with callback name, e.g. "onlinecb"
-    return test.enterContext(mock.patch.object(core, callback, **kwargs))
+    patcher = mock.patch.object(core, callback, **kwargs)
+    mocked_callback = patcher.start()
+    test.addCleanup(patcher.stop)
+
+    return mocked_callback
 
 
 def fake_preprintsend(gline, *args):

@@ -34,8 +34,9 @@ def mock_sttyhup(cls):
     """Fake stty control"""
     # Needed to avoid error:
     # "stty: /mocked/port: No such file or directory"
-    cls.enterClassContext(
-        mock.patch("gscrib.printrun.device.Device._disable_ttyhup"))
+    patcher = mock.patch("gscrib.printrun.device.Device._disable_ttyhup")
+    patcher.start()
+    cls.addClassCleanup(patcher.stop)
 
 
 def patch_serial(function, **kwargs):
@@ -65,7 +66,11 @@ def setup_serial(test):
     """Set up a Device through a mocked serial connection"""
     dev = device.Device()
     test.addCleanup(dev.disconnect)
-    mocked_open = test.enterContext(patch_serial("open"))
+
+    patcher = patch_serial("open")
+    mocked_open = patcher.start()
+    test.addCleanup(patcher.stop)
+
     dev.connect("/mocked/port")
 
     return dev, mocked_open
@@ -75,7 +80,11 @@ def setup_socket(test):
     """Set up a Device through a mocked socket connection"""
     dev = device.Device()
     test.addCleanup(dev.disconnect)
-    mocked_socket = test.enterContext(patch_socket("connect"))
+
+    patcher = patch_socket("connect")
+    mocked_socket = patcher.start()
+    test.addCleanup(patcher.stop)
+
     dev.connect("127.0.0.1:80")
 
     return dev, mocked_socket
@@ -351,8 +360,10 @@ class TestWriteSerial(unittest.TestCase):
         instance_mock.is_open = True
         if side_effect is not None:
             instance_mock.write.side_effect = side_effect
-        mocked_serial = self.enterContext(mock.patch("serial.Serial",
-                                                     class_mock))
+
+        patcher = mock.patch("serial.Serial", class_mock)
+        mocked_serial = patcher.start()
+        self.addCleanup(patcher.stop)
 
         dev = device.Device()
         self.addCleanup(dev.disconnect)
