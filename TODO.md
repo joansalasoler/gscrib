@@ -12,6 +12,29 @@ Enhance G-code compatibility by supporting more commands, for example:
 
 * G43, G44: Tool Length Compensation
 
+## Simulate Canned Cycles with Plain G-code
+
+Implement common CNC canned cycles (G81, G82, G83, etc.) as plain G0/G1
+commands. This approach will increase flexibility by allowing hooks,
+transformations, and custom operations to be applied to the G-code,
+ensuring broad compatibility with many machines while offering greater
+control over how the G-code is processed.
+
+## Add More Real-World Usage Examples
+
+Include practical examples that demonstrate how to use the library
+in real workflows:
+
+* **Postprocessing a plain G-code file**: Show how to write a script that
+  loads a G-code file, processes toolpaths, and saves the result.
+* **FreeCAD CAM Postprocessor**: Provide an example postprocessor that
+  works with FreeCAD’s internal CAM output. See [FreeCAD’s wiki](https://wiki.freecad.org/CAM_Postprocessor_Customization)
+  for reference.
+* **Advanced Hooks for Complex Effects**: Demonstrate creative uses of
+  hooks, such as simulating temperature-driven material changes. A great reference is the
+  [wood.py](https://github.com/MoonCactus/gcode_postprocessors/blob/master/wood/wood.py)
+  script, which varies temperature to simulate wood grain.
+
 ## Ensure Selected Plane Affects Interpolated Paths
 
 Make sure that the selected plane (XY, XZ, or YZ) influences the
