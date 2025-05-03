@@ -10,6 +10,7 @@ from . import enums
 from . import excepts
 from . import formatters
 from . import geometry
+from . import heightmaps
 from . import hooks
 from . import types
 from . import writers
@@ -29,6 +30,7 @@ __all__ = [
     "GState",
     "ParamsDict",
     "formatters",
+    "heightmaps",
     "enums",
     "excepts",
     "geometry",

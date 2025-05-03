@@ -939,6 +939,11 @@ class GCodeBuilder(GCodeCore):
             point: Target position for the move
             params: Movement parameters (feed rate, etc.)
             comment: Optional comment to include
+
+        Returns:
+            Tuple[str, ParamsDict]: A tuple containing:
+                - (str) The formatted G-code statement
+                - (ParamsDict) The updated movement parameters
         """
 
         if len(self._hooks) > 0:

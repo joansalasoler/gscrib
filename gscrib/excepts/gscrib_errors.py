@@ -19,3 +19,11 @@
 
 class GscribError(Exception):
     """Base exception for all Gscrib errors."""
+
+
+class ImageLoadError(GscribError):
+    """Exception raised when an image file cannot be loaded."""
+
+
+class FileLoadError(GscribError):
+    """Exception raised when a file cannot be loaded."""
