@@ -797,7 +797,7 @@ class GCodeBuilder(GCodeCore):
         )
 
     @typechecked
-    def emergency_halt(self, message: str) -> None:
+    def emergency_halt(self, message: str, reset: bool = False) -> None:
         """Execute an emergency shutdown sequence and pause execution.
 
         Performs a complete safety shutdown sequence in this order:
@@ -805,24 +805,25 @@ class GCodeBuilder(GCodeCore):
         1. Deactivates all active tools (spindle, laser, etc.)
         2. Turns off all coolant systems
         3. Adds a comment with the emergency message
-        4. Halts program execution with a mandatory pause
+        4. Halts program execution with a mandatory pause or reset
 
         This method ensures safe machine state in emergency situations.
         The program cannot resume until manually cleared.
 
         Args:
             message (str): Description of the emergency condition
+            reset (bool): Perform a full machine reset after halting
 
         >>> M05
         >>> M09
         >>> ; Emergency halt: <message>
-        >>> M00
+        >>> M00|M30
         """
 
         self.tool_off()
         self.coolant_off()
         self.comment(f"Emergency halt: {message}")
-        self.halt(HaltMode.PAUSE)
+        self.halt(HaltMode.END_WITH_RESET if reset else HaltMode.PAUSE)
 
     @typechecked
     def probe(self,
