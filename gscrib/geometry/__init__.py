@@ -12,6 +12,7 @@ from .bounds import Bound, BoundManager
 from .tracer import PathTracer
 from .transformer import CoordinateTransformer
 from .transform import Transform
+from .patterns import grid
 
 __all__ = [
     "Point",
@@ -20,4 +21,5 @@ __all__ = [
     "Transform",
     "Bound",
     "BoundManager",
+    "grid",
 ]

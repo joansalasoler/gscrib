@@ -91,8 +91,8 @@ grid of holes, combining Python loops with G-code generation. It covers
 the setup, drilling, and finalization steps.
 
 ```python
-from itertools import product
 from gscrib import GCodeBuilder
+from gscrib.geometry import grid
 
 # Set work parameters
 
@@ -121,11 +121,11 @@ with GCodeBuilder(output=file_name) as g:
     g.coolant_on("flood")              # Turn on flood coolant
     g.sleep(1)                         # Dwell for 1 second
 
-    # Drill a 5x5 grid of holes, each 10 mm apart. The `product` function
-    # generates (x, y) coordinate pairs for a 5x5 grid.
-
-    for x, y in product(range(0, 50, 10), repeat=2):
-        g.rapid(point=(x, y))          # Rapid move to the hole position
+    # Drill a 5x5 grid of holes, each 10 mm apart, using a snake pattern
+    # to minimize travel time.
+    points = grid(rows=5, columns=5, row_step=10, col_step=10, order='snake')
+    for point in points:
+        g.rapid(point=point)           # Rapid move to the hole position
         g.move(z=work_z)               # Drill down to 5 mm depth
         g.rapid(z=safe_z)              # Rapid move to safe Z
 
@@ -221,6 +221,37 @@ length = g.trace.estimate_length(100, circle)
 g.set_resolution(0.1)
 g.trace.parametric(circle, length)
 ```
+
+### Generating Patterns
+
+Gscrib provides convenient iterators for generating common geometric
+patterns. These functions generate points starting from the origin (0,0),
+which can then be easily translated or transformed into the desired position.
+
+#### Grid Pattern
+
+The `grid()` iterator generates points over a rectangular grid. You can
+specify the number of rows and columns, the distance between them, and
+the order in which the points are generated.
+
+```python
+from gscrib.geometry import grid, Point
+
+# Generate a 3x2 grid with snake-like traversal
+points = grid(rows=3, columns=2, row_step=10, col_step=5, order='snake')
+
+# Move the grid by 20 units in x and y
+offset = Point(20, 20)
+for point in points:
+    g.rapid(point=point + offset)
+    # ... perform some action at the grid point
+```
+
+The `order` parameter supports the following modes:
+- `'row'`: Standard row-by-row traversal (left to right).
+- `'column'`: Column-by-column traversal (top to bottom).
+- `'snake'`: Bi-directional traversal, alternating between left-to-right
+  and right-to-left rows. This is useful for minimizing travel distance.
 
 ### Transforming Paths
 
