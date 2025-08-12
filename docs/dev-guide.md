@@ -25,14 +25,14 @@ Before you start, make sure you have the following installed on your
 machine:
 
 - **Python** (3.10 or newer)
-- **Pip** (Python package manager)
+- **Poetry** (Python dependency manager and packaging tool)
 - **Git** (Version control tool)
 
 If you need help installing any of these, check out their official
 installation guides:
 
 - [Python](https://www.python.org/downloads/)
-- [Pip](https://pip.pypa.io/en/stable/installation/)
+- [Poetry](https://python-poetry.org/docs/#installation)
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 
 ### Setting Up the Development Environment
@@ -46,20 +46,11 @@ git clone https://github.com/joansalasoler/gscrib.git
 cd gscrib
 ```
 
-**Create and activate a virtual environment:**
+**Create the virtual environment and install dependencies:**
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate  # On Windows, use: venv\Scripts\activate
-```
-
-**Install dependencies:**
-
-```bash
-pip install --upgrade pip  # Upgrade pip
-pip install -e .  # Install in development mode
-pip install -r requirements.txt  # Install additional dependencies
-pip install -r requirements.dev.txt  # Install development dependencies
+poetry install --with dev,docs
+eval $(poetry env activate)
 ```
 
 ## Project Structure
@@ -77,22 +68,21 @@ gscrib/
 
 ## Documentation and Testing
 
+To run the test suite, use `pytest`. This will automatically discover
+and run all the tests in the project. You can also run specific tests
+by referring to the [pytest documentation](https://docs.pytest.org/en/stable/).
+
+```bash
+poetry run pytest
+```
+
 To build the documentation locally run the following commands. This will
 generate the documentation in the `./docs/html` directory. Open `index.html`
 in a web browser to view it.
 
 ```bash
 cd docs
-pip install -r requirements.txt
-python -m sphinx . ./html
-```
-
-To run the test suite, use `pytest`. This will automatically discover
-and run all the tests in the project. You can also run specific tests
-by referring to the [pytest documentation](https://docs.pytest.org/en/stable/).
-
-```bash
-python -m pytest
+poetry run python -m sphinx . ./html
 ```
 
 ## Extending the Library

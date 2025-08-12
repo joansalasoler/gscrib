@@ -24,11 +24,13 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        python -m pip install flake8 pytest mock
-        pip install -r requirements.txt
+        poetry config virtualenvs.create false
+        poetry add --dev flake8 pytest mock
+        poetry install --no-interaction --no-ansi --with dev
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -37,7 +39,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        python -m pytest
+        poetry run pytest
 
   test:
 
@@ -49,14 +51,16 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install pytest pytest-cov
-        pip install -r requirements.txt
+        poetry config virtualenvs.create false
+        poetry add --dev pytest pytest-cov
+        poetry install --no-interaction --no-ansi --with dev
     - name: Run tests
       run: |
-        python -m pytest --cov --cov-branch --cov-report=xml
+        poetry run pytest --cov --cov-branch --cov-report=xml
     - name: Upload results to Codecov
       uses: codecov/codecov-action@v5
       with:

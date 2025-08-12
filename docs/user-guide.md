@@ -29,16 +29,17 @@ into clean, correct **G-code** for you.
 ## Installation
 
 To use **Gscrib**, you need to have **Python 3.10 or newer** installed on
-your computer. You'll also need **Pip** to install the library. If you're
-new to Python or Pip, these links will help you get set up:
+your computer. You'll also need **Poetry** to install the library. If you're
+new to Python or Poetry, these links will help you get set up:
 
 - [Python Downloads](https://www.python.org/downloads/)
-- [Pip Installation Guide](https://pip.pypa.io/en/stable/installation/)
+- [Poetry Installation Guide](https://python-poetry.org/docs/#installation)
 
 Once you're set up, open your terminal and install **Gscrib** with:
 
 ```bash
-pip install gscrib
+poetry init --no-interaction
+poetry add gscrib
 ```
 
 That's it! This will download and install **Gscrib** and any other software
@@ -47,8 +48,10 @@ your Python scripts.
 
 ## Writing Your First Gscrib Program
 
-Let's write a super simple program that creates a G-code file (output.gcode)
-to move your machine from point A to point B:
+Let's write a super simple program that creates a G-code file
+(```output.gcode```) to move your machine from point A to point B:
+
+1. **Save the following code** into a file named ```test.py```:
 
 ```python
 from gscrib import GCodeBuilder
@@ -64,9 +67,17 @@ g.tool_off()                  # Turn off the tool
 g.teardown()                  # Finalize and save the file
 ```
 
-This is a very basic example. Once you're comfortable, you can add loops,
-curves, safety checks, and even export directly to your CNC. All using
-Python's full power.
+2. **Run the program** using Poetry (this ensures it uses the correct
+   virtual environment):
+
+```bash
+poetry run python test.py
+```
+
+You should now have a file named ```output.gcode``` in your project folder.
+You can open it in a text editor to see the generated G-code. This is a very
+basic example. Once you're comfortable, you can add loops, curves, safety
+checks, and even export directly to your CNC. All using Python's full power.
 
 ## Features at a Glance
 
