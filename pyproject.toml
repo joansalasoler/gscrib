@@ -20,7 +20,7 @@ scikit-image = "~0.25.0"
 scipy = "~1.15.0"
 typeguard = "~4.4.0"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 mock = "~5.2.0"
 pre-commit = "~4.2.0"
 pylint = "~3.3.7"
