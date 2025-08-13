@@ -3,7 +3,7 @@ repos:
     hooks:
       - id: pylint
         name: pylint
-        entry: pylint -E gscrib
+        entry: poetry run pylint -E gscrib
         language: system
         types: [python]
         require_serial: true
