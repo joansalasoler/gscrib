@@ -620,6 +620,36 @@ class GCodeCore(object):
             self.write(statement)
 
     @typechecked
+    def annotate(self, key: str, value: str) -> None:
+        """Write an annotation comment to the G-code output.
+
+        Annotations are a special type of structured comments that can be
+        used by post-processors or other tools to store metadata or
+        configuration information. Useful for storing tool settings,
+        material properties, or processing parameters alongside the G-code.
+
+        Args:
+            key (str): Variable name (a valid identifier)
+            value (str): Variable value (any string)
+
+        Raises:
+            ValueError: If key is not a valid identifier
+
+        Example:
+            >>> g.annotate("tool_diameter", "3.175 mm")
+            ; @set tool_diameter = 3.175 mm
+
+        >>> ; @set <key> = <value>
+        """
+
+        if not key.isidentifier():
+            raise ValueError("Not a valid annotation key.")
+
+        annotation = f"@set {key} = {value}"
+        comment = self.format.comment(annotation)
+        self.write(comment)
+
+    @typechecked
     def comment(self, message: str, *args: Any) -> None:
         """Write a comment to the G-code output.
 
