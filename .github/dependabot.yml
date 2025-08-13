@@ -19,10 +19,11 @@ updates:
     directory: "/"
     target-branch: "develop"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     open-pull-requests-limit: 5
     commit-message:
       prefix: "chore"
       include: "scope"
     allow:
       - dependency-type: "direct"
+    versioning-strategy: "increase"
