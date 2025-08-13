@@ -75,7 +75,7 @@ poetry run python test.py
 ```
 
 You should now have a file named ```output.gcode``` in your project folder.
-You can open it in a text editor to see the generated G-code. This is a very
+Open it in a text editor to see the generated G-code. This is a very
 basic example. Once you're comfortable, you can add loops, curves, safety
 checks, and even export directly to your CNC. All using Python's full power.
 
@@ -92,6 +92,8 @@ capabilities:
   behavior.
 - **Transformations**: Move, scale, rotate, and mirror your toolpaths
   without rewriting coordinates.
+- **Height Compensation**: Automatically adjust Z coordinates or tool
+  power using heightmaps.
 - **Safe Output**: Export to G-code files or send instructions directly
   to your machine.
 
@@ -277,6 +279,47 @@ g.transform.restore_state("my_transorm")
 g.trace.arc(target=(10, 0), center=(5, 0))
 ```
 
+### Height Compensation with Heightmaps
+
+Heightmaps let you adjust your toolpaths dynamically based on measured
+surface variations or image data. They're most often used for **Z-axis**
+**height correction**, but can also control **laser power**, **cutting**
+**depth**, or other parameters based on position.
+
+**Typical Uses:**
+
+- **Surface leveling**: Keep a constant depth on warped or uneven materials.
+- **Curved surface machining**: Work seamlessly on freeform shapes.
+- **Texture mapping**: Turn grayscale images into 3D topographical engravings.
+- **Photo engraving**: Map brightness to laser power for smooth tonal gradients.
+- **Dynamic tool modulation**: Adjust tool parameters using spatial data.
+
+**Supported Heightmap Formats:**
+
+- **CSV files**: Stores height data as (x, y, z) coordinates. Best for
+  precise adjustments and sparse measurement data.
+- **Raster images**: Encode height via pixel brightness. Useful for photo
+  engraving or when working with scanned surfaces.
+
+**Usage Examples**:
+
+```python
+# Load sparse heightmap data from a CSV file
+from gscrib.heightmaps import SparseHeightMap
+heightmap = SparseHeightMap.from_path("surface_scan.csv")
+
+# Load heightmap data from a grayscale image
+from gscrib.heightmaps import RasterHeightMap
+heightmap = RasterHeightMap.from_path("photo.png")
+
+# Sample height at specific coordinates
+z_value = heightmap.get_depth_at(x=10, y=20)
+
+# Sample along a path for smooth interpolation
+for x, y, z in heightmap.sample_path([0, 0, 50, 50]):
+    g.move(x=x, y=y, z=z)
+```
+
 ### State Tracking And Validation
 
 Easily track and manage the machine's state during operations, including
@@ -371,6 +414,23 @@ hook_function = extrusion_hook(
 
 with g.move_hook(hook_function)
     g.move(x=10, y=0)
+```
+
+You can also make your toolpath automatically follow uneven surfaces by
+attaching a heightmap hook.
+
+```python
+from gscrib.hooks import heightmap_hook
+from gscrib.heightmaps import SparseHeightMap
+
+# Load the scanned surface topology from a CSV file
+heightmap = SparseHeightMap.from_file("surface_scan.csv")
+
+# Attach a heightmap hook to set Z height during movement
+g.add_hook(heightmap_hook(heightmap))
+
+# All subsequent moves will follow the surface contours
+g.move(x=50, y=50)
 ```
 
 ### Read Device Sensors

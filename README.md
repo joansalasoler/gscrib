@@ -26,6 +26,8 @@ customizable G-code programs.
   operations.
 - **Transformation Utilities**: Apply rotations, scaling, reflections,
   and more.
+- **Height Compensation**: Automatically adjust Z coordinates or tool
+  parameters using heightmaps for uneven surfaces.
 - **Customizable Hooks**: Add custom logic to modify parameters dynamically.
 - **Live Sensor Data**: Read temperatures, positions, and more from
   connected devices.
@@ -121,6 +123,25 @@ length = g.trace.estimate_length(100, circle)
 # Interpolate the path
 g.set_resolution(0.1)
 g.trace.parametric(circle, length)
+```
+
+### Height Compensation with Heightmaps
+
+Automatically adjust Z coordinates based on surface variations using
+heightmaps from CSV files or grayscale images.
+
+```python
+from gscrib.hooks import heightmap_hook
+from gscrib.heightmaps import SparseHeightMap
+
+# Load heightmap from CSV file or grayscale image
+heightmap = SparseHeightMap.from_path("surface_scan.csv")
+
+# Apply automatic height compensation
+g.add_hook(heightmap_hook(heightmap))
+
+# All movements now follow surface contours
+g.move(x=50, y=50)
 ```
 
 ### Custom Hooks
@@ -264,6 +285,8 @@ g.query("temperature")          # Request temperature data
 T = writer.get_parameter("T")   # Get tool temperature
 B = writer.get_parameter("B")   # Get bed temperature
 ```
+
+
 
 ### Context Managers
 
