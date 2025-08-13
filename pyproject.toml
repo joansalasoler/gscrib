@@ -13,7 +13,7 @@ keywords = ["G-code", "Python", "G-code transformer"]
 [tool.poetry.dependencies]
 python = ">=3.10"
 numpy = "~2.2.0"
-opencv-python = "~4.11.0"
+opencv-python = "~4.12.0"
 pydantic = "~2.10.0"
 pyserial = "~3.5.0"
 scikit-image = "~0.25.0"
