@@ -416,23 +416,6 @@ with g.move_hook(hook_function)
     g.move(x=10, y=0)
 ```
 
-You can also make your toolpath automatically follow uneven surfaces by
-attaching a heightmap hook.
-
-```python
-from gscrib.hooks import heightmap_hook
-from gscrib.heightmaps import SparseHeightMap
-
-# Load the scanned surface topology from a CSV file
-heightmap = SparseHeightMap.from_file("surface_scan.csv")
-
-# Attach a heightmap hook to set Z height during movement
-g.add_hook(heightmap_hook(heightmap))
-
-# All subsequent moves will follow the surface contours
-g.move(x=50, y=50)
-```
-
 ### Read Device Sensors
 
 In **direct write mode**, machine data such as position, temperature, and

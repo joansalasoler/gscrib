@@ -131,17 +131,20 @@ Automatically adjust Z coordinates based on surface variations using
 heightmaps from CSV files or grayscale images.
 
 ```python
-from gscrib.hooks import heightmap_hook
+# Load sparse heightmap data from a CSV file
 from gscrib.heightmaps import SparseHeightMap
-
-# Load heightmap from CSV file or grayscale image
 heightmap = SparseHeightMap.from_path("surface_scan.csv")
 
-# Apply automatic height compensation
-g.add_hook(heightmap_hook(heightmap))
+# Load heightmap data from a grayscale image
+from gscrib.heightmaps import RasterHeightMap
+heightmap = RasterHeightMap.from_path("photo.png")
 
-# All movements now follow surface contours
-g.move(x=50, y=50)
+# Sample height at specific coordinates
+z_value = heightmap.get_depth_at(x=10, y=20)
+
+# Sample along a path for smooth interpolation
+for x, y, z in heightmap.sample_path([0, 0, 50, 50]):
+    g.move(x=x, y=y, z=z)
 ```
 
 ### Custom Hooks
