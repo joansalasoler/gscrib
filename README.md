@@ -325,6 +325,13 @@ uv run pytest -n auto
 ```
 This will run tests in parallel so that they run fast!
 
+Linting and formatting:
+``` bash
+uvx ruff check
+uvx ruff format
+```
+
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

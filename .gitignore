@@ -174,3 +174,6 @@ cython_debug/
 docs/api
 docs/html
 docs/_build
+
+### don't commit the lock file
+uv.lock
