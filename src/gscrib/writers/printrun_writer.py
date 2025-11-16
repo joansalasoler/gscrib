@@ -39,8 +39,7 @@ POLLING_INTERVAL = 0.1  # seconds
 SUCCESS_PREFIXES = ("ok",)
 ERROR_PREFIXES = ("error", "alarm", "!!")
 AXES = ("X", "Y", "Z", "A", "B", "C")
-VALUE_PATTERN = re.compile(r"([A-Za-z0-9]+):([-\d\.]+(?:,[-\d\.]+)*)")
-
+VALUE_PATTERN = re.compile(r"([A-Za-z0-9]+):(-?\d+(?:\.\d+)?(?:,-?\d+(?:\.\d+)?)*)")
 
 class PrintrunWriter(BaseWriter):
     """Writer that sends commands through a serial or socket connection.
