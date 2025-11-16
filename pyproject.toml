@@ -31,9 +31,3 @@ build-backend = "uv_build"
 
 [tool.pytest.ini_options]
 typeguard-packages = "gscrib"
-
-[tool.pylint.messages_control]
-disable = ["C", "R"]
-
-[tool.pylint.reports]
-output-format = "colorized"
