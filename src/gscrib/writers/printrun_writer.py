@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
+import re2
 import threading
 import logging
 import time
@@ -39,7 +39,7 @@ POLLING_INTERVAL = 0.1  # seconds
 SUCCESS_PREFIXES = ("ok",)
 ERROR_PREFIXES = ("error", "alarm", "!!")
 AXES = ("X", "Y", "Z", "A", "B", "C")
-VALUE_PATTERN = re.compile(r"([A-Za-z0-9]+):(-?\d+(?:\.\d+)?(?:,-?\d+(?:\.\d+)?)*)")
+VALUE_PATTERN = re2.compile(r'([A-Za-z0-9]+):([-\d\.]+(?:,[-\d\.]+)*)')
 
 class PrintrunWriter(BaseWriter):
     """Writer that sends commands through a serial or socket connection.

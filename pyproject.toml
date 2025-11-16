@@ -7,11 +7,12 @@ description = "Supercharge G-code with Python"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "google-re2>=1.1.20251105",
     "numpy >=2.2.0",
     "pydantic >=2.10.0",
     "pyserial >=3.5.0",
     "scipy >=1.15.0",
-    "typeguard >=4.4.0"
+    "typeguard >=4.4.0",
 ]
 license = "GPL-3.0-only"
 keywords = ["G-code", "Python", "G-code transformer"]
