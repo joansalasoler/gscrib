@@ -1,4 +1,3 @@
-import pytest
 from types import SimpleNamespace
 from gscrib.config import GConfig
 

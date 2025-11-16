@@ -74,17 +74,17 @@ class BoundManager:
 
         if name == "axes":
             if not isinstance(min, Point):
-                raise TypeError(f"Min value must be a Point")
+                raise TypeError("Min value must be a Point")
             if not isinstance(max, Point):
-                raise TypeError(f"Max value must be a Point")
+                raise TypeError("Max value must be a Point")
         else:
             if not isinstance(min, (int, float)):
-                raise TypeError(f"Min value must be a number")
+                raise TypeError("Min value must be a number")
             if not isinstance(max, (int, float)):
-                raise TypeError(f"Max value must be a number")
+                raise TypeError("Max value must be a number")
 
         if min >= max:
-            raise ValueError(f"Min value must be less than max value")
+            raise ValueError("Min value must be less than max value")
 
         self._bounds[name] = (min, max)
 

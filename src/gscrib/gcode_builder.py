@@ -21,13 +21,34 @@ from typing import Any, Callable, Tuple
 from contextlib import contextmanager
 from typeguard import typechecked
 
+from gscrib.enums.base_enum import BaseEnum
+from gscrib.enums.types.bed_temperature import BedTemperature
+from gscrib.enums.types.chamber_temperature import ChamberTemperature
+from gscrib.enums.types.coolant_mode import CoolantMode
+from gscrib.enums.types.direction import Direction
+from gscrib.enums.types.distance_mode import DistanceMode
+from gscrib.enums.types.extrusion_mode import ExtrusionMode
+from gscrib.enums.types.fan_mode import FanMode
+from gscrib.enums.types.feed_mode import FeedMode
+from gscrib.enums.types.halt_mode import HaltMode
+from gscrib.enums.types.hotend_temperature import HotendTemperature
+from gscrib.enums.types.plane import Plane
+from gscrib.enums.types.positioning_mode import PositioningMode
+from gscrib.enums.types.power_mode import PowerMode
+from gscrib.enums.types.probing_mode import ProbingMode
+from gscrib.enums.types.query_mode import QueryMode
+from gscrib.enums.types.spin_mode import SpinMode
+from gscrib.enums.types.tool_swap_mode import ToolSwapMode
+from gscrib.enums.units.length_units import LengthUnits
+from gscrib.enums.units.temperature_units import TemperatureUnits
+from gscrib.enums.units.time_units import TimeUnits
+
 from .codes import gcode_table
 from .gcode_core import GCodeCore
 from .gcode_state import GState
 from .params import ParamsDict
 from .geometry import Point, PathTracer
 from .types import Bound, PointLike
-from .enums import *
 
 
 class GCodeBuilder(GCodeCore):

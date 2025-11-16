@@ -1,7 +1,6 @@
 import pytest
 from gscrib.enums import BaseEnum
 from gscrib.codes.gcode_entry import GCodeEntry
-from enum import auto
 
 
 # --------------------------------------------------------------------

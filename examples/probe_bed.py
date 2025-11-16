@@ -5,7 +5,8 @@
 # probes the bed in a grid pattern, moving to each point on the machine
 # bed and recording the Z height at each point.
 
-import logging, sys
+import logging
+import sys
 from argparse import ArgumentParser
 from collections import namedtuple
 from gscrib import GConfig, GCodeBuilder
@@ -99,7 +100,7 @@ def execute_probing_program(ctx):
 
         try:
             g.probe("towards", Z=ctx.probe_z, F=ctx.probe_speed)
-        except DeviceError as e:
+        except DeviceError:
             print("Probe failed. Exiting now.", file=sys.stderr)
             g.teardown()
             sys.exit(1)

@@ -163,7 +163,7 @@ class printcore:
         for handler in self.event_handler:
             try:
                 handler.on_init()
-            except:
+            except:  # noqa: E722
                 self._logger.error(traceback.format_exc())
         if port is not None and baud is not None:
             self.connect(port, baud)
@@ -185,12 +185,12 @@ class printcore:
         for handler in self.event_handler:
             try:
                 handler.on_error(error)
-            except:
+            except:  # noqa: E722
                 self._logger.error(traceback.format_exc())
         if self.errorcb:
             try:
                 self.errorcb(error)
-            except:
+            except:  # noqa: E722
                 self._logger.error(traceback.format_exc())
         else:
             self._logger.error(error)
@@ -216,7 +216,7 @@ class printcore:
         for handler in self.event_handler:
             try:
                 handler.on_disconnect()
-            except:
+            except:  # noqa: E722
                 self._logger.error(traceback.format_exc())
         self.printer = None
         self.online = False
@@ -246,7 +246,7 @@ class printcore:
             for handler in self.event_handler:
                 try:
                     handler.on_connect()
-                except:
+                except:  # noqa: E722
                     self._logger.error(traceback.format_exc())
             self.stop_read_thread = False
             self.read_thread = threading.Thread(target=self._listen, name="read thread")
@@ -280,12 +280,12 @@ class printcore:
                 for handler in self.event_handler:
                     try:
                         handler.on_recv(line)
-                    except:
+                    except:  # noqa: E722
                         self._logger.error(traceback.format_exc())
                 if self.recvcb:
                     try:
                         self.recvcb(line)
-                    except:
+                    except:  # noqa: E722
                         self.logError(traceback.format_exc())
                 if self.loud:
                     self._logger.info("RECV: %s" % line.rstrip())
@@ -347,12 +347,12 @@ class printcore:
                     for handler in self.event_handler:
                         try:
                             handler.on_online()
-                        except:
+                        except:  # noqa: E722
                             self._logger.error(traceback.format_exc())
                     if self.onlinecb:
                         try:
                             self.onlinecb()
-                        except:
+                        except:  # noqa: E722
                             self.logError(traceback.format_exc())
                     return
 
@@ -374,13 +374,13 @@ class printcore:
                 for handler in self.event_handler:
                     try:
                         handler.on_temp(line)
-                    except:
+                    except:  # noqa: E722
                         self._logger.error(traceback.format_exc())
                 if self.tempcb:
                     # callback for temp, status, whatever
                     try:
                         self.tempcb(line)
-                    except:
+                    except:  # noqa: E722
                         self.logError(traceback.format_exc())
             elif line.startswith("Error"):
                 self.logError(line)
@@ -395,7 +395,7 @@ class printcore:
                         toresend = int(linewords.pop(0))
                         self.resendfrom = toresend
                         break
-                    except:
+                    except:  # noqa: E722
                         pass
                 self.clear = True
         self.clear = True
@@ -482,10 +482,10 @@ class printcore:
         try:
             with open(filename) as f:
                 for i in f:
-                    l = i.replace("\n", "")
-                    l = l.partition(";")[0]  # remove comments
-                    self.send_now(l)
-        except:
+                    line = i.replace("\n", "")
+                    line = line.partition(";")[0]  # remove comments
+                    self.send_now(line)
+        except:  # noqa: E722
             pass
 
     def pause(self):
@@ -506,10 +506,10 @@ class printcore:
         self.printing = False
 
         # ';@pause' in the gcode file calls pause from the print thread
-        if not threading.current_thread() is self.print_thread:
+        if threading.current_thread() is not self.print_thread:
             try:
                 self.print_thread.join()
-            except:
+            except:  # noqa: E722
                 self.logError(traceback.format_exc())
 
         self.print_thread = None
@@ -612,13 +612,13 @@ class printcore:
             for handler in self.event_handler:
                 try:
                     handler.on_start(resuming)
-                except:
+                except:  # noqa: E722
                     self._logger.error(traceback.format_exc())
             if self.startcb:
                 # callback for printing started
                 try:
                     self.startcb(resuming)
-                except:
+                except:  # noqa: E722
                     self.logError(
                         _("Print start callback failed with:")
                         + "\n"
@@ -632,19 +632,19 @@ class printcore:
             for handler in self.event_handler:
                 try:
                     handler.on_end()
-                except:
+                except:  # noqa: E722
                     self._logger.error(traceback.format_exc())
             if self.endcb:
                 # callback for printing done
                 try:
                     self.endcb()
-                except:
+                except:  # noqa: E722
                     self.logError(
                         _("Print end callback failed with:")
                         + "\n"
                         + traceback.format_exc()
                     )
-        except:
+        except:  # noqa: E722
             self.logError(
                 _("Print thread died due to the following error:")
                 + "\n"
@@ -690,19 +690,19 @@ class printcore:
                     for handler in self.event_handler:
                         try:
                             handler.on_layerchange(layer)
-                        except:
+                        except:  # noqa: E722
                             self._logger.error(traceback.format_exc())
             if self.layerchangecb and self.queueindex > 0:
                 (prev_layer, prev_line) = self.mainqueue.idxs(self.queueindex - 1)
                 if prev_layer != layer:
                     try:
                         self.layerchangecb(layer)
-                    except:
+                    except:  # noqa: E722
                         self.logError(traceback.format_exc())
             for handler in self.event_handler:
                 try:
                     handler.on_preprintsend(gline, self.queueindex, self.mainqueue)
-                except:
+                except:  # noqa: E722
                     self._logger.error(traceback.format_exc())
             if self.preprintsendcb:
                 if self.mainqueue.has_index(self.queueindex + 1):
@@ -730,12 +730,12 @@ class printcore:
                 for handler in self.event_handler:
                     try:
                         handler.on_printsend(gline)
-                    except:
+                    except:  # noqa: E722
                         self._logger.error(traceback.format_exc())
                 if self.printsendcb:
                     try:
                         self.printsendcb(gline)
-                    except:
+                    except:  # noqa: E722
                         self.logError(traceback.format_exc())
             else:
                 self.clear = True
@@ -761,7 +761,7 @@ class printcore:
             gline = None
             try:
                 gline = self.analyzer.append(command, store=False)
-            except:
+            except:  # noqa: E722
                 self._logger.warning(
                     _("Could not analyze command %s:") % command
                     + "\n"
@@ -773,12 +773,12 @@ class printcore:
             for handler in self.event_handler:
                 try:
                     handler.on_send(command, gline)
-                except:
+                except:  # noqa: E722
                     self._logger.error(traceback.format_exc())
             if self.sendcb:
                 try:
                     self.sendcb(command, gline)
-                except:
+                except:  # noqa: E722
                     self.logError(traceback.format_exc())
             try:
                 self.printer.write((command + "\n").encode("ascii"))

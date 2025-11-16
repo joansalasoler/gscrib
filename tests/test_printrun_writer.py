@@ -2,7 +2,6 @@ import pytest
 from unittest.mock import Mock, patch
 from gscrib.enums import DirectWrite
 from gscrib.excepts import DeviceConnectionError
-from gscrib.excepts import DeviceTimeoutError
 from gscrib.excepts import DeviceWriteError
 from gscrib.writers import PrintrunWriter
 

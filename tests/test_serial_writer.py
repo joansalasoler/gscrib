@@ -1,4 +1,3 @@
-import pytest
 from gscrib.writers import SerialWriter
 from gscrib.writers import PrintrunWriter
 

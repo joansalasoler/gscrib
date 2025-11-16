@@ -116,9 +116,9 @@ def test_set_axis_additional_axis(builder, mock_writer):
     assert builder.position == Point(None, None, None)
     assert "G92 E20" in mock_writer.written_lines
     assert builder.get_parameter("E") == 20
-    assert builder.get_parameter("X") == None
-    assert builder.get_parameter("Y") == None
-    assert builder.get_parameter("Z") == None
+    assert builder.get_parameter("X") is None
+    assert builder.get_parameter("Y") is None
+    assert builder.get_parameter("Z") is None
 
 
 def test_get_parameter(builder):
@@ -126,12 +126,12 @@ def test_get_parameter(builder):
     assert builder.get_parameter("F") == 1000
     assert builder.get_parameter("X") == 10
     assert builder.get_parameter("Y") == 20
-    assert builder.get_parameter("Z") == None
+    assert builder.get_parameter("Z") is None
 
     builder.rapid(z=15, y=5, e=100)
     assert builder.get_parameter("E") == 100
     assert builder.get_parameter("F") == 1000
-    assert builder.get_parameter("X") == None
+    assert builder.get_parameter("X") is None
     assert builder.get_parameter("Y") == 5
     assert builder.get_parameter("Z") == 15
 

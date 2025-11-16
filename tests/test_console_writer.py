@@ -1,5 +1,5 @@
-import pytest
-import sys, io
+import sys
+import io
 from gscrib.writers import ConsoleWriter
 
 
@@ -93,4 +93,4 @@ def test_write_to_stderr_unbuffered():
 def test_disconnect():
     writer = ConsoleWriter().connect()
     writer.disconnect()
-    assert writer._file == None
+    assert writer._file is None

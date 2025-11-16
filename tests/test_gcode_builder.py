@@ -1,8 +1,16 @@
 import pytest
 from unittest.mock import patch
 from gscrib import GCodeBuilder
+from gscrib.enums.types.coolant_mode import CoolantMode
+from gscrib.enums.types.direction import Direction
+from gscrib.enums.types.distance_mode import DistanceMode
+from gscrib.enums.types.plane import Plane
+from gscrib.enums.types.power_mode import PowerMode
+from gscrib.enums.types.spin_mode import SpinMode
+from gscrib.enums.types.tool_swap_mode import ToolSwapMode
+from gscrib.enums.units.length_units import LengthUnits
+from gscrib.enums.units.time_units import TimeUnits
 from gscrib.geometry import Point
-from gscrib.enums import *
 
 
 # --------------------------------------------------------------------
@@ -75,14 +83,14 @@ def test_set_axis_partial(builder, mock_write):
 def test_set_distance_mode_absolute(builder, mock_write):
     builder.set_distance_mode(DistanceMode.ABSOLUTE)
     assert builder.state.distance_mode == DistanceMode.ABSOLUTE
-    assert builder.state.distance_mode.is_relative == False
+    assert not builder.state.distance_mode.is_relative
     assert mock_write.last_statement.startswith("G90")
 
 
 def test_set_distance_mode_relative(builder, mock_write):
     builder.set_distance_mode(DistanceMode.RELATIVE)
     assert builder.state.distance_mode == DistanceMode.RELATIVE
-    assert builder.state.distance_mode.is_relative == True
+    assert builder.state.distance_mode.is_relative
     assert mock_write.last_statement.startswith("G91")
 
 
@@ -279,8 +287,8 @@ def test_auto_home_all_axes(builder, mock_write):
 def test_auto_home_specific_axes(builder, mock_write):
     builder.set_axis(X=5, y=5, z=5)
     builder.auto_home(x=10, y=20)
-    assert builder.position.x == None
-    assert builder.position.y == None
+    assert builder.position.x is None
+    assert builder.position.y is None
     assert builder.position.z == 5
     assert mock_write.last_statement.startswith("G28 X10 Y20 ;")
 
@@ -288,7 +296,7 @@ def test_auto_home_specific_axes(builder, mock_write):
 def test_auto_home_with_point(builder, mock_write):
     point = Point(5, 5, 5)
     builder.auto_home(point)
-    assert builder.position.x == None
-    assert builder.position.y == None
-    assert builder.position.z == None
+    assert builder.position.x is None
+    assert builder.position.y is None
+    assert builder.position.z is None
     assert mock_write.last_statement.startswith("G28 X5 Y5 Z5 ;")

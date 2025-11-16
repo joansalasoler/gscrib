@@ -736,8 +736,8 @@ class TestSendThread(unittest.TestCase):
         #     func.assert_called_once_with(self.command, self.parsed_gline)
         #
         # Had to use a workaround. See `compare_glines`
-        for item in (mocked_handler.on_send, mocked_cb):
-            mock_name = getattr(item, "_mock_name", None) or f"mock_{i}"
+        for idx, item in enumerate((mocked_handler.on_send, mocked_cb)):
+            mock_name = getattr(item, "_mock_name", None) or f"mock_{idx}"
             with self.subTest("Check triggering `send` event/callback", mock=mock_name):
                 self.assertEqual(self.command, item.call_args.args[0])
                 assert_equal_glines(self, self.parsed_gline, item.call_args.args[1])

@@ -16,8 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re, threading
-import logging, time, signal
+import re
+import threading
+import logging
+import time
+import signal
 
 from gscrib.enums import DirectWrite
 from gscrib.printrun import printcore, gcoder
@@ -187,7 +190,7 @@ class PrintrunWriter(BaseWriter):
         self._logger.info("Disconnect")
 
         try:
-            if wait == True:
+            if wait:
                 self._wait_for_pending_operations()
         finally:
             if self._device:

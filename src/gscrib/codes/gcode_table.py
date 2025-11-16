@@ -110,7 +110,8 @@ class GCodeTable:
             "     - Description",
         ]
 
-        sort_fn = lambda entry: entry.enum.__class__.__name__
+        def sort_fn(entry):
+            return entry.enum.__class__.__name__
 
         for entry in sorted(self._entries.values(), key=sort_fn):
             table.append(f"   * - :obj:`{entry.enum}`")

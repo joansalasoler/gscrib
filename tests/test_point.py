@@ -12,9 +12,9 @@ from gscrib.geometry import Point
 
 def test_default_initialization():
     point = Point()
-    assert point.x == None
-    assert point.y == None
-    assert point.z == None
+    assert point.x is None
+    assert point.y is None
+    assert point.z is None
 
 
 def test_initialization_with_values():

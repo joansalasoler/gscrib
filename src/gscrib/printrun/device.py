@@ -221,7 +221,7 @@ class Device:
                         and 1 <= self._port_number <= 65535
                     ):
                         return True
-                except:
+                except:  # noqa: E722
                     # TODO: avoid catch-all clauses
                     pass
         return False

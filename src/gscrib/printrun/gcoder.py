@@ -56,8 +56,8 @@ class PyLine:
         "gcview_end_vertex",
     )
 
-    def __init__(self, l):
-        self.raw = l
+    def __init__(self, line):
+        self.raw = line
 
     def __getattr__(self, name):
         return None
@@ -66,8 +66,8 @@ class PyLine:
 class PyLightLine:
     __slots__ = ("raw", "command")
 
-    def __init__(self, l):
-        self.raw = l
+    def __init__(self, line):
+        self.raw = line
 
     def __getattr__(self, name):
         return None
@@ -262,7 +262,7 @@ class GCode:
         self.home_pos = home_pos
         if data:
             line_class = self.line_class
-            self.lines = [line_class(l2) for l2 in (l.strip() for l in data) if l2]
+            self.lines = [line_class(l2) for l2 in (line.strip() for line in data) if l2]
             self._preprocess(build_layers=True, layer_callback=layer_callback)
         else:
             self.lines = []
@@ -483,9 +483,9 @@ class GCode:
                         layer_callback(self, layer_id)
 
         if self.line_class != Line:
-            get_line = lambda l: Line(l.raw)
+            get_line = lambda line: Line(line.raw)  # noqa: E731
         else:
-            get_line = lambda l: l
+            get_line = lambda line: line  # noqa: E731
         for true_line in lines:
             # # Parse line
             # Use a heavy copy of the light line to preprocess
@@ -514,7 +514,7 @@ class GCode:
                 elif line.command[0] == "T":
                     try:
                         current_tool = int(line.command[1:])
-                    except:
+                    except:  # noqa: E722
                         pass  # handle T? by treating it as no tool change
                     while current_tool + 1 > len(self.current_e_multi):
                         self.current_e_multi += [0]
