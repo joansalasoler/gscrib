@@ -139,8 +139,8 @@ def assert_equal_glines(test, gline_a, gline_b):
 
 def subtest_mock(test, msg, mocks, check, *args):
     """Perform same test on a list of mocked objects"""
-    for item in mocks:
-        with test.subTest(msg, mock=item):
+    for i, item in enumerate(mocks):
+        with test.subTest(f"{msg} [mock {i}]"):
             getattr(item, check)(*args)
 
 
@@ -474,9 +474,10 @@ class TestPrint(unittest.TestCase):
                      (self.end_cb, self.mocked_handler.on_end),
                      "assert_called_once")
 
-        for item in (self.mocked_handler.on_layerchange, layerchange_cb):
+        for idx, item in enumerate((self.mocked_handler.on_layerchange, layerchange_cb)):
+            mock_name = getattr(item, '_mock_name', None) or f'mock_{idx}'
             with self.subTest("Check triggering `layerchange` event/callback",
-                              mock=item):
+                              mock=mock_name):
                 for i in range(1, self.print_layer_count):
                     item.assert_any_call(i)
 
@@ -508,9 +509,10 @@ class TestPrint(unittest.TestCase):
                                 self.core.mainqueue.lines[i])
             self.assertEqual(last_call_args[1], None)
 
-        for item in (self.mocked_handler.on_printsend, printsend_cb):
+        for idx, item in enumerate((self.mocked_handler.on_printsend, printsend_cb)):
+            mock_name = getattr(item, '_mock_name', None) or f'mock_{idx}'
             with self.subTest("Check triggering `printsend` event/callback",
-                              mock=item):
+                              mock=mock_name):
                 # Had to use this workaround. See test_handler_on_send
                 for i in range(self.print_line_count):
                     # Get the arguments from the ith call to event
@@ -709,8 +711,9 @@ class TestSendThread(unittest.TestCase):
         #
         # Had to use a workaround. See `compare_glines`
         for item in (mocked_handler.on_send, mocked_cb):
+            mock_name = getattr(item, '_mock_name', None) or f'mock_{i}'
             with self.subTest("Check triggering `send` event/callback",
-                              mock=item):
+                              mock=mock_name):
                 self.assertEqual(self.command, item.call_args.args[0])
                 assert_equal_glines(self, self.parsed_gline,
                                     item.call_args.args[1])

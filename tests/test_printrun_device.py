@@ -419,7 +419,7 @@ class TestWriteSocket(unittest.TestCase):
         # DeviceError and terminate the connection
         self.assertTrue(self.dev.is_connected)
         for e in [OSError, RuntimeError]:
-            with self.subTest(error=e):
+            with self.subTest(error=e.__name__):
                 with self.assertRaises(device.DeviceError):
                     self._fake_write(b"test", side_effect=e)
                 self.assertFalse(self.dev.is_connected)

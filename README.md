@@ -313,26 +313,16 @@ $ git clone https://github.com/joansalasoler/gscrib.git
 $ cd gscrib
 ```
 
-Create a virtual environment:
+Create a virtual environment and install all the dependencies:
 
 ```bash
-$ python3 -m venv venv
-$ source venv/bin/activate
-```
-
-Install `gscrib` and its dependencies:
-
-```bash
-$ pip install --upgrade pip
-$ pip install -e .
-$ pip install -r requirements.txt
-$ pip install -r requirements.dev.txt
+$ uv sync --all-extras
 ```
 
 Run tests:
 
 ```bash
-pytest
+uv run pytest
 ```
 
 ## Contributing
