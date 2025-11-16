@@ -455,8 +455,8 @@ class GCodeCore(object):
 
         return (
             origin + Point(*point).resolve()
-            if self.distance_mode.is_relative else
-            origin.replace(*point)
+            if self.distance_mode.is_relative
+            else origin.replace(*point)
         )
 
     @typechecked
@@ -507,8 +507,8 @@ class GCodeCore(object):
 
         return (
             point.resolve() - origin
-            if self.distance_mode.is_relative else
-            point.resolve()
+            if self.distance_mode.is_relative
+            else point.resolve()
         )
 
     @typechecked
@@ -632,8 +632,8 @@ class GCodeCore(object):
 
         text = (
             message
-            if len(args) == 0 else
-            f"{message} {' '.join((str(a) for a in args))}"
+            if len(args) == 0
+            else f"{message} {' '.join((str(a) for a in args))}"
         )
 
         comment = self.format.comment(text)
@@ -715,9 +715,9 @@ class GCodeCore(object):
         for writer in self._writers:
             writer.flush()
 
-    def _prepare_move(self,
-        point: Point, params: ParamsDict,
-        comment: str | None = None) -> Tuple[str, ParamsDict]:
+    def _prepare_move(
+        self, point: Point, params: ParamsDict, comment: str | None = None
+    ) -> Tuple[str, ParamsDict]:
         """Process a linear move statement with the given parameters.
 
         Args:
@@ -731,13 +731,13 @@ class GCodeCore(object):
                 - (ParamsDict) The updated movement parameters
         """
 
-        args = { **params, "X": point.x, "Y": point.y, "Z": point.z }
+        args = {**params, "X": point.x, "Y": point.y, "Z": point.z}
         statement = self.format.command("G1", args, comment)
         return statement, params
 
-    def _prepare_rapid(self,
-        point: Point, params: ParamsDict,
-        comment: str | None = None) -> Tuple[str, ParamsDict]:
+    def _prepare_rapid(
+        self, point: Point, params: ParamsDict, comment: str | None = None
+    ) -> Tuple[str, ParamsDict]:
         """Process a rapid move statement with the given parameters.
 
         Args:
@@ -751,7 +751,7 @@ class GCodeCore(object):
                 - (ParamsDict) The updated movement parameters
         """
 
-        args = { **params, "X": point.x, "Y": point.y, "Z": point.z }
+        args = {**params, "X": point.x, "Y": point.y, "Z": point.z}
         statement = self.format.command("G0", args, comment)
         return statement, params
 
@@ -782,11 +782,7 @@ class GCodeCore(object):
         comment = kwargs.pop("comment", None)
         params = ParamsDict(kwargs)
 
-        point = (
-            Point(*point[:3])
-            if point is not None else
-            Point.from_params(params)
-        )
+        point = Point(*point[:3]) if point is not None else Point.from_params(params)
 
         params["X"] = point.x
         params["Y"] = point.y
@@ -846,7 +842,7 @@ class GCodeCore(object):
         self._current_params.update(params)
         self._current_axes = axes
 
-    def __enter__(self) -> 'GCodeCore':
+    def __enter__(self) -> "GCodeCore":
         """Enter the context manager."""
 
         return self

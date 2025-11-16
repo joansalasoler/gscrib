@@ -138,7 +138,7 @@ class TestDisconnect(unittest.TestCase):
     def test_socket_erorr(self):
         """DeviceError is raised if socket fails at disconnect"""
         dev, _ = setup_socket(self)
-        with mock.patch('socket.socket.close', side_effect=socket.error):
+        with mock.patch("socket.socket.close", side_effect=socket.error):
             with self.assertRaises(device.DeviceError):
                 dev.disconnect()
 
@@ -288,7 +288,7 @@ class TestReadSerial(unittest.TestCase):
     def test_read_empty(self):
         """READ_EMPTY is returned when there's nothing to read"""
         # Serial.readline() returns b'' (aka `READ_EMPTY`) on timeout
-        self.assertEqual(self._fake_read(return_value=b''), device.READ_EMPTY)
+        self.assertEqual(self._fake_read(return_value=b""), device.READ_EMPTY)
 
     def test_read_disconnected(self):
         """DeviceError is raised when reading from a disconnected device"""
@@ -341,7 +341,7 @@ class TestReadSocket(unittest.TestCase):
 
     def test_read_data(self):
         """Data returned by socket.socket.read is passed as is"""
-        with mock.patch('socket.SocketIO.read', return_value=b"data\n"):
+        with mock.patch("socket.SocketIO.read", return_value=b"data\n"):
             self.assertEqual(self.dev.readline(), b"data\n")
 
 
@@ -427,5 +427,5 @@ class TestWriteSocket(unittest.TestCase):
     def test_flush_timeout(self):
         """Silent on socket timeout during flushing"""
         # Current behavior is to silently ignore socket.timeout
-        with mock.patch('socket.SocketIO.flush', side_effect=socket.timeout):
+        with mock.patch("socket.SocketIO.flush", side_effect=socket.timeout):
             self._fake_write(b"test")

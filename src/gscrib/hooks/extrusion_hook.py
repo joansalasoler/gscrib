@@ -24,8 +24,9 @@ from gscrib.enums import ExtrusionMode
 
 
 @typechecked
-def extrusion_hook(layer_height: float, nozzle_diameter: float,
-                   filament_diameter: float) -> Callable:
+def extrusion_hook(
+    layer_height: float, nozzle_diameter: float, filament_diameter: float
+) -> Callable:
     """Creates a hook function to automatically extrude filament.
 
     Args:

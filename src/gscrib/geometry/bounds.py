@@ -23,7 +23,6 @@ from gscrib.types import Bound
 from .point import Point
 
 
-
 VALID_PROPERTIES = (
     "axes",
     "bed-temperature",
@@ -33,6 +32,7 @@ VALID_PROPERTIES = (
     "tool-number",
     "tool-power",
 )
+
 
 class BoundManager:
     """Bounds manager and validator."""
@@ -74,22 +74,17 @@ class BoundManager:
 
         if name == "axes":
             if not isinstance(min, Point):
-                raise TypeError(
-                    f"Min value must be a Point")
+                raise TypeError(f"Min value must be a Point")
             if not isinstance(max, Point):
-                raise TypeError(
-                    f"Max value must be a Point")
+                raise TypeError(f"Max value must be a Point")
         else:
             if not isinstance(min, (int, float)):
-                raise TypeError(
-                    f"Min value must be a number")
+                raise TypeError(f"Min value must be a number")
             if not isinstance(max, (int, float)):
-                raise TypeError(
-                    f"Max value must be a number")
+                raise TypeError(f"Max value must be a number")
 
         if min >= max:
-            raise ValueError(
-                f"Min value must be less than max value")
+            raise ValueError(f"Min value must be less than max value")
 
         self._bounds[name] = (min, max)
 
@@ -116,8 +111,6 @@ class BoundManager:
 
         if isinstance(value, Point):
             if not value.within_bounds(min_value, max_value):
-                raise ValueError(
-                    f"Point {value} is out of bounds for '{name}'")
+                raise ValueError(f"Point {value} is out of bounds for '{name}'")
         elif not (min_value <= value <= max_value):
-            raise ValueError(
-                f"Value {value} is out of bounds for '{name}'")
+            raise ValueError(f"Value {value} is out of bounds for '{name}'")

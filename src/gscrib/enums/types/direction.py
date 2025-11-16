@@ -20,10 +20,8 @@ import math
 from gscrib.enums.base_enum import BaseEnum
 
 
-SYNONYMS = {
-    "cw": "clockwise",
-    "ccw": "counter"
-}
+SYNONYMS = {"cw": "clockwise", "ccw": "counter"}
+
 
 class Direction(BaseEnum):
     """Directions for interpolated moves."""

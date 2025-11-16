@@ -68,17 +68,17 @@ class Point(NamedTuple):
     z: OptFloat = None
 
     @classmethod
-    def unknown(cls) -> 'Point':
+    def unknown(cls) -> "Point":
         """Create a point with unknown coordinates"""
         return cls(None, None, None)
 
     @classmethod
-    def zero(cls) -> 'Point':
+    def zero(cls) -> "Point":
         """Create a point at origin (0, 0, 0)"""
         return cls(0.0, 0.0, 0.0)
 
     @classmethod
-    def from_vector(cls, vector: np.ndarray) -> 'Point':
+    def from_vector(cls, vector: np.ndarray) -> "Point":
         """Create a Point from a 4D vector"""
         return cls(*vector[:3]).resolve()
 
@@ -87,26 +87,27 @@ class Point(NamedTuple):
         return np.array([self.x or 0, self.y or 0, self.z or 0, 1.0])
 
     @classmethod
-    def from_params(cls, params: ParamsDict) -> 'Point':
+    def from_params(cls, params: ParamsDict) -> "Point":
         """Create a point from a dictionary of move parameters."""
 
-        x = params.get('X', None)
-        y = params.get('Y', None)
-        z = params.get('Z', None)
+        x = params.get("X", None)
+        y = params.get("Y", None)
+        z = params.get("Z", None)
 
         return cls(x, y, z)
 
-    def resolve(self) -> 'Point':
+    def resolve(self) -> "Point":
         """Create a new point replacing None values with zeros."""
 
         return Point(
             0 if self.x is None else self.x,
             0 if self.y is None else self.y,
-            0 if self.z is None else self.z
+            0 if self.z is None else self.z,
         )
 
-    def replace(self,
-        x: OptFloat = None, y: OptFloat = None, z: OptFloat = None) -> 'Point':
+    def replace(
+        self, x: OptFloat = None, y: OptFloat = None, z: OptFloat = None
+    ) -> "Point":
         """Create a new point replacing only the specified coordinates.
 
         Args:
@@ -121,11 +122,12 @@ class Point(NamedTuple):
         return Point(
             self.x if x is None else x,
             self.y if y is None else y,
-            self.z if z is None else z
+            self.z if z is None else z,
         )
 
-    def mask(self,
-        x: OptFloat = None, y: OptFloat = None, z: OptFloat = None) -> 'Point':
+    def mask(
+        self, x: OptFloat = None, y: OptFloat = None, z: OptFloat = None
+    ) -> "Point":
         """Create a new point with coordinates set to None if specified.
 
         This method creates a new point where coordinates are set to
@@ -145,10 +147,10 @@ class Point(NamedTuple):
         return Point(
             self.x if x is None else None,
             self.y if y is None else None,
-            self.z if z is None else None
+            self.z if z is None else None,
         )
 
-    def combine(self, o: 'Point', t: 'Point', m: 'Point') -> 'Point':
+    def combine(self, o: "Point", t: "Point", m: "Point") -> "Point":
         """Update coordinates based on position changes.
 
         Updates coordinates by comparing the current, reference, and
@@ -173,7 +175,7 @@ class Point(NamedTuple):
 
         return Point(x, y, z)
 
-    def within_bounds(self, min_point: 'Point', max_point: 'Point') -> bool:
+    def within_bounds(self, min_point: "Point", max_point: "Point") -> bool:
         """Check if point lies within bounds defined by two points.
 
         Coordinates that are ``None`` in either self, min_point, or
@@ -188,18 +190,17 @@ class Point(NamedTuple):
         """
 
         def in_range(value, min_bound, max_bound):
-            return (
-                (None in (value, min_bound, max_bound)) or
-                (min_bound <= value <= max_bound)
+            return (None in (value, min_bound, max_bound)) or (
+                min_bound <= value <= max_bound
             )
 
         return (
-            in_range(self.x, min_point.x, max_point.x) and
-            in_range(self.y, min_point.y, max_point.y) and
-            in_range(self.z, min_point.z, max_point.z)
+            in_range(self.x, min_point.x, max_point.x)
+            and in_range(self.y, min_point.y, max_point.y)
+            and in_range(self.z, min_point.z, max_point.z)
         )
 
-    def __add__(self, other: 'Point') -> 'Point':
+    def __add__(self, other: "Point") -> "Point":
         """Add two points.
 
         Args:
@@ -212,13 +213,9 @@ class Point(NamedTuple):
             A new point with the coordinates added
         """
 
-        return Point(
-            self.x + other.x,
-            self.y + other.y,
-            self.z + other.z
-        )
+        return Point(self.x + other.x, self.y + other.y, self.z + other.z)
 
-    def __sub__(self, other: 'Point') -> 'Point':
+    def __sub__(self, other: "Point") -> "Point":
         """Subtract two points.
 
         Args:
@@ -231,13 +228,9 @@ class Point(NamedTuple):
             A new point with the coordinates substracted
         """
 
-        return Point(
-            self.x - other.x,
-            self.y - other.y,
-            self.z - other.z
-        )
+        return Point(self.x - other.x, self.y - other.y, self.z - other.z)
 
-    def __mul__(self, scalar: float) -> 'Point':
+    def __mul__(self, scalar: float) -> "Point":
         """Multiply the point's coordinates by a scalar.
 
         Args:
@@ -250,13 +243,9 @@ class Point(NamedTuple):
             A new point with the coordinates multiplied by the scalar.
         """
 
-        return Point(
-            self.x * scalar,
-            self.y * scalar,
-            self.z * scalar
-        )
+        return Point(self.x * scalar, self.y * scalar, self.z * scalar)
 
-    def __rmul__(self, scalar: float) -> 'Point':
+    def __rmul__(self, scalar: float) -> "Point":
         """Multiply the point's coordinates by a scalar.
 
         Args:
@@ -271,7 +260,7 @@ class Point(NamedTuple):
 
         return self.__mul__(scalar)
 
-    def __neg__(self) -> 'Point':
+    def __neg__(self) -> "Point":
         """Negate the point's coordinates.
 
         Returns:
@@ -281,10 +270,10 @@ class Point(NamedTuple):
         return Point(
             None if self.x is None else -(self.x or 0),
             None if self.y is None else -(self.y or 0),
-            None if self.z is None else -(self.z or 0)
+            None if self.z is None else -(self.z or 0),
         )
 
-    def __truediv__(self, scalar: float) -> 'Point':
+    def __truediv__(self, scalar: float) -> "Point":
         """Divide the point's coordinates by a scalar.
 
         Args:
@@ -298,13 +287,9 @@ class Point(NamedTuple):
             ZeroDivisionError: If the scalar is zero.
         """
 
-        return Point(
-            self.x / scalar,
-            self.y / scalar,
-            self.z / scalar
-        )
+        return Point(self.x / scalar, self.y / scalar, self.z / scalar)
 
-    def __lt__(self, other: 'Point') -> bool:
+    def __lt__(self, other: "Point") -> bool:
         """Less than operator
 
         Args:
@@ -315,41 +300,33 @@ class Point(NamedTuple):
         """
 
         return bool(
-            self.x <= other.x and
-            self.y <= other.y and
-            self.z <= other.z and
-            (
-                self.x < other.x or
-                self.y < other.y or
-                self.z < other.z
-            )
+            self.x <= other.x
+            and self.y <= other.y
+            and self.z <= other.z
+            and (self.x < other.x or self.y < other.y or self.z < other.z)
         )
 
-    def __eq__(self, other: 'Point') -> bool:
+    def __eq__(self, other: "Point") -> bool:
         """Equal to operator"""
 
-        return bool(
-            self.x == other.x and
-            self.y == other.y and
-            self.z == other.z
-        )
+        return bool(self.x == other.x and self.y == other.y and self.z == other.z)
 
-    def __ge__(self, other: 'Point') -> bool:
+    def __ge__(self, other: "Point") -> bool:
         """Greater than or equal operator."""
 
         return not (self < other)
 
-    def __gt__(self, other: 'Point') -> bool:
+    def __gt__(self, other: "Point") -> bool:
         """Greater than operator."""
 
         return not (self < other or self == other)
 
-    def __le__(self, other: 'Point') -> bool:
+    def __le__(self, other: "Point") -> bool:
         """Less than or equal operator."""
 
         return self < other or self == other
 
-    def __ne__(self, other: 'Point') -> bool:
+    def __ne__(self, other: "Point") -> bool:
         """Not equal operator."""
 
         return not (self == other)

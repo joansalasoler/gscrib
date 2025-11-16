@@ -12,7 +12,7 @@ from gscrib import GConfig, GCodeBuilder
 from gscrib.excepts import DeviceError
 
 
-Option = namedtuple('Option', ['type', 'name', 'default', 'help'])
+Option = namedtuple("Option", ["type", "name", "default", "help"])
 
 # ----------------------------------------------------------------------
 # Command line definition
@@ -39,6 +39,7 @@ options = (
 # Command line parsing
 # ----------------------------------------------------------------------
 
+
 def parse_command_line_options():
     parser = ArgumentParser(description=description)
 
@@ -47,7 +48,7 @@ def parse_command_line_options():
             f"--{option.name}",
             type=option.type,
             default=option.default,
-            help=option.help
+            help=option.help,
         )
 
     return parser.parse_args()
@@ -56,6 +57,7 @@ def parse_command_line_options():
 # ----------------------------------------------------------------------
 # Probing program
 # ----------------------------------------------------------------------
+
 
 def execute_probing_program(ctx):
     results = []
@@ -93,7 +95,7 @@ def execute_probing_program(ctx):
 
     for x, y in grid_points:
         g.rapid(point=(x, y))
-        g.pause() # Pause for user to move the probe
+        g.pause()  # Pause for user to move the probe
 
         try:
             g.probe("towards", Z=ctx.probe_z, F=ctx.probe_speed)
@@ -103,8 +105,8 @@ def execute_probing_program(ctx):
             sys.exit(1)
 
         try:
-            g.sleep(0) # Sync with the machine
-            g.wait() # Ensure probe is done
+            g.sleep(0)  # Sync with the machine
+            g.wait()  # Ensure probe is done
             g.query("position")
         except DeviceError as e:
             logging.warning("Warning: %s", e)

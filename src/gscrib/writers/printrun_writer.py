@@ -33,10 +33,10 @@ from .base_writer import BaseWriter
 
 DEFAULT_TIMEOUT = 30.0  # seconds
 POLLING_INTERVAL = 0.1  # seconds
-SUCCESS_PREFIXES = ('ok',)
-ERROR_PREFIXES = ('error', 'alarm', '!!')
+SUCCESS_PREFIXES = ("ok",)
+ERROR_PREFIXES = ("error", "alarm", "!!")
 AXES = ("X", "Y", "Z", "A", "B", "C")
-VALUE_PATTERN = re.compile(r'([A-Za-z0-9]+):([-\d\.]+(?:,[-\d\.]+)*)')
+VALUE_PATTERN = re.compile(r"([A-Za-z0-9]+):([-\d\.]+(?:,[-\d\.]+)*)")
 
 
 class PrintrunWriter(BaseWriter):
@@ -106,9 +106,9 @@ class PrintrunWriter(BaseWriter):
         """Check if there are pending operations."""
 
         return self.is_connected and (
-            self._device.printing or
-            not self._device.clear or
-            not self._device.priqueue.empty()
+            self._device.printing
+            or not self._device.clear
+            or not self._device.priqueue.empty()
         )
 
     def get_parameter(self, name: str) -> float:
@@ -220,8 +220,7 @@ class PrintrunWriter(BaseWriter):
             self._send_statement(statement)
             self._wait_for_acknowledgment()
         except Exception as e:
-            raise DeviceWriteError(
-                f"Failed to send command: {str(e)}") from e
+            raise DeviceWriteError(f"Failed to send command: {str(e)}") from e
 
         self._abort_on_device_error()
 

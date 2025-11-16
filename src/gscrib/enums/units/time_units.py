@@ -18,10 +18,8 @@
 
 from gscrib.enums.base_enum import BaseEnum
 
-SYNONYMS = {
-    "s": "seconds",
-    "ms": "milliseconds"
-}
+SYNONYMS = {"s": "seconds", "ms": "milliseconds"}
+
 
 class TimeUnits(BaseEnum):
     """Units of time measurement."""

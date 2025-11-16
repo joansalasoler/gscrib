@@ -9,6 +9,7 @@ from gscrib.writers import PrintrunWriter
 
 # Test initialization
 
+
 def test_init_default_state():
     writer = SerialWriter("/dev/ttyUSB0", 115200)
     assert isinstance(writer._writer_delegate, PrintrunWriter)

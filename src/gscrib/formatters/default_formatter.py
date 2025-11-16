@@ -50,7 +50,7 @@ class DefaultFormatter(BaseFormatter):
         self._line_endings = os.linesep
         self._decimal_places = DEFAULT_DECIMAL_PLACES
         self._valid_axes = [a.value.upper() for a in Axis]
-        self._labels = { a: a for a in self._valid_axes }
+        self._labels = {a: a for a in self._valid_axes}
         self.set_comment_symbols(DEFAULT_COMMENT_SYMBOLS)
 
     @typechecked
@@ -146,7 +146,7 @@ class DefaultFormatter(BaseFormatter):
             unique=True,
             fractional=True,
             sign=False,
-            trim="-"
+            trim="-",
         )
 
     @typechecked
@@ -176,8 +176,9 @@ class DefaultFormatter(BaseFormatter):
         return self._comment_template.format(text)
 
     @typechecked
-    def command(self,
-        command: str, params: dict = {}, comment: str | None = None) -> str:
+    def command(
+        self, command: str, params: dict = {}, comment: str | None = None
+    ) -> str:
         """Format a G-code command with optional parameters.
 
         Args:
@@ -213,7 +214,7 @@ class DefaultFormatter(BaseFormatter):
 
         space = " "
         buffer = []
-        upper_params = { k.upper(): v for k, v in params.items() }
+        upper_params = {k.upper(): v for k, v in params.items()}
 
         # Handle XYZ axis parameters
 

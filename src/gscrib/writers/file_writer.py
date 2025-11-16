@@ -35,11 +35,7 @@ class FileWriter(BaseWriter):
         >>> writer.disconnect()
     """
 
-    __slots__ = (
-        "_file",
-        "_is_terminal",
-        "_output"
-    )
+    __slots__ = ("_file", "_is_terminal", "_output")
 
     def __init__(self, output: Union[str, TextIO, BinaryIO]):
         """Initialize the file writer.
@@ -98,7 +94,7 @@ class FileWriter(BaseWriter):
         # We may not be in binary mode if the user provided an open
         # file, so we may need to convert bytes to strings
 
-        if hasattr(self._file, 'encoding'):
+        if hasattr(self._file, "encoding"):
             statement_str = statement.decode("utf-8")
             self._file.write(statement_str)
         else:

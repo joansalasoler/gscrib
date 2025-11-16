@@ -31,6 +31,7 @@ SYNONYMS = {
     "mm": "millimeters",
 }
 
+
 class LengthUnits(BaseEnum):
     """Units of length measurement."""
 

@@ -19,10 +19,8 @@
 from gscrib.enums.base_enum import BaseEnum
 
 
-SYNONYMS = {
-    "cw": "clockwise",
-    "ccw": "counter"
-}
+SYNONYMS = {"cw": "clockwise", "ccw": "counter"}
+
 
 class SpinMode(BaseEnum):
     """Spindle rotation direction and state."""

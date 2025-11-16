@@ -18,6 +18,7 @@
 __version__ = "2.2.0"
 
 import sys
+
 if sys.version_info.major < 3:
     print("You need to run this on Python 3")
     sys.exit(-1)
@@ -39,8 +40,10 @@ def locked(f):
     def inner(*args, **kw):
         with inner.lock:
             return f(*args, **kw)
+
     inner.lock = threading.Lock()
     return inner
+
 
 def decode_utf8(s):
     """Attempt to decode a string, return the string otherwise"""
@@ -48,16 +51,18 @@ def decode_utf8(s):
         return s.decode()
     return s
 
+
 def _(string):
     return string
 
 
-PR_EOF = None  #printrun's marker for EOF
-PR_AGAIN = b'' #printrun's marker for timeout/no data
-SYS_EOF = b''  #python's marker for EOF
-SYS_AGAIN = None #python's marker for timeout/no data
+PR_EOF = None  # printrun's marker for EOF
+PR_AGAIN = b""  # printrun's marker for timeout/no data
+SYS_EOF = b""  # python's marker for EOF
+SYS_AGAIN = None  # python's marker for timeout/no data
 
-class printcore():
+
+class printcore:
     """Core 3D printer host functionality.
 
     If `port` and `baud` are specified, `connect` is called immediately.
@@ -106,7 +111,7 @@ class printcore():
 
     """
 
-    def __init__(self, port = None, baud = None, dtr=None):
+    def __init__(self, port=None, baud=None, dtr=None):
         self._logger = logging.getLogger(__name__)
 
         self.baud = None
@@ -130,7 +135,7 @@ class printcore():
         self.resendfrom = -1
         self.paused = False
         self.sentlines = {}
-        self.log = deque(maxlen = 10000)
+        self.log = deque(maxlen=10000)
         self.sent = []
         self.writefailures = 0
         self.tempcb = None  # impl (wholeline)
@@ -145,7 +150,7 @@ class printcore():
         self.onlinecb = None  # impl ()
         self.loud = False  # emit sent and received lines to terminal
         self.tcp_streaming_mode = False
-        self.greetings = ['start', 'Grbl ']
+        self.greetings = ["start", "Grbl "]
         self.wait = 0  # default wait period for send(), send_now()
         self.read_thread = None
         self.stop_read_thread = False
@@ -156,8 +161,10 @@ class printcore():
         self.selector = None
         self.event_handler = []
         for handler in self.event_handler:
-            try: handler.on_init()
-            except: self._logger.error(traceback.format_exc())
+            try:
+                handler.on_init()
+            except:
+                self._logger.error(traceback.format_exc())
         if port is not None and baud is not None:
             self.connect(port, baud)
         self.xy_feedrate = None
@@ -167,27 +174,30 @@ class printcore():
         self._send_line_numbers = True
 
     def addEventHandler(self, handler):
-        '''
+        """
         Adds an event handler.
 
         @param handler: The handler to be added.
-        '''
+        """
         self.event_handler.append(handler)
 
     def logError(self, error):
         for handler in self.event_handler:
-            try: handler.on_error(error)
-            except: self._logger.error(traceback.format_exc())
+            try:
+                handler.on_error(error)
+            except:
+                self._logger.error(traceback.format_exc())
         if self.errorcb:
-            try: self.errorcb(error)
-            except: self._logger.error(traceback.format_exc())
+            try:
+                self.errorcb(error)
+            except:
+                self._logger.error(traceback.format_exc())
         else:
             self._logger.error(error)
 
     @locked
     def disconnect(self):
-        """Disconnects from printer and pauses the print
-        """
+        """Disconnects from printer and pauses the print"""
         if self.printer:
             if self.read_thread:
                 self.stop_read_thread = True
@@ -204,16 +214,17 @@ class printcore():
                 self.logError(traceback.format_exc())
                 pass
         for handler in self.event_handler:
-            try: handler.on_disconnect()
-            except: self._logger.error(traceback.format_exc())
+            try:
+                handler.on_disconnect()
+            except:
+                self._logger.error(traceback.format_exc())
         self.printer = None
         self.online = False
         self.printing = False
 
     @locked
-    def connect(self, port = None, baud = None, dtr=None):
-        """Set port and baudrate if given, then connect to printer
-        """
+    def connect(self, port=None, baud=None, dtr=None):
+        """Set port and baudrate if given, then connect to printer"""
         if self.printer:
             self.disconnect()
         if port is not None:
@@ -233,11 +244,12 @@ class printcore():
                 self.printer = None
                 return
             for handler in self.event_handler:
-                try: handler.on_connect()
-                except: self._logger.error(traceback.format_exc())
+                try:
+                    handler.on_connect()
+                except:
+                    self._logger.error(traceback.format_exc())
             self.stop_read_thread = False
-            self.read_thread = threading.Thread(target = self._listen,
-                                                name='read thread')
+            self.read_thread = threading.Thread(target=self._listen, name="read thread")
             self.read_thread.start()
             self._start_sender()
 
@@ -256,48 +268,57 @@ class printcore():
         try:
             line_bytes = self.printer.readline()
             if line_bytes is device.READ_EOF:
-                self.logError("Can't read from printer (disconnected?)." +
-                              " line_bytes is None")
+                self.logError(
+                    "Can't read from printer (disconnected?)." + " line_bytes is None"
+                )
                 self.stop_read_thread = True
                 return PR_EOF
-            line = line_bytes.decode('utf-8')
+            line = line_bytes.decode("utf-8")
 
             if len(line) > 1:
                 self.log.append(line)
                 for handler in self.event_handler:
-                    try: handler.on_recv(line)
-                    except: self._logger.error(traceback.format_exc())
+                    try:
+                        handler.on_recv(line)
+                    except:
+                        self._logger.error(traceback.format_exc())
                 if self.recvcb:
-                    try: self.recvcb(line)
-                    except: self.logError(traceback.format_exc())
-                if self.loud: self._logger.info("RECV: %s" % line.rstrip())
+                    try:
+                        self.recvcb(line)
+                    except:
+                        self.logError(traceback.format_exc())
+                if self.loud:
+                    self._logger.info("RECV: %s" % line.rstrip())
             return line
         except UnicodeDecodeError:
-            msg = ("Got rubbish reply from {0} at baudrate {1}:\n"
-                   "Maybe a bad baudrate?").format(self.port, self.baud)
+            msg = (
+                "Got rubbish reply from {0} at baudrate {1}:\nMaybe a bad baudrate?"
+            ).format(self.port, self.baud)
             self.logError(msg)
             return None
         except device.DeviceError as e:
-            msg = ("Can't read from printer (disconnected?) {0}"
-                   ).format(decode_utf8(str(e)))
+            msg = ("Can't read from printer (disconnected?) {0}").format(
+                decode_utf8(str(e))
+            )
             self.logError(msg)
             return None
 
     def _listen_can_continue(self):
-        return (not self.stop_read_thread
-                and self.printer
-                and self.printer.is_connected)
+        return not self.stop_read_thread and self.printer and self.printer.is_connected
 
     def _listen_until_online(self):
         while not self.online and self._listen_can_continue():
             self._send("G4 P0")  # It was M105, which Grbl doesn't like
             if self.writefailures >= 4:
-                self._logger.error(_("Aborting connection attempt after 4 failed writes."))
+                self._logger.error(
+                    _("Aborting connection attempt after 4 failed writes.")
+                )
                 return
             empty_lines = 0
             while self._listen_can_continue():
                 line = self._readline()
-                if line is None: break  # connection problem
+                if line is None:
+                    break  # connection problem
                 # workaround cases where M105 was sent before printer Serial
                 # was online an empty line means read timeout was reached,
                 # meaning no data was received thus we count those empty lines,
@@ -309,47 +330,59 @@ class printcore():
                 # before resending
                 if not line:
                     empty_lines += 1
-                    if empty_lines == 15: break
-                else: empty_lines = 0
+                    if empty_lines == 15:
+                        break
+                else:
+                    empty_lines = 0
 
                 if line.startswith("Grbl"):
                     self._send_line_numbers = False
 
-                if line.startswith(tuple(self.greetings)) \
-                   or line.startswith('ok') or "T:" in line:
+                if (
+                    line.startswith(tuple(self.greetings))
+                    or line.startswith("ok")
+                    or "T:" in line
+                ):
                     self.online = True
                     for handler in self.event_handler:
-                        try: handler.on_online()
-                        except: self._logger.error(traceback.format_exc())
+                        try:
+                            handler.on_online()
+                        except:
+                            self._logger.error(traceback.format_exc())
                     if self.onlinecb:
-                        try: self.onlinecb()
-                        except: self.logError(traceback.format_exc())
+                        try:
+                            self.onlinecb()
+                        except:
+                            self.logError(traceback.format_exc())
                     return
 
     def _listen(self):
-        """This function acts on messages from the firmware
-        """
+        """This function acts on messages from the firmware"""
         self.clear = True
         if not self.printing:
             self._listen_until_online()
         while self._listen_can_continue():
             line = self._readline()
             if line is None:
-                self._logger.debug('_readline() is None, exiting _listen()')
+                self._logger.debug("_readline() is None, exiting _listen()")
                 break
-            if line.startswith('DEBUG_'):
+            if line.startswith("DEBUG_"):
                 continue
-            if line.startswith(tuple(self.greetings)) or line.startswith('ok'):
+            if line.startswith(tuple(self.greetings)) or line.startswith("ok"):
                 self.clear = True
-            if line.startswith('ok') and "T:" in line:
+            if line.startswith("ok") and "T:" in line:
                 for handler in self.event_handler:
-                    try: handler.on_temp(line)
-                    except: self._logger.error(traceback.format_exc())
+                    try:
+                        handler.on_temp(line)
+                    except:
+                        self._logger.error(traceback.format_exc())
                 if self.tempcb:
                     # callback for temp, status, whatever
-                    try: self.tempcb(line)
-                    except: self.logError(traceback.format_exc())
-            elif line.startswith('Error'):
+                    try:
+                        self.tempcb(line)
+                    except:
+                        self.logError(traceback.format_exc())
+            elif line.startswith("Error"):
                 self.logError(line)
             # Teststrings for resend parsing       # Firmware     exp. result
             # line="rs N2 Expected checksum 67"    # Teacup       2
@@ -366,12 +399,11 @@ class printcore():
                         pass
                 self.clear = True
         self.clear = True
-        self._logger.debug('Exiting read thread')
+        self._logger.debug("Exiting read thread")
 
     def _start_sender(self):
         self.stop_send_thread = False
-        self.send_thread = threading.Thread(target = self._sender,
-                                            name = 'send thread')
+        self.send_thread = threading.Thread(target=self._sender, name="send thread")
         self.send_thread.start()
 
     def _stop_sender(self):
@@ -395,7 +427,7 @@ class printcore():
     def _checksum(self, command):
         return reduce(lambda x, y: x ^ y, map(ord, command))
 
-    def startprint(self, gcode, startindex = 0):
+    def startprint(self, gcode, startindex=0):
         """Start a print.
 
         The `mainqueue` is populated and then commands are gradually sent to
@@ -429,10 +461,10 @@ class printcore():
         self.clear = False
         self._reset_line_numbers()
 
-        resuming = (startindex != 0)
-        self.print_thread = threading.Thread(target = self._print,
-                                             name = 'print thread',
-                                             kwargs = {"resuming": resuming})
+        resuming = startindex != 0
+        self.print_thread = threading.Thread(
+            target=self._print, name="print thread", kwargs={"resuming": resuming}
+        )
         self.print_thread.start()
         return True
 
@@ -445,12 +477,13 @@ class printcore():
 
     # run a simple script if it exists, no multithreading
     def runSmallScript(self, filename):
-        if not filename: return
+        if not filename:
+            return
         try:
             with open(filename) as f:
                 for i in f:
                     l = i.replace("\n", "")
-                    l = l.partition(';')[0]  # remove comments
+                    l = l.partition(";")[0]  # remove comments
                     self.send_now(l)
         except:
             pass
@@ -467,7 +500,8 @@ class printcore():
             False if not printing.
 
         """
-        if not self.printing: return False
+        if not self.printing:
+            return False
         self.paused = True
         self.printing = False
 
@@ -502,12 +536,13 @@ class printcore():
             False if print not paused.
 
         """
-        if not self.paused: return False
+        if not self.paused:
+            return False
         # restores the status
         self.send_now("G90")  # go to absolute coordinates
 
-        xyFeed = '' if self.xy_feedrate is None else ' F' + str(self.xy_feedrate)
-        zFeed = '' if self.z_feedrate is None else ' F' + str(self.z_feedrate)
+        xyFeed = "" if self.xy_feedrate is None else " F" + str(self.xy_feedrate)
+        zFeed = "" if self.z_feedrate is None else " F" + str(self.z_feedrate)
 
         self.send_now("G1 X%s Y%s%s" % (self.pauseX, self.pauseY, xyFeed))
         self.send_now("G1 Z" + str(self.pauseZ) + zFeed)
@@ -517,18 +552,18 @@ class printcore():
         if self.pauseRelative:
             self.send_now("G91")
         if self.pauseRelativeE:
-            self.send_now('M83')
+            self.send_now("M83")
         # reset old feed rate
         self.send_now("G1 F" + str(self.pauseF))
 
         self.paused = False
         self.printing = True
-        self.print_thread = threading.Thread(target = self._print,
-                                             name = 'print thread',
-                                             kwargs = {"resuming": True})
+        self.print_thread = threading.Thread(
+            target=self._print, name="print thread", kwargs={"resuming": True}
+        )
         self.print_thread.start()
 
-    def send(self, command, wait = 0):
+    def send(self, command, wait=0):
         """Adds a command to the main queue.
 
         If a print is ongoing, `command` is appended at the end of
@@ -552,7 +587,7 @@ class printcore():
         else:
             self.logError(_("Not connected to printer."))
 
-    def send_now(self, command, wait = 0):
+    def send_now(self, command, wait=0):
         """Adds a command to the priority queue.
 
         Command is appended to `priqueue`. The `command` is added to a queue
@@ -571,35 +606,50 @@ class printcore():
         else:
             self.logError(_("Not connected to printer."))
 
-    def _print(self, resuming = False):
+    def _print(self, resuming=False):
         self._stop_sender()
         try:
             for handler in self.event_handler:
-                try: handler.on_start(resuming)
-                except: self._logger.error(traceback.format_exc())
+                try:
+                    handler.on_start(resuming)
+                except:
+                    self._logger.error(traceback.format_exc())
             if self.startcb:
                 # callback for printing started
-                try: self.startcb(resuming)
+                try:
+                    self.startcb(resuming)
                 except:
-                    self.logError(_("Print start callback failed with:") +
-                                  "\n" + traceback.format_exc())
+                    self.logError(
+                        _("Print start callback failed with:")
+                        + "\n"
+                        + traceback.format_exc()
+                    )
             while self.printing and self.printer and self.online:
                 self._sendnext()
             self.sentlines = {}
             self.log.clear()
             self.sent = []
             for handler in self.event_handler:
-                try: handler.on_end()
-                except: self._logger.error(traceback.format_exc())
+                try:
+                    handler.on_end()
+                except:
+                    self._logger.error(traceback.format_exc())
             if self.endcb:
                 # callback for printing done
-                try: self.endcb()
+                try:
+                    self.endcb()
                 except:
-                    self.logError(_("Print end callback failed with:") +
-                                  "\n" + traceback.format_exc())
+                    self.logError(
+                        _("Print end callback failed with:")
+                        + "\n"
+                        + traceback.format_exc()
+                    )
         except:
-            self.logError(_("Print thread died due to the following error:") +
-                          "\n" + traceback.format_exc())
+            self.logError(
+                _("Print thread died due to the following error:")
+                + "\n"
+                + traceback.format_exc()
+            )
         finally:
             self.print_thread = None
             self._start_sender()
@@ -638,16 +688,22 @@ class printcore():
                 (prev_layer, prev_line) = self.mainqueue.idxs(self.queueindex - 1)
                 if prev_layer != layer:
                     for handler in self.event_handler:
-                        try: handler.on_layerchange(layer)
-                        except: self._logger.error(traceback.format_exc())
+                        try:
+                            handler.on_layerchange(layer)
+                        except:
+                            self._logger.error(traceback.format_exc())
             if self.layerchangecb and self.queueindex > 0:
                 (prev_layer, prev_line) = self.mainqueue.idxs(self.queueindex - 1)
                 if prev_layer != layer:
-                    try: self.layerchangecb(layer)
-                    except: self.logError(traceback.format_exc())
+                    try:
+                        self.layerchangecb(layer)
+                    except:
+                        self.logError(traceback.format_exc())
             for handler in self.event_handler:
-                try: handler.on_preprintsend(gline, self.queueindex, self.mainqueue)
-                except: self._logger.error(traceback.format_exc())
+                try:
+                    handler.on_preprintsend(gline, self.queueindex, self.mainqueue)
+                except:
+                    self._logger.error(traceback.format_exc())
             if self.preprintsendcb:
                 if self.mainqueue.has_index(self.queueindex + 1):
                     (next_layer, next_line) = self.mainqueue.idxs(self.queueindex + 1)
@@ -672,11 +728,15 @@ class printcore():
                 self._send(tline, self.lineno, True)
                 self.lineno += 1
                 for handler in self.event_handler:
-                    try: handler.on_printsend(gline)
-                    except: self._logger.error(traceback.format_exc())
+                    try:
+                        handler.on_printsend(gline)
+                    except:
+                        self._logger.error(traceback.format_exc())
                 if self.printsendcb:
-                    try: self.printsendcb(gline)
-                    except: self.logError(traceback.format_exc())
+                    try:
+                        self.printsendcb(gline)
+                    except:
+                        self.logError(traceback.format_exc())
             else:
                 self.clear = True
             self.queueindex += 1
@@ -687,7 +747,7 @@ class printcore():
                 self.queueindex = 0
                 self._reset_line_numbers()
 
-    def _send(self, command, lineno = 0, calcchecksum = False):
+    def _send(self, command, lineno=0, calcchecksum=False):
         # Only add checksums if over serial (tcp does the flow control itself)
         if calcchecksum and not self.printer.has_flow_control:
             if self._send_line_numbers:
@@ -700,25 +760,31 @@ class printcore():
             # run the command through the analyzer
             gline = None
             try:
-                gline = self.analyzer.append(command, store = False)
+                gline = self.analyzer.append(command, store=False)
             except:
-                self._logger.warning(_("Could not analyze command %s:") % command +
-                                "\n" + traceback.format_exc())
+                self._logger.warning(
+                    _("Could not analyze command %s:") % command
+                    + "\n"
+                    + traceback.format_exc()
+                )
             if self.loud:
                 self._logger.info("SENT: %s" % command)
 
             for handler in self.event_handler:
-                try: handler.on_send(command, gline)
-                except: self._logger.error(traceback.format_exc())
+                try:
+                    handler.on_send(command, gline)
+                except:
+                    self._logger.error(traceback.format_exc())
             if self.sendcb:
-                try: self.sendcb(command, gline)
-                except: self.logError(traceback.format_exc())
+                try:
+                    self.sendcb(command, gline)
+                except:
+                    self.logError(traceback.format_exc())
             try:
-                self.printer.write((command + "\n").encode('ascii'))
+                self.printer.write((command + "\n").encode("ascii"))
                 self.writefailures = 0
             except device.DeviceError as e:
-                self.logError("Can't write to printer (disconnected?)"
-                              "{0}".format(e))
+                self.logError("Can't write to printer (disconnected?){0}".format(e))
                 self.writefailures += 1
 
     def _reset_line_numbers(self):

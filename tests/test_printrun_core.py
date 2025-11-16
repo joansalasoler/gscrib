@@ -36,19 +36,19 @@ from gscrib.printrun import eventhandler
 from gscrib.printrun import gcoder
 
 
-DEFAULT_ANSWER = 'ok:\n'
+DEFAULT_ANSWER = "ok:\n"
 CNC_PROCESS_TIME = 0.02  # in s
 
 
 def slow_printer(*args):
     """Simulate a slow processing printer"""
-    time.sleep(CNC_PROCESS_TIME*random.randint(0, 90)/100)
+    time.sleep(CNC_PROCESS_TIME * random.randint(0, 90) / 100)
     return DEFAULT_ANSWER.encode()
 
 
 def wait_printer_cycles(cycles):
     """Wait for a slow printer to process"""
-    time.sleep(CNC_PROCESS_TIME*cycles)
+    time.sleep(CNC_PROCESS_TIME * cycles)
 
 
 def mock_sttyhup(cls):
@@ -83,8 +83,7 @@ def mock_socket(test, read_function=slow_printer):
     selector_mock.return_value.select = mock.Mock(return_value=True)
 
     patcher = mock.patch(
-        'selectors.DefaultSelector',
-        return_value=selector_mock.return_value
+        "selectors.DefaultSelector", return_value=selector_mock.return_value
     )
 
     patcher.start()
@@ -105,8 +104,7 @@ def mock_socket(test, read_function=slow_printer):
 
 def add_mocked_handler(core):
     """Add a fake PrinterEventHandler to a printcore instance"""
-    mocked_handler = mock.create_autospec(
-        spec=eventhandler.PrinterEventHandler)
+    mocked_handler = mock.create_autospec(spec=eventhandler.PrinterEventHandler)
     core.addEventHandler(mocked_handler)
     return mocked_handler
 
@@ -167,11 +165,9 @@ def setup_socket_core(test):
 def setup_test_command():
     """Set up a command to test"""
     command = "Random Command"
-    parsed_command = f"{command}\n".encode('ascii')
+    parsed_command = f"{command}\n".encode("ascii")
     parsed_gline = gcoder.GCode().append(command, store=False)
-    return {'raw': command,
-            'parsed': parsed_command,
-            'gline': parsed_gline}
+    return {"raw": command, "parsed": parsed_command, "gline": parsed_gline}
 
 
 def checksum_command(command, lineno=0):
@@ -181,7 +177,7 @@ def checksum_command(command, lineno=0):
     # pylint: disable-next=protected-access
     checksum = str(core._checksum(prefixed_command))
     checksummed_command = f"{prefixed_command}*{checksum}\n"
-    return checksummed_command.encode('ascii')
+    return checksummed_command.encode("ascii")
 
 
 class TestConnect(unittest.TestCase):
@@ -214,9 +210,12 @@ class TestConnect(unittest.TestCase):
         with self.subTest("Check the `on_connect` event is triggered"):
             mocked_handler.on_connect.assert_called_once()
 
-        subtest_mock(self, "Check triggering the `online` event/callback",
-                     (mocked_handler.on_online, online_cb),
-                     "assert_called_once")
+        subtest_mock(
+            self,
+            "Check triggering the `online` event/callback",
+            (mocked_handler.on_online, online_cb),
+            "assert_called_once",
+        )
 
     def test_calls_socket_connect(self):
         """Test that socket.socket.connect() is called"""
@@ -274,8 +273,13 @@ class TestConnect(unittest.TestCase):
         mocked_cb = mock_callback(self, self.core, "errorcb")
         mocked_handler = add_mocked_handler(self.core)
         self.core.send_now("Random Command")
-        subtest_mock(self, "", (mocked_handler.on_error, mocked_cb),
-                     "assert_called_once_with", err_msg)
+        subtest_mock(
+            self,
+            "",
+            (mocked_handler.on_error, mocked_cb),
+            "assert_called_once_with",
+            err_msg,
+        )
 
     def tearDown(self):
         self.core.disconnect()
@@ -331,9 +335,12 @@ class TestDisconnect(unittest.TestCase):
     def test_disconnect_error(self):
         """Test that an error is logged if disconnection fails"""
         with (
-            mock.patch.object(self.mocked_serial.return_value, "close",
-                              side_effect=serial.SerialException),
-            self.assertLogs(level="ERROR")
+            mock.patch.object(
+                self.mocked_serial.return_value,
+                "close",
+                side_effect=serial.SerialException,
+            ),
+            self.assertLogs(level="ERROR"),
         ):
             self.core.disconnect()
         # Check that `online` is unset even after an error
@@ -346,7 +353,7 @@ class TestSends(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         mock_sttyhup(cls)
-        cls.command = setup_test_command()['raw']
+        cls.command = setup_test_command()["raw"]
 
     def setUp(self):
         self.core, self.mocked_serial = setup_serial_core(self)
@@ -368,7 +375,7 @@ class TestSends(unittest.TestCase):
         """Test that a command is put into `mainqueue` when printing"""
         with (
             mock.patch.object(self.core, "printing", True),
-            mock.patch.object(self.core, "mainqueue") as mocked_queue
+            mock.patch.object(self.core, "mainqueue") as mocked_queue,
         ):
             self.assertTrue(self.core.printing)
             self.core.send(self.command)
@@ -411,7 +418,7 @@ class TestPrint(unittest.TestCase):
             tmp = tmp + [
                 f"G1 Z{i}",  # move to layer (i)
                 "G0 X1",
-                f"G1 X100 E{i+1}",
+                f"G1 X100 E{i + 1}",
             ]
         cls.print_line_count = len(tmp)
         cls.print_code = gcoder.GCode(tmp)
@@ -430,8 +437,7 @@ class TestPrint(unittest.TestCase):
     def check_unfinished_print(self):
         """Check the first command was sent but the last wasn't"""
         first_call = mock.call(self.parsed_print_code[0])
-        last_call = mock.call(
-            self.parsed_print_code[self.print_line_count-1])
+        last_call = mock.call(self.parsed_print_code[self.print_line_count - 1])
         write_calls = self.mocked_serial.return_value.write.mock_calls
         self.assertIn(first_call, write_calls)
         self.assertNotIn(last_call, write_calls)
@@ -444,8 +450,9 @@ class TestPrint(unittest.TestCase):
     def test_start_finish(self):
         """Test events from print start to finish"""
         layerchange_cb = mock_callback(self, self.core, "layerchangecb")
-        preprintsend_cb = mock_callback(self, self.core, "preprintsendcb",
-                                        side_effect=fake_preprintsend)
+        preprintsend_cb = mock_callback(
+            self, self.core, "preprintsendcb", side_effect=fake_preprintsend
+        )
         printsend_cb = mock_callback(self, self.core, "printsendcb")
 
         with self.subTest("Check `printing` was unset before test"):
@@ -460,24 +467,34 @@ class TestPrint(unittest.TestCase):
         with self.subTest("Check `printing` is set"):
             self.assertTrue(self.core.printing)
 
-        subtest_mock(self, "Check triggering `start` event/callback",
-                     (self.start_cb, self.mocked_handler.on_start),
-                     "assert_called_once_with", False)
+        subtest_mock(
+            self,
+            "Check triggering `start` event/callback",
+            (self.start_cb, self.mocked_handler.on_start),
+            "assert_called_once_with",
+            False,
+        )
 
         # Let the print finish
-        wait_printer_cycles(self.print_line_count*1.5)
+        wait_printer_cycles(self.print_line_count * 1.5)
 
         with self.subTest("Check that serial.Serial.write() was called"):
             self.check_finished_print()
 
-        subtest_mock(self, "Check triggering `end` event/callback",
-                     (self.end_cb, self.mocked_handler.on_end),
-                     "assert_called_once")
+        subtest_mock(
+            self,
+            "Check triggering `end` event/callback",
+            (self.end_cb, self.mocked_handler.on_end),
+            "assert_called_once",
+        )
 
-        for idx, item in enumerate((self.mocked_handler.on_layerchange, layerchange_cb)):
-            mock_name = getattr(item, '_mock_name', None) or f'mock_{idx}'
-            with self.subTest("Check triggering `layerchange` event/callback",
-                              mock=mock_name):
+        for idx, item in enumerate(
+            (self.mocked_handler.on_layerchange, layerchange_cb)
+        ):
+            mock_name = getattr(item, "_mock_name", None) or f"mock_{idx}"
+            with self.subTest(
+                "Check triggering `layerchange` event/callback", mock=mock_name
+            ):
                 for i in range(1, self.print_layer_count):
                     item.assert_any_call(i)
 
@@ -488,37 +505,37 @@ class TestPrint(unittest.TestCase):
                 # Get the arguments from the ith call to event
                 call_args = event.call_args_list[i].args
                 # Check the arguments of the call are as expected
-                assert_equal_glines(self, call_args[0],
-                                    self.core.mainqueue.lines[i])
+                assert_equal_glines(self, call_args[0], self.core.mainqueue.lines[i])
                 self.assertEqual(call_args[1], i)
                 self.assertEqual(call_args[2], self.core.mainqueue)
 
         with self.subTest("Check triggering `preprintsend` callback"):
             # Had to use this workaround. See test_handler_on_send
-            for i in range(self.print_line_count-1):
+            for i in range(self.print_line_count - 1):
                 # Get the arguments from the ith call to callback
                 call_args = preprintsend_cb.call_args_list[i].args
                 # Check the arguments of the call are as expected
-                assert_equal_glines(self, call_args[0],
-                                    self.core.mainqueue.lines[i])
-                assert_equal_glines(self, call_args[1],
-                                    self.core.mainqueue.lines[i+1])
+                assert_equal_glines(self, call_args[0], self.core.mainqueue.lines[i])
+                assert_equal_glines(
+                    self, call_args[1], self.core.mainqueue.lines[i + 1]
+                )
             i = self.print_line_count - 1
             last_call_args = preprintsend_cb.call_args_list[i].args
-            assert_equal_glines(self, last_call_args[0],
-                                self.core.mainqueue.lines[i])
+            assert_equal_glines(self, last_call_args[0], self.core.mainqueue.lines[i])
             self.assertEqual(last_call_args[1], None)
 
         for idx, item in enumerate((self.mocked_handler.on_printsend, printsend_cb)):
-            mock_name = getattr(item, '_mock_name', None) or f'mock_{idx}'
-            with self.subTest("Check triggering `printsend` event/callback",
-                              mock=mock_name):
+            mock_name = getattr(item, "_mock_name", None) or f"mock_{idx}"
+            with self.subTest(
+                "Check triggering `printsend` event/callback", mock=mock_name
+            ):
                 # Had to use this workaround. See test_handler_on_send
                 for i in range(self.print_line_count):
                     # Get the arguments from the ith call to event
                     call_args = item.call_args_list[i].args
-                    assert_equal_glines(self, call_args[0],
-                                        self.core.mainqueue.lines[i])
+                    assert_equal_glines(
+                        self, call_args[0], self.core.mainqueue.lines[i]
+                    )
 
     def test_start_startindex(self):
         """Test that only commands after resume point are sent to the
@@ -541,7 +558,7 @@ class TestPrint(unittest.TestCase):
             lineno += 1
 
         self.core.startprint(self.print_code, startindex=resume_index)
-        wait_printer_cycles(self.print_line_count*1.5)
+        wait_printer_cycles(self.print_line_count * 1.5)
         for line in parsed_print_code:
             self.mocked_serial.return_value.write.assert_any_call(line)
 
@@ -579,9 +596,12 @@ class TestPrint(unittest.TestCase):
         with self.subTest("Check print didn't finish yet"):
             self.check_unfinished_print()
 
-        subtest_mock(self, "Check triggering `end` event/callback on pause",
-                     (self.mocked_handler.on_end, self.end_cb),
-                     "assert_called_once")
+        subtest_mock(
+            self,
+            "Check triggering `end` event/callback on pause",
+            (self.mocked_handler.on_end, self.end_cb),
+            "assert_called_once",
+        )
 
         # Resume print
         self.core.resume()
@@ -593,12 +613,16 @@ class TestPrint(unittest.TestCase):
         with self.subTest("Check `printing` is set after resuming"):
             self.assertTrue(self.core.printing)
 
-        subtest_mock(self, "Check `start` event/callback when resuming",
-                     (self.start_cb, self.mocked_handler.on_start),
-                     "assert_called_with", True)
+        subtest_mock(
+            self,
+            "Check `start` event/callback when resuming",
+            (self.start_cb, self.mocked_handler.on_start),
+            "assert_called_with",
+            True,
+        )
 
         # Let the print finish
-        wait_printer_cycles(self.print_line_count*1.5)
+        wait_printer_cycles(self.print_line_count * 1.5)
 
         with self.subTest("Check that `resume` finishes the print"):
             self.check_finished_print()
@@ -617,7 +641,7 @@ class TestPrint(unittest.TestCase):
         """Test events after canceling a print"""
         # Start a print and cancel it mid-print
         self.core.startprint(self.print_code)
-        wait_printer_cycles(self.print_line_count/3)
+        wait_printer_cycles(self.print_line_count / 3)
         self.core.cancelprint()
         wait_printer_cycles(6)
 
@@ -633,19 +657,22 @@ class TestPrint(unittest.TestCase):
         with self.subTest("Check the print is unfinished"):
             self.check_unfinished_print()
 
-        subtest_mock(self, "Test triggering `end` event/callback",
-                     (self.mocked_handler.on_end, self.end_cb),
-                     "assert_called_once")
+        subtest_mock(
+            self,
+            "Test triggering `end` event/callback",
+            (self.mocked_handler.on_end, self.end_cb),
+            "assert_called_once",
+        )
 
     def test_host_command(self):
         """Test calling host-commands"""
         print_lines = []
         for i in range(2):
             print_lines.append(f"G1 X{i}")
-        print_lines.append(';@pause')
+        print_lines.append(";@pause")
         print_code = gcoder.GCode(print_lines)
         self.core.startprint(print_code)
-        wait_printer_cycles(len(print_lines)*2)
+        wait_printer_cycles(len(print_lines) * 2)
         self.assertTrue(self.core.paused)
 
 
@@ -674,9 +701,9 @@ class TestSendThread(unittest.TestCase):
     def setUpClass(cls):
         mock_sttyhup(cls)
         test_command = setup_test_command()
-        cls.command = test_command['raw']
-        cls.parsed_command = test_command['parsed']
-        cls.parsed_gline = test_command['gline']
+        cls.command = test_command["raw"]
+        cls.parsed_command = test_command["parsed"]
+        cls.parsed_gline = test_command["gline"]
 
     def setUp(self):
         self.core, self.mocked_serial = setup_serial_core(self)
@@ -685,8 +712,7 @@ class TestSendThread(unittest.TestCase):
         """Test that commands are sent to the printer from priqueue"""
         self.core.send_now(self.command)
         wait_printer_cycles(2)
-        self.mocked_serial.return_value.write.assert_called_with(
-            self.parsed_command)
+        self.mocked_serial.return_value.write.assert_called_with(self.parsed_command)
         self.assertTrue(self.core.writefailures == 0)
 
     def test_calls_socket_write(self):
@@ -711,19 +737,20 @@ class TestSendThread(unittest.TestCase):
         #
         # Had to use a workaround. See `compare_glines`
         for item in (mocked_handler.on_send, mocked_cb):
-            mock_name = getattr(item, '_mock_name', None) or f'mock_{i}'
-            with self.subTest("Check triggering `send` event/callback",
-                              mock=mock_name):
+            mock_name = getattr(item, "_mock_name", None) or f"mock_{i}"
+            with self.subTest("Check triggering `send` event/callback", mock=mock_name):
                 self.assertEqual(self.command, item.call_args.args[0])
-                assert_equal_glines(self, self.parsed_gline,
-                                    item.call_args.args[1])
+                assert_equal_glines(self, self.parsed_gline, item.call_args.args[1])
 
     def test_write_serial_error(self):
         """Test an error is logged when serial error during writing"""
         with (
-              mock.patch.object(self.mocked_serial.return_value, "write",
-                                side_effect=serial.SerialException),
-              self.assertLogs(level="ERROR")
+            mock.patch.object(
+                self.mocked_serial.return_value,
+                "write",
+                side_effect=serial.SerialException,
+            ),
+            self.assertLogs(level="ERROR"),
         ):
             self.core.send(self.command)
             wait_printer_cycles(2)
@@ -734,9 +761,8 @@ class TestSendThread(unittest.TestCase):
         core, mocked_socket = setup_socket_core(self)
         socket_file = mocked_socket.return_value.makefile.return_value
         with (
-              mock.patch.object(socket_file, "write",
-                                side_effect=socket.error),
-              self.assertLogs(level="ERROR")
+            mock.patch.object(socket_file, "write", side_effect=socket.error),
+            self.assertLogs(level="ERROR"),
         ):
             core.send(self.command)
             wait_printer_cycles(2)
@@ -752,7 +778,7 @@ class TestListenThread(unittest.TestCase):
 
     def custom_slow_printer(self):
         """Simulate a slow processing printer"""
-        time.sleep(CNC_PROCESS_TIME*random.randint(0, 90)/100)
+        time.sleep(CNC_PROCESS_TIME * random.randint(0, 90) / 100)
         return self.printer_answer
 
     def setUp(self):
@@ -794,15 +820,18 @@ class TestListenThread(unittest.TestCase):
     def test_read_bad_encoding(self):
         """Check that an error is logged on bad enconding"""
         with self.assertLogs(level="ERROR"):
-            self.printer_answer = b'\xC0'
+            self.printer_answer = b"\xc0"
             wait_printer_cycles(2)
 
     def test_read_serial_error(self):
         """Check error is logged when serial error while reading"""
         with (
             self.assertLogs(level="ERROR"),
-            mock.patch.object(self.mocked_serial.return_value, "readline",
-                              side_effect=serial.SerialException)
+            mock.patch.object(
+                self.mocked_serial.return_value,
+                "readline",
+                side_effect=serial.SerialException,
+            ),
         ):
             wait_printer_cycles(2)
 
@@ -816,8 +845,9 @@ class TestListenThread(unittest.TestCase):
         """Check error is logged when socket error while reading"""
         with (
             self.assertLogs(level="ERROR"),
-            mock.patch.object(self.mocked_serial.return_value, "readline",
-                              side_effect=socket.error)
+            mock.patch.object(
+                self.mocked_serial.return_value, "readline", side_effect=socket.error
+            ),
         ):
             wait_printer_cycles(2)
 

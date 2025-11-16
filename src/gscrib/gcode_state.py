@@ -88,7 +88,7 @@ class GState:
         self._set_temperature_units(TemperatureUnits.CELSIUS)
         self._set_plane(Plane.XY)
         self._set_direction(Direction.CLOCKWISE)
-        self._set_resolution(0.1) # mm
+        self._set_resolution(0.1)  # mm
 
     @property
     def position(self) -> Point:
@@ -281,7 +281,6 @@ class GState:
 
         self._current_direction = direction
 
-
     @typechecked
     def _set_resolution(self, resolution: float) -> None:
         """Set the resolution for interpolated moves.
@@ -392,7 +391,7 @@ class GState:
             self._ensure_tool_is_inactive("Spindle already active.")
 
         self._set_tool_power(speed)
-        self._is_tool_active = (mode != SpinMode.OFF)
+        self._is_tool_active = mode != SpinMode.OFF
         self._current_spin_mode = mode
 
     @typechecked
@@ -413,7 +412,7 @@ class GState:
             self._ensure_tool_is_inactive("Power already active.")
 
         self._set_tool_power(power)
-        self._is_tool_active = (mode != PowerMode.OFF)
+        self._is_tool_active = mode != PowerMode.OFF
         self._current_power_mode = mode
 
     @typechecked

@@ -49,9 +49,9 @@ class CoordinateTransformer:
     """
 
     __slots__ = (
-        '_named_transforms',
-        '_transforms_stack',
-        '_current_transform',
+        "_named_transforms",
+        "_transforms_stack",
+        "_current_transform",
     )
 
     def __init__(self) -> None:
@@ -309,5 +309,5 @@ class CoordinateTransformer:
         return {
             Axis.X: [angle_rad, 0, 0],
             Axis.Y: [0, angle_rad, 0],
-            Axis.Z: [0, 0, angle_rad]
+            Axis.Z: [0, 0, angle_rad],
         }[axis]

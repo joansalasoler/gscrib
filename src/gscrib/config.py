@@ -22,7 +22,7 @@ from .enums import DirectWrite
 
 
 @dataclass
-class GConfig():
+class GConfig:
     """Configuration settings for the G-code builders.
 
     This class holds various configuration options for controlling the
@@ -55,7 +55,6 @@ class GConfig():
     y_axis: str = field(default="Y")
     z_axis: str = field(default="Z")
 
-
     @classmethod
     def from_object(cls, config) -> "GConfig":
         """Instantiate from an object or dictionary.
@@ -68,14 +67,18 @@ class GConfig():
         """
 
         if isinstance(config, dict):
-            return cls(**{
-                field.name: config.get(field.name)
-                for field in fields(cls)
-                if field.name in config
-            })
+            return cls(
+                **{
+                    field.name: config.get(field.name)
+                    for field in fields(cls)
+                    if field.name in config
+                }
+            )
 
-        return cls(**{
-            field.name: getattr(config, field.name)
-            for field in fields(cls)
-            if hasattr(config, field.name)
-        })
+        return cls(
+            **{
+                field.name: getattr(config, field.name)
+                for field in fields(cls)
+                if hasattr(config, field.name)
+            }
+        )

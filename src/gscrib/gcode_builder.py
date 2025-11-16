@@ -366,7 +366,7 @@ class GCodeBuilder(GCodeCore):
         """
 
         self.state._set_feed_rate(speed)
-        statement = self.format.parameters({ "F": speed })
+        statement = self.format.parameters({"F": speed})
         self.write(statement)
 
     @typechecked
@@ -390,7 +390,7 @@ class GCodeBuilder(GCodeCore):
         """
 
         self.state._set_tool_power(power)
-        statement = self.format.parameters({ "S": power })
+        statement = self.format.parameters({"S": power})
         self.write(statement)
 
     @typechecked
@@ -413,7 +413,7 @@ class GCodeBuilder(GCodeCore):
         if speed < 0 or speed > 255:
             raise ValueError(f"Invalid fan speed '{speed}'.")
 
-        params = { "P": fan_number, "S": speed }
+        params = {"P": fan_number, "S": speed}
         mode = FanMode.COOLING if speed > 0 else FanMode.OFF
         statement = self._get_statement(mode, params)
         self.write(statement)
@@ -434,7 +434,7 @@ class GCodeBuilder(GCodeCore):
 
         units = self.state.temperature_units
         bed_units = BedTemperature.from_units(units)
-        statement = self._get_statement(bed_units, { "S": temperature })
+        statement = self._get_statement(bed_units, {"S": temperature})
         self.state._set_target_bed_temperature(temperature)
         self.write(statement)
 
@@ -454,7 +454,7 @@ class GCodeBuilder(GCodeCore):
 
         units = self.state.temperature_units
         hotend_units = HotendTemperature.from_units(units)
-        statement = self._get_statement(hotend_units, { "S": temperature })
+        statement = self._get_statement(hotend_units, {"S": temperature})
         self.state._set_target_hotend_temperature(temperature)
         self.write(statement)
 
@@ -474,7 +474,7 @@ class GCodeBuilder(GCodeCore):
 
         units = self.state.temperature_units
         chamber_units = ChamberTemperature.from_units(units)
-        statement = self._get_statement(chamber_units, { "S": temperature })
+        statement = self._get_statement(chamber_units, {"S": temperature})
         self.state._set_target_chamber_temperature(temperature)
         self.write(statement)
 
@@ -559,7 +559,7 @@ class GCodeBuilder(GCodeCore):
             raise ValueError(f"Invalid sleep time '{duration}'.")
 
         units = self.state.time_units
-        statement = self._get_statement(units, { "P": duration })
+        statement = self._get_statement(units, {"P": duration})
         self.write(statement)
 
     @typechecked
@@ -588,7 +588,7 @@ class GCodeBuilder(GCodeCore):
 
         mode = SpinMode(mode)
         self.state._set_spin_mode(mode, speed)
-        params = self.format.parameters({ "S": speed })
+        params = self.format.parameters({"S": speed})
         mode_statement = self._get_statement(mode)
         statement = f"{params} {mode_statement}"
         self.write(statement)
@@ -630,7 +630,7 @@ class GCodeBuilder(GCodeCore):
 
         mode = PowerMode(mode)
         self.state._set_power_mode(mode, power)
-        params = self.format.parameters({ "S": power })
+        params = self.format.parameters({"S": power})
         mode_statement = self._get_statement(mode)
         statement = f"{params} {mode_statement}"
         self.write(statement)
@@ -771,11 +771,7 @@ class GCodeBuilder(GCodeCore):
         >>> M00|M01
         """
 
-        self.halt(
-            HaltMode.OPTIONAL_PAUSE
-            if optional is True else
-            HaltMode.PAUSE
-        )
+        self.halt(HaltMode.OPTIONAL_PAUSE if optional is True else HaltMode.PAUSE)
 
     @typechecked
     def stop(self, reset: bool = False) -> None:
@@ -791,9 +787,7 @@ class GCodeBuilder(GCodeCore):
         """
 
         self.halt(
-            HaltMode.END_WITH_RESET
-            if reset is True else
-            HaltMode.END_WITHOUT_RESET
+            HaltMode.END_WITH_RESET if reset is True else HaltMode.END_WITHOUT_RESET
         )
 
     @typechecked
@@ -825,8 +819,7 @@ class GCodeBuilder(GCodeCore):
         self.halt(HaltMode.PAUSE)
 
     @typechecked
-    def probe(self,
-        mode: ProbingMode | str, point: PointLike = None, **kwargs) -> None:
+    def probe(self, mode: ProbingMode | str, point: PointLike = None, **kwargs) -> None:
         """Execute a probe move to the specified location.
 
         A probe move will continue until contact is made or the target
@@ -852,7 +845,7 @@ class GCodeBuilder(GCodeCore):
 
         # Prepare the G-code statement parameters
 
-        args = { **params, "X": move.x, "Y": move.y, "Z": move.z }
+        args = {**params, "X": move.x, "Y": move.y, "Z": move.z}
         statement = self._get_statement(mode, args, comment)
 
         # Set position to unknown for any axis involved
@@ -926,9 +919,9 @@ class GCodeBuilder(GCodeCore):
         finally:
             self.remove_hook(hook)
 
-    def _prepare_move(self,
-        point: Point, params: ParamsDict,
-        comment: str | None = None) -> Tuple[str, ParamsDict]:
+    def _prepare_move(
+        self, point: Point, params: ParamsDict, comment: str | None = None
+    ) -> Tuple[str, ParamsDict]:
         """Process a linear move statement with the given parameters.
 
         Applies all registered move hooks before returning the movement
@@ -951,9 +944,9 @@ class GCodeBuilder(GCodeCore):
         self._track_move_params(params)
         return super()._prepare_move(point, params, comment)
 
-    def _prepare_rapid(self,
-        point: Point, params: ParamsDict,
-        comment: str | None = None) -> Tuple[str, ParamsDict]:
+    def _prepare_rapid(
+        self, point: Point, params: ParamsDict, comment: str | None = None
+    ) -> Tuple[str, ParamsDict]:
         """Process a rapid move statement with the given parameters.
 
         Args:
@@ -1001,8 +994,9 @@ class GCodeBuilder(GCodeCore):
         self.state._set_params(self._current_params)
         self.state._set_axes(self._current_axes)
 
-    def _get_statement(self,
-        value: BaseEnum, params: dict = {}, comment: str | None = None)-> str:
+    def _get_statement(
+        self, value: BaseEnum, params: dict = {}, comment: str | None = None
+    ) -> str:
         """Generate a G-code statement from the codes table."""
 
         entry = gcode_table.get_entry(value)
@@ -1011,8 +1005,8 @@ class GCodeBuilder(GCodeCore):
 
         return f"{command} {comment}"
 
-    def _get_user_param(self, keys: list, params: dict)-> Any:
+    def _get_user_param(self, keys: list, params: dict) -> Any:
         """Retrieve a user-defined parameter value from a dictionary."""
 
-        values = { key.upper(): value for key, value in params.items() }
+        values = {key.upper(): value for key, value in params.items()}
         return next((values[key] for key in keys if key in values), None)

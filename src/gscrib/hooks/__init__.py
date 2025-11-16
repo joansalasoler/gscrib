@@ -8,6 +8,4 @@ Currently only a basic extrusion hook is available.
 
 from .extrusion_hook import extrusion_hook
 
-__all__ = [
-    "extrusion_hook"
-]
+__all__ = ["extrusion_hook"]

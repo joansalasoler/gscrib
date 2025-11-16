@@ -25,6 +25,7 @@ NORMALS = {
     "zx": [0, 1, 0],
 }
 
+
 class Plane(BaseEnum):
     """Working planes for machine operations."""
 
@@ -35,4 +36,3 @@ class Plane(BaseEnum):
     def normal(self):
         """Return the normal vector of the plane."""
         return NORMALS[self.value]
-

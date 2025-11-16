@@ -32,9 +32,7 @@ class LogWriter(BaseWriter):
         >>> writer.write(b"G1 X10 Y10\\n")
     """
 
-    __slots__ = (
-        "_logger",
-    )
+    __slots__ = ("_logger",)
 
     def __init__(self):
         """Initialize the logger writer."""
@@ -61,7 +59,6 @@ class LogWriter(BaseWriter):
             level = level.upper()
 
         self._logger.setLevel(level)
-
 
     def connect(self) -> "LogWriter":
         return self

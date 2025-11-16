@@ -20,10 +20,10 @@ OptFloat: TypeAlias = float | None
 PathFn: TypeAlias = Callable[[ndarray], ndarray]
 """A parametric function for path interpolation."""
 
-PointLike: TypeAlias = Union['Point', Sequence[float | None], ndarray, None]
+PointLike: TypeAlias = Union["Point", Sequence[float | None], ndarray, None]
 """Objects that can be interpreted as a point in 3D space."""
 
-ProcessedParams: TypeAlias = Tuple['Point', 'ParamsDict', str | None]
+ProcessedParams: TypeAlias = Tuple["Point", "ParamsDict", str | None]
 """A tuple containing processed parameters for moves."""
 
 Bound: TypeAlias = Union[int, float, PointLike]

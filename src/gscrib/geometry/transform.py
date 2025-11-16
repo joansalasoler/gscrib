@@ -27,13 +27,7 @@ from .point import Point
 class Transform:
     """Encapsulates a transformation state."""
 
-    __slots__ = (
-        '_matrix',
-        '_inverse',
-        '_pivot',
-        '_from_pivot',
-        '_to_pivot'
-    )
+    __slots__ = ("_matrix", "_inverse", "_pivot", "_from_pivot", "_to_pivot")
 
     def __init__(self, matrix: np.ndarray, pivot: Point) -> None:
         self._set_pivot(pivot)

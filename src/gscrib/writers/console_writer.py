@@ -40,9 +40,7 @@ class ConsoleWriter(FileWriter):
         """
 
         super().__init__(
-            self._get_stdout_file()
-            if stderr is False else
-            self._get_stderr_file()
+            self._get_stdout_file() if stderr is False else self._get_stderr_file()
         )
 
     def connect(self) -> "ConsoleWriter":
@@ -55,7 +53,7 @@ class ConsoleWriter(FileWriter):
     def _get_stdout_file(self) -> Any:
         """Get binary or text stdout file."""
 
-        if hasattr(sys.stdout, 'buffer'):
+        if hasattr(sys.stdout, "buffer"):
             return sys.stdout.buffer
 
         return sys.stdout
@@ -63,7 +61,7 @@ class ConsoleWriter(FileWriter):
     def _get_stderr_file(self) -> Any:
         """Get binary or text stdout file."""
 
-        if hasattr(sys.stderr, 'buffer'):
+        if hasattr(sys.stderr, "buffer"):
             return sys.stderr.buffer
 
         return sys.stderr

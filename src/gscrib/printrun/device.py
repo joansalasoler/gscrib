@@ -24,14 +24,14 @@ import time
 # Third-party libraries
 import serial
 
-READ_EMPTY = b''
+READ_EMPTY = b""
 """Constant to represent empty or no data"""
 
 READ_EOF = None
 """Constant to represent an end-of-file"""
 
 
-class Device():
+class Device:
     """Handler for serial and web socket connections.
 
     Provides the same functions for both so it abstracts what kind of
@@ -62,8 +62,9 @@ class Device():
 
     """
 
-    def __init__(self, port=None, baudrate=9600, force_dtr=None,
-                 parity_workaround=False):
+    def __init__(
+        self, port=None, baudrate=9600, force_dtr=None, parity_workaround=False
+    ):
         self.port = port
         self.baudrate = baudrate
         self.force_dtr = force_dtr
@@ -136,7 +137,7 @@ class Device():
     @property
     def has_flow_control(self):
         """True if the device has flow control mechanics."""
-        if self._type == 'socket':
+        if self._type == "socket":
             return True
         return False
 
@@ -171,7 +172,7 @@ class Device():
 
         """
         if self._device is not None:
-            if self._type == 'serial':
+            if self._type == "serial":
                 getattr(self, "_reset_" + self._type)()
 
     def write(self, data: bytes):
@@ -200,21 +201,25 @@ class Device():
     def _parse_type(self):
         # Guess which type of connection is being used
         if self._is_url(self.port):
-            self._type = 'socket'
+            self._type = "socket"
         else:
-            self._type = 'serial'
+            self._type = "serial"
 
     def _is_url(self, text):
         # TODO: Rearrange to avoid long line
-        host_regexp = re.compile(r"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$|^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$")
-        if ':' in text:
+        host_regexp = re.compile(
+            r"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$|^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$"
+        )
+        if ":" in text:
             bits = text.split(":")
             if len(bits) == 2:
                 self._hostname = bits[0]
                 try:
                     self._port_number = int(bits[1])
-                    if (host_regexp.match(self._hostname) and
-                            1 <= self._port_number <= 65535):
+                    if (
+                        host_regexp.match(self._hostname)
+                        and 1 <= self._port_number <= 65535
+                    ):
                         return True
                 except:
                     # TODO: avoid catch-all clauses
@@ -232,16 +237,18 @@ class Device():
         try:
             # TODO: Check if this trick is still needed
             if self.parity_workaround:
-                self._device = serial.Serial(port=self.port,
-                                             baudrate=self.baudrate,
-                                             timeout=0.25,
-                                             parity=serial.PARITY_ODD)
+                self._device = serial.Serial(
+                    port=self.port,
+                    baudrate=self.baudrate,
+                    timeout=0.25,
+                    parity=serial.PARITY_ODD,
+                )
                 self._device.close()
                 self._device.parity = serial.PARITY_NONE
             else:
-                self._device = serial.Serial(baudrate=self.baudrate,
-                                             timeout=0.25,
-                                             parity=serial.PARITY_NONE)
+                self._device = serial.Serial(
+                    baudrate=self.baudrate, timeout=0.25, parity=serial.PARITY_NONE
+                )
                 self._device.port = self.port
 
             # TODO: Check if this is still required
@@ -302,15 +309,14 @@ class Device():
             # A single read timeout raises OSError for all later reads
             # probably since python 3.5 use non blocking instead
             self._device.settimeout(0)
-            self._socketfile = self._device.makefile('rwb', buffering=0)
+            self._socketfile = self._device.makefile("rwb", buffering=0)
             self._selector = selectors.DefaultSelector()
             self._selector.register(self._device, selectors.EVENT_READ)
             self._is_connected = True
 
         except OSError as e:
             self._disconnect_socket()
-            msg = "Could not connect to {}:{}".format(self._hostname,
-                                                      self._port_number)
+            msg = "Could not connect to {}:{}".format(self._hostname, self._port_number)
             raise DeviceError(msg, e) from e
 
     def _is_connected_socket(self):
@@ -342,8 +348,7 @@ class Device():
             chunk_size = 256
             while True:
                 chunk = self._socketfile.read(chunk_size)
-                if (chunk is SYS_AGAIN and
-                        self._selector.select(self._timeout)):
+                if chunk is SYS_AGAIN and self._selector.select(self._timeout):
                     chunk = self._socketfile.read(chunk_size)
                 if chunk:
                     self._read_buffer.append(chunk)
@@ -353,7 +358,7 @@ class Device():
                 elif chunk is SYS_AGAIN:
                     return READ_EMPTY
                 else:  # chunk is SYS_EOF
-                    line = b''.join(self._read_buffer)
+                    line = b"".join(self._read_buffer)
                     self._read_buffer = []
                     if line:
                         return line
@@ -361,20 +366,21 @@ class Device():
                     return READ_EOF
         except OSError as e:
             self._is_connected = False
-            msg = ("Unable to read from {}:{}. Connection lost"
-                   ).format(self._hostname, self._port_number)
+            msg = ("Unable to read from {}:{}. Connection lost").format(
+                self._hostname, self._port_number
+            )
             raise DeviceError(msg, e) from e
 
     def _readline_buf(self):
         # Try to readline from buffer
         if self._read_buffer:
             chunk = self._read_buffer[-1]
-            eol = chunk.find(b'\n')
+            eol = chunk.find(b"\n")
             if eol >= 0:
-                line = b''.join(self._read_buffer[:-1]) + chunk[:(eol+1)]
+                line = b"".join(self._read_buffer[:-1]) + chunk[: (eol + 1)]
                 self._read_buffer = []
                 if eol + 1 < len(chunk):
-                    self._read_buffer.append(chunk[(eol+1):])
+                    self._read_buffer.append(chunk[(eol + 1) :])
                 return line
         return READ_EMPTY
 
@@ -387,8 +393,9 @@ class Device():
                 pass
         except (OSError, RuntimeError) as e:
             self._is_connected = False
-            msg = ("Unable to write to {}:{}. Connection lost"
-                   ).format(self._hostname, self._port_number)
+            msg = ("Unable to write to {}:{}. Connection lost").format(
+                self._hostname, self._port_number
+            )
             raise DeviceError(msg, e) from e
 
 

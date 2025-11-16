@@ -103,7 +103,8 @@ class PathTracer:
 
         # Validate that both points lie on the same circle
 
-        do = o - c; dt = t - c
+        do = o - c
+        dt = t - c
         radius = np.hypot(do.x, do.y)
         target_radius = np.hypot(dt.x, dt.y)
 
@@ -169,7 +170,8 @@ class PathTracer:
         o = self._g.position.resolve()
         t = self._g.to_absolute(target)
 
-        dt = t - o; a = t + o
+        dt = t - o
+        a = t + o
         distance = np.hypot(dt.x, dt.y)
 
         # Validate that the two points can lie on the same circle
@@ -178,14 +180,13 @@ class PathTracer:
             if abs(abs(radius) - distance / 2) <= 0.01:
                 radius = np.copysign(distance / 2, radius)
             else:
-                raise ValueError(
-                    "Radius too small for the given points")
+                raise ValueError("Radius too small for the given points")
 
         # Direction depends on radius sign and selected direction
 
         direction = self._g.state.direction
         height = np.sqrt(abs(radius) ** 2 - (distance / 2) ** 2)
-        is_clockwise = (direction == Direction.CLOCKWISE)
+        is_clockwise = direction == Direction.CLOCKWISE
 
         if is_clockwise == (radius > 0):
             cx = a.x / 2 + height * dt.y / distance
@@ -257,8 +258,7 @@ class PathTracer:
         # Need at least 2 distinct points to create a spline
 
         if len(controls) < 2:
-            raise ValueError(
-                "Spline requires at least 2 distinct points")
+            raise ValueError("Spline requires at least 2 distinct points")
 
         # Create a spline for each coordinate of the control points.
 
@@ -268,18 +268,15 @@ class PathTracer:
         sz = CubicSpline(thetas, [c.z for c in controls])
 
         def spline_function(thetas: np.ndarray) -> np.ndarray:
-            return np.column_stack((
-                sx(thetas),
-                sy(thetas),
-                sz(thetas)
-            ))
+            return np.column_stack((sx(thetas), sy(thetas), sz(thetas)))
 
         total_length = self.estimate_length(500, spline_function)
         self.parametric(spline_function, total_length, **kwargs)
 
     @typechecked
-    def helix(self,
-        target: PointLike, center: PointLike, turns: int = 1, **kwargs) -> None:
+    def helix(
+        self, target: PointLike, center: PointLike, turns: int = 1, **kwargs
+    ) -> None:
         """Trace a helical path to target point with varying radius.
 
         Creates a helical motion that can change radius as it moves from
@@ -312,7 +309,8 @@ class PathTracer:
         t = self._g.to_absolute(target)
         c = o + Point(*center).resolve()
 
-        do = o - c; dt = t - c
+        do = o - c
+        dt = t - c
         start_radius = np.hypot(do.x, do.y)
         end_radius = np.hypot(dt.x, dt.y)
         total_radius = end_radius - start_radius
