@@ -320,10 +320,10 @@ $ uv sync --all-extras
 ```
 
 Run tests:
-
 ```bash
-uv run pytest
+uv run pytest -n auto
 ```
+This will run tests in parallel so that they run fast!
 
 ## Contributing
 
