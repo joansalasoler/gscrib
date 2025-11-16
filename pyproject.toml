@@ -1,41 +1,32 @@
-[tool.poetry]
+
+### newer UV format
+[project]
 name = "gscrib"
-version = "1.1.0"
+version = "1.1.1"
 description = "Supercharge G-code with Python"
-authors = ["Joan Sala <contact@joansala.com>"]
-license = "GPL-3.0"
 readme = "README.md"
-homepage = "https://github.com/joansalasoler/gscrib"
-repository = "https://github.com/joansalasoler/gscrib"
-documentation = "https://gscrib.readthedocs.io"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy >=2.3.0",
+    "pydantic >=2.10.0",
+    "pyserial >=3.5.0",
+    "scipy >=1.16.0",
+    "typeguard >=4.4.0"
+]
+license = "GPL-3.0-only"
 keywords = ["G-code", "Python", "G-code transformer"]
 
-[tool.poetry.dependencies]
-python = ">=3.10"
-numpy = "~2.2.0"
-pydantic = "~2.10.0"
-pyserial = "~3.5.0"
-scipy = "~1.15.0"
-typeguard = "~4.4.0"
-
-[tool.poetry.dev-dependencies]
-mock = "~5.2.0"
-pre-commit = "~4.1.0"
-pylint = "~3.3.0"
-pytest = "~8.3.0"
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pylint>=3.3.0",
+    "pre-commit>=4.1.0",
+    "mock>=5.2.0"
+]
 
 [build-system]
-requires = ["poetry-core", "wheel"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.black]
-line-length = 80
-target-version = ["py310", "py311", "py312", "py313"]
-
-[tool.isort]
-profile = "black"
-line_length = 80
-src_paths = ["gscrib"]
+requires = ["uv_build>=0.9.9,<0.10.0"]
+build-backend = "uv_build"
 
 [tool.pytest.ini_options]
 typeguard-packages = "gscrib"
