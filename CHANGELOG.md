@@ -1,5 +1,12 @@
 # Change log
 
+## 1.1.1 (2025-11-15)
+
+* Switches from poetry to uv
+* Updates Numpy and Scipy min versions and in the process bumps the python min ver to 3.11
+* Adjusts tests so that can be run quickly in parallal using pytest-xdist
+* Ruff checking and formatting for the whole project (instead of black, isort and pylint)
+
 ## 1.1.0 (2025-04-28)
 
 * Allows dwell for zero seconds (G4 P0).
