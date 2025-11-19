@@ -1,5 +1,16 @@
 # Change log
 
+## 1.2.0 (2025-11-19)
+
+* Adds support for Python 3.14.
+* Adds `tox` for multi-version testing with Poetry.
+* Relaxes dependency constraints and upgrades multiple dependencies.
+* Adds support for heightmaps, including raster images and CSV files.
+* Adds a method to write metadata annotations in G-code.
+* Adds a reset option (M30) to emergency halt method.
+* Deprecates `pip` in favor of Poetry for dependency management.
+* Integrates linters with Poetry workflow (`flake8`, `pylint`).
+
 ## 1.1.0 (2025-04-28)
 
 * Allows dwell for zero seconds (G4 P0).
