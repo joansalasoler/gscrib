@@ -23,7 +23,7 @@ from typeguard import typechecked
 from gscrib.geometry.bounds import Bound, BoundManager
 from gscrib.geometry.point import Point
 from gscrib.params import ParamsDict
-from gscrib.excepts import *
+from gscrib.excepts import CoolantStateError, ToolStateError
 from gscrib.enums import *
 
 
@@ -213,6 +213,7 @@ class GState:
         """Current user defined bounds for a property"""
         return self._user_bounds.get_bounds(name)
 
+    # pylint: disable=redefined-builtin
     def _set_bounds(self, name: str, min: Bound, max: Bound) -> None:
         """Set the bounds for a property."""
 

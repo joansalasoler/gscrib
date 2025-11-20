@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from array import array
 from numbers import Number
 
 import numpy as np
@@ -177,7 +176,7 @@ class DefaultFormatter(BaseFormatter):
 
     @typechecked
     def command(self,
-        command: str, params: dict = {}, comment: str | None = None) -> str:
+        command: str, params: dict | None = None, comment: str | None = None) -> str:
         """Format a G-code command with optional parameters.
 
         Args:

@@ -230,9 +230,9 @@ class PrintrunWriter(BaseWriter):
 
         device = printcore()
         device.loud = True
-        device.onlinecb = lambda: self._on_device_online()
-        device.errorcb = lambda error: self._on_printrun_error(error)
-        device.recvcb = lambda line: self._on_device_message(line)
+        device.onlinecb = self._on_device_online
+        device.errorcb = self._on_printrun_error
+        device.recvcb = self._on_device_message
 
         return device
 
@@ -349,7 +349,7 @@ class PrintrunWriter(BaseWriter):
             self._logger.exception("Cannot process message: %s", message)
             self._device_error = GscribError(f"Internal error: {str(e)}")
 
-    def _on_shutdown_signal(self, signum, frame):
+    def _on_shutdown_signal(self, _signum, _frame):
         """Handle shutdown signals by disconnecting cleanly."""
 
         try:

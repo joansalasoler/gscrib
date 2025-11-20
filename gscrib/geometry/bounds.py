@@ -56,6 +56,7 @@ class BoundManager:
         return self._bounds.get(name, (None, None))
 
     @typechecked
+    # pylint: disable=redefined-builtin
     def set_bounds(self, name: str, min: Bound, max: Bound) -> None:
         """Set the bounds for a given property.
 
@@ -75,21 +76,21 @@ class BoundManager:
         if name == "axes":
             if not isinstance(min, Point):
                 raise TypeError(
-                    f"Min value must be a Point")
+                    "Min value must be a Point")
             if not isinstance(max, Point):
                 raise TypeError(
-                    f"Max value must be a Point")
+                    "Max value must be a Point")
         else:
             if not isinstance(min, (int, float)):
                 raise TypeError(
-                    f"Min value must be a number")
+                    "Min value must be a number")
             if not isinstance(max, (int, float)):
                 raise TypeError(
-                    f"Max value must be a number")
+                    "Max value must be a number")
 
         if min >= max:
             raise ValueError(
-                f"Min value must be less than max value")
+                "Min value must be less than max value")
 
         self._bounds[name] = (min, max)
 

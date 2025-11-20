@@ -96,7 +96,7 @@ class BaseFormatter(ABC):
 
     @abstractmethod
     def command(self,
-        command: str, params: dict = {}, comment: str | None = None) -> str:
+        command: str, params: dict | None = None, comment: str | None = None) -> str:
         """Format a G-code command with optional parameters.
 
         Args:
