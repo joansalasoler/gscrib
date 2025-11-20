@@ -8,6 +8,8 @@ to G-code processing and generation.
 """
 
 from .gscrib_errors import GscribError
+from .gscrib_errors import ImageLoadError
+from .gscrib_errors import FileLoadError
 from .gcode_errors import GCodeError
 from .gcode_errors import ToolStateError
 from .gcode_errors import CoolantStateError
@@ -25,4 +27,6 @@ __all__ = [
     "DeviceTimeoutError",
     "DeviceConnectionError",
     "DeviceWriteError",
+    "ImageLoadError",
+    "FileLoadError",
 ]

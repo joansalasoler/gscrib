@@ -10,6 +10,7 @@ from . import enums
 from . import excepts
 from . import formatters
 from . import geometry
+from . import heightmaps
 from . import hooks
 from . import types
 from . import writers
@@ -20,7 +21,7 @@ from .gcode_core import GCodeCore
 from .gcode_state import GState
 from .params import ParamsDict
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 __all__ = [
     "GCodeCore",
@@ -29,6 +30,7 @@ __all__ = [
     "GState",
     "ParamsDict",
     "formatters",
+    "heightmaps",
     "enums",
     "excepts",
     "geometry",

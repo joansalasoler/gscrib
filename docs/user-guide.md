@@ -29,16 +29,17 @@ into clean, correct **G-code** for you.
 ## Installation
 
 To use **Gscrib**, you need to have **Python 3.10 or newer** installed on
-your computer. You'll also need **Pip** to install the library. If you're
-new to Python or Pip, these links will help you get set up:
+your computer. You'll also need **Poetry** to install the library. If you're
+new to Python or Poetry, these links will help you get set up:
 
 - [Python Downloads](https://www.python.org/downloads/)
-- [Pip Installation Guide](https://pip.pypa.io/en/stable/installation/)
+- [Poetry Installation Guide](https://python-poetry.org/docs/#installation)
 
 Once you're set up, open your terminal and install **Gscrib** with:
 
 ```bash
-pip install gscrib
+poetry init --no-interaction
+poetry add gscrib
 ```
 
 That's it! This will download and install **Gscrib** and any other software
@@ -47,8 +48,10 @@ your Python scripts.
 
 ## Writing Your First Gscrib Program
 
-Let's write a super simple program that creates a G-code file (output.gcode)
-to move your machine from point A to point B:
+Let's write a super simple program that creates a G-code file
+(```output.gcode```) to move your machine from point A to point B:
+
+1. **Save the following code** into a file named ```test.py```:
 
 ```python
 from gscrib import GCodeBuilder
@@ -64,9 +67,17 @@ g.tool_off()                  # Turn off the tool
 g.teardown()                  # Finalize and save the file
 ```
 
-This is a very basic example. Once you're comfortable, you can add loops,
-curves, safety checks, and even export directly to your CNC. All using
-Python's full power.
+2. **Run the program** using Poetry (this ensures it uses the correct
+   virtual environment):
+
+```bash
+poetry run python test.py
+```
+
+You should now have a file named ```output.gcode``` in your project folder.
+Open it in a text editor to see the generated G-code. This is a very
+basic example. Once you're comfortable, you can add loops, curves, safety
+checks, and even export directly to your CNC. All using Python's full power.
 
 ## Features at a Glance
 
@@ -81,6 +92,8 @@ capabilities:
   behavior.
 - **Transformations**: Move, scale, rotate, and mirror your toolpaths
   without rewriting coordinates.
+- **Height Compensation**: Automatically adjust Z coordinates or tool
+  power using heightmaps.
 - **Safe Output**: Export to G-code files or send instructions directly
   to your machine.
 
@@ -264,6 +277,47 @@ g.transform.restore_state("my_transorm")
 
 # Trace an arc in the restored coordinate system
 g.trace.arc(target=(10, 0), center=(5, 0))
+```
+
+### Height Compensation with Heightmaps
+
+Heightmaps let you adjust your toolpaths dynamically based on measured
+surface variations or image data. They're most often used for **Z-axis**
+**height correction**, but can also control **laser power**, **cutting**
+**depth**, or other parameters based on position.
+
+**Typical Uses:**
+
+- **Surface leveling**: Keep a constant depth on warped or uneven materials.
+- **Curved surface machining**: Work seamlessly on freeform shapes.
+- **Texture mapping**: Turn grayscale images into 3D topographical engravings.
+- **Photo engraving**: Map brightness to laser power for smooth tonal gradients.
+- **Dynamic tool modulation**: Adjust tool parameters using spatial data.
+
+**Supported Heightmap Formats:**
+
+- **CSV files**: Stores height data as (x, y, z) coordinates. Best for
+  precise adjustments and sparse measurement data.
+- **Raster images**: Encode height via pixel brightness. Useful for photo
+  engraving or when working with scanned surfaces.
+
+**Usage Examples**:
+
+```python
+# Load sparse heightmap data from a CSV file
+from gscrib.heightmaps import SparseHeightMap
+heightmap = SparseHeightMap.from_path("surface_scan.csv")
+
+# Load heightmap data from a grayscale image
+from gscrib.heightmaps import RasterHeightMap
+heightmap = RasterHeightMap.from_path("photo.png")
+
+# Sample height at specific coordinates
+z_value = heightmap.get_depth_at(x=10, y=20)
+
+# Sample along a path for smooth interpolation
+for x, y, z in heightmap.sample_path([0, 0, 50, 50]):
+    g.move(x=x, y=y, z=z)
 ```
 
 ### State Tracking And Validation

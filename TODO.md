@@ -80,13 +80,6 @@ Extend support to additional axes (e.g., A, B, C, U, V, W) beyond the
 currently supported X, Y, and Z. While additional axes can be set as
 keyword parameters, they are not fully integrated into the system.
 
-## HeightMap Integration
-
-Explore the feasibility of integrating heightmaps into the system to
-dynamically adjust Z-height based on surface variations. Currently, a
-basic raster-based heightmap implementation is available through the
-Vpype-Gscrib plugin.
-
 ## Scaffolding System
 
 Scaffolding means creating a basic structure for a program. Implement a

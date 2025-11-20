@@ -26,6 +26,8 @@ customizable G-code programs.
   operations.
 - **Transformation Utilities**: Apply rotations, scaling, reflections,
   and more.
+- **Height Compensation**: Automatically adjust Z coordinates or tool
+  parameters using heightmaps for uneven surfaces.
 - **Customizable Hooks**: Add custom logic to modify parameters dynamically.
 - **Live Sensor Data**: Read temperatures, positions, and more from
   connected devices.
@@ -121,6 +123,28 @@ length = g.trace.estimate_length(100, circle)
 # Interpolate the path
 g.set_resolution(0.1)
 g.trace.parametric(circle, length)
+```
+
+### Height Compensation with Heightmaps
+
+Automatically adjust Z coordinates based on surface variations using
+heightmaps from CSV files or grayscale images.
+
+```python
+# Load sparse heightmap data from a CSV file
+from gscrib.heightmaps import SparseHeightMap
+heightmap = SparseHeightMap.from_path("surface_scan.csv")
+
+# Load heightmap data from a grayscale image
+from gscrib.heightmaps import RasterHeightMap
+heightmap = RasterHeightMap.from_path("photo.png")
+
+# Sample height at specific coordinates
+z_value = heightmap.get_depth_at(x=10, y=20)
+
+# Sample along a path for smooth interpolation
+for x, y, z in heightmap.sample_path([0, 0, 50, 50]):
+    g.move(x=x, y=y, z=z)
 ```
 
 ### Custom Hooks
@@ -265,6 +289,8 @@ T = writer.get_parameter("T")   # Get tool temperature
 B = writer.get_parameter("B")   # Get bed temperature
 ```
 
+
+
 ### Context Managers
 
 Context managers provide a convenient way to temporarily modify settings,
@@ -306,34 +332,9 @@ and efficient toolkit for plotter and CNC workflows. See
 
 ## Development setup
 
-Here is how to clone the project for development:
-
-```bash
-$ git clone https://github.com/joansalasoler/gscrib.git
-$ cd gscrib
-```
-
-Create a virtual environment:
-
-```bash
-$ python3 -m venv venv
-$ source venv/bin/activate
-```
-
-Install `gscrib` and its dependencies:
-
-```bash
-$ pip install --upgrade pip
-$ pip install -e .
-$ pip install -r requirements.txt
-$ pip install -r requirements.dev.txt
-```
-
-Run tests:
-
-```bash
-pytest
-```
+For detailed instructions on setting up the development environment, cloning the
+project, installing dependencies, and running tests, please visit the
+[Development Guide](https://gscrib.readthedocs.io/en/latest/dev-guide.html).
 
 ## Contributing
 
