@@ -30,6 +30,7 @@ from .types import Bound, PointLike
 from .enums import *
 
 
+# pylint: disable=protected-access
 class GCodeBuilder(GCodeCore):
     """G-code generator with complete machine control capabilities.
 
@@ -162,6 +163,7 @@ class GCodeBuilder(GCodeCore):
         if hook in self._hooks:
             self._hooks.remove(hook)
 
+    # pylint: disable=redefined-builtin
     def set_bounds(self, name: str, min: Bound, max: Bound) -> None:
         """Set the allowed range (bounds) for a device property.
 
@@ -1008,7 +1010,7 @@ class GCodeBuilder(GCodeCore):
         self.state._set_axes(self._current_axes)
 
     def _get_statement(self,
-        value: BaseEnum, params: dict = {}, comment: str | None = None)-> str:
+        value: BaseEnum, params: dict | None = None, comment: str | None = None)-> str:
         """Generate a G-code statement from the codes table."""
 
         entry = gcode_table.get_entry(value)

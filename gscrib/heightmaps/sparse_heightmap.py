@@ -83,7 +83,7 @@ class SparseHeightMap(BaseHeightMap):
         except Exception as e:
             raise FileLoadError(
                 f"Could not load heightmap from '{path}': {str(e)}"
-            )
+            ) from e
 
     @typechecked
     def set_scale(self, scale_z: float) -> None:

@@ -33,6 +33,7 @@ from .writers import BaseWriter, ConsoleWriter, FileWriter
 from .writers import SocketWriter, SerialWriter
 
 
+# pylint: disable=protected-access
 class GCodeCore(object):
     """Core class for generating G-code output.
 

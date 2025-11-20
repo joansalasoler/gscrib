@@ -30,6 +30,7 @@ from .point import Point
 from .transform import Transform
 
 
+# pylint: disable=protected-access
 class CoordinateTransformer:
     """Coordinate system transformations using 4x4 matrices.
 
