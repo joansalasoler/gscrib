@@ -14,6 +14,7 @@ from .printrun_writer import PrintrunWriter
 from .socket_writer import SocketWriter
 from .serial_writer import SerialWriter
 from .file_writer import FileWriter
+from .string_writer import StringWriter
 
 __all__ = [
     "BaseWriter",
@@ -23,4 +24,5 @@ __all__ = [
     "SocketWriter",
     "SerialWriter",
     "FileWriter",
+    "StringWriter",
 ]
