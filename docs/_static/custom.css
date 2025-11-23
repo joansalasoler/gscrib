@@ -1,10 +1,66 @@
 .rst-content code.literal,
 .rst-content tt.literal {
-    color: rgb(11, 88, 99);
+    color: rgb(37, 112, 166);
 }
 
 a.reference .py-class:not(:has(code)),
 a.reference .py-meth:not(:has(code)) {
     font-family: monospace;
     font-size: 90%;
+}
+
+.wy-nav-side {
+    background: #000d15;
+}
+
+.wy-menu-vertical header,
+.wy-menu-vertical p.caption {
+    font-weight: 900;
+    color: #fff;
+}
+
+.wy-menu-vertical li button.toctree-expand {
+    color: #fff;
+}
+
+.wy-side-nav-search div[role="search"] input[type="text"] {
+    width: 100%;
+    padding: 12px 0 12px 32px;
+    border-radius: 0;
+    border-color: #347eb3;
+    border-width: 0 0 2px 0;
+    border-style: solid;
+    box-shadow: none;
+    box-sizing: border-box;
+    background-color: transparent;
+    color: white;
+    font-size: 100%;
+}
+
+.wy-side-nav-search div[role="search"] {
+    position: relative;
+    margin-top: 16px;
+}
+
+.wy-side-nav-search div[role="search"]::before {
+    content: "\f002";
+    font-weight: 900;
+    font-family: "Font Awesome 6 Free";
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-55%);
+    color: #c7c7c7;
+    pointer-events: none;
+    font-size: 0.9em;
+}
+
+@media screen and (min-width: 1100px) {
+  .wy-nav-content-wrap {
+    background: #fcfcfc;
+  }
+}
+
+.wy-nav-content-wrap {
+  background: #fcfcfc;
 }
