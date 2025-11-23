@@ -44,6 +44,14 @@ html_static_path = ['_static']
 html_css_files = ['custom.css']
 modindex_common_prefix = ["gscrib."]
 autodoc_typehints = 'description'
+html_logo = '_static/logo.png'
+
+html_theme_options = {
+    'sticky_navigation': True,
+    'collapse_navigation': False,
+    'style_nav_header_background': '#000d15',
+    'navigation_depth': 4,
+}
 
 # -- External Documentation Mappings -----------------------------------------
 
