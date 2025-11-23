@@ -1,6 +1,6 @@
 import pytest
 from gscrib.writers import SocketWriter
-from gscrib.writers import PrintrunWriter
+from gscrib.writers import HostWriter
 
 
 # --------------------------------------------------------------------
@@ -11,4 +11,4 @@ from gscrib.writers import PrintrunWriter
 
 def test_init_default_state():
     writer = SocketWriter("localhost", 8000)
-    assert isinstance(writer._writer_delegate, PrintrunWriter)
+    assert isinstance(writer._writer_delegate, HostWriter)

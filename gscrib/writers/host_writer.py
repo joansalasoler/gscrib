@@ -20,7 +20,7 @@ import re, threading
 import logging, time, signal
 
 from gscrib.enums import DirectWrite
-from gscrib.printrun import printcore, gcoder
+from gscrib.host import GCodeHost
 from gscrib.excepts import GscribError
 from gscrib.excepts import DeviceError
 from gscrib.excepts import DeviceWriteError
@@ -39,7 +39,7 @@ AXES = ("X", "Y", "Z", "A", "B", "C")
 VALUE_PATTERN = re.compile(r'([A-Za-z0-9]+):([-\d\.]+(?:,[-\d\.]+)*)')
 
 
-class PrintrunWriter(BaseWriter):
+class HostWriter(BaseWriter):
     """Writer that sends commands through a serial or socket connection.
 
     This class implements a G-code writer that connects to a device
@@ -94,21 +94,23 @@ class PrintrunWriter(BaseWriter):
     @property
     def is_connected(self) -> bool:
         """Check if device is currently connected."""
-        return self._device is not None and self._device.online
+
+        return self._device is not None and self._device.is_connected()
 
     @property
-    def is_printing(self) -> bool:
-        """Check if the device is currently printing."""
-        return self.is_connected and self._device.printing
+    def is_busy(self) -> bool:
+        """Check if the device is currently busy."""
+
+        return self.is_connected and self._device.is_busy()
 
     @property
     def has_pending_operations(self) -> bool:
         """Check if there are pending operations."""
 
         return self.is_connected and (
-            self._device.printing or
-            not self._device.clear or
-            not self._device.priqueue.empty()
+            self._device.is_busy() or
+            not self._device.is_ready() or
+            self._device.has_queued_commands()
         )
 
     def get_parameter(self, name: str) -> float:
@@ -139,11 +141,11 @@ class PrintrunWriter(BaseWriter):
 
         self._timeout = timeout
 
-    def connect(self) -> "PrintrunWriter":
+    def connect(self) -> "HostWriter":
         """Establish the connection to the device.
 
         Returns:
-            PrintrunWriter: Self for method chaining
+            HostWriter: Self for method chaining
 
         Raises:
             DeviceConnectionError: If connection cannot be established
@@ -191,7 +193,7 @@ class PrintrunWriter(BaseWriter):
                 self._wait_for_pending_operations()
         finally:
             if self._device:
-                self._device.cancelprint()
+                self._device.stop_processing()
                 self._device.disconnect()
                 self._online_event.clear()
                 self._device = None
@@ -228,15 +230,14 @@ class PrintrunWriter(BaseWriter):
     def _create_device(self):
         """Create serial or socket connection."""
 
-        device = printcore()
-        device.loud = True
-        device.onlinecb = self._on_device_online
-        device.errorcb = self._on_printrun_error
-        device.recvcb = self._on_device_message
+        device = GCodeHost()
+        device.set_connect_callback(self._on_device_online)
+        device.set_error_callback(self._on_printrun_error)
+        device.set_message_callback(self._on_device_message)
 
         return device
 
-    def _connect_device(self, device: printcore) -> None:
+    def _connect_device(self, device: GCodeHost) -> None:
         """Connect to the device."""
 
         self._online_event.clear()
@@ -257,9 +258,9 @@ class PrintrunWriter(BaseWriter):
         checksums, resends, acknowledgment-based flow control, etc.
         """
 
-        if self.is_connected and not self.is_printing:
-            self._logger.info("Starting print thread")
-            self._device.startprint(gcoder.GCode([]))
+        if self.is_connected and not self.is_busy:
+            self._logger.info("Starting processing thread")
+            self._device.start_processing()
             self._wait_for_pending_operations()
 
     def _send_statement(self, statement: bytes) -> None:
@@ -269,7 +270,7 @@ class PrintrunWriter(BaseWriter):
         self._logger.info("Send command: %s", command)
 
         self._ack_event.clear()
-        self._device.send(command)
+        self._device.enqueue(command)
 
     def _wait_for_connection(self) -> None:
         """Wait for the connection to be established.
@@ -282,7 +283,7 @@ class PrintrunWriter(BaseWriter):
 
         self._logger.info("Wait for device connection")
 
-        if self._device.printer is None:
+        if not self._device.has_device():
             raise DeviceConnectionError("Could not connect to device")
 
         if not self._online_event.wait(timeout=self._timeout):
@@ -433,7 +434,7 @@ class PrintrunWriter(BaseWriter):
 
         return message
 
-    def __enter__(self) -> "PrintrunWriter":
+    def __enter__(self) -> "HostWriter":
         return self.connect()
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:

@@ -10,7 +10,7 @@ including files, network sockets, and serial connections.
 from .base_writer import BaseWriter
 from .console_writer import ConsoleWriter
 from .log_writer import LogWriter
-from .printrun_writer import PrintrunWriter
+from .host_writer import HostWriter
 from .socket_writer import SocketWriter
 from .serial_writer import SerialWriter
 from .file_writer import FileWriter
@@ -19,7 +19,7 @@ __all__ = [
     "BaseWriter",
     "ConsoleWriter",
     "LogWriter",
-    "PrintrunWriter",
+    "HostWriter",
     "SocketWriter",
     "SerialWriter",
     "FileWriter",

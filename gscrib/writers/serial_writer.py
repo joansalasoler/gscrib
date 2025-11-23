@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from gscrib.enums import DirectWrite
-from .printrun_writer import PrintrunWriter
+from .host_writer import HostWriter
 from .base_writer import BaseWriter
 
 
@@ -44,7 +44,7 @@ class SerialWriter(BaseWriter):
         if not isinstance(baudrate, int) or baudrate <= 0:
             raise ValueError("Baudrate must be positive")
 
-        self._writer_delegate = PrintrunWriter(
+        self._writer_delegate = HostWriter(
             mode=DirectWrite.SERIAL,
             host='localhost',
             port=port,
@@ -54,12 +54,14 @@ class SerialWriter(BaseWriter):
     @property
     def is_connected(self) -> bool: # pragma: no cover
         """Check if device is currently connected."""
-        return self._writer_delegate.is_connected
+
+        return self._writer_delegate.is_connected()
 
     @property
-    def is_printing(self) -> bool: # pragma: no cover
+    def is_busy(self) -> bool: # pragma: no cover
         """Check if the device is currently printing."""
-        return self._writer_delegate.is_printing
+
+        return self._writer_delegate.is_busy()
 
     def get_parameter(self, name: str) -> float: # pragma: no cover
         """Get the last reading for a parameter by name.
@@ -89,7 +91,7 @@ class SerialWriter(BaseWriter):
     def connect(self) -> "SerialWriter": # pragma: no cover
         """Establish the serial connection to the device.
 
-        Creates a `printcore` object with the configured port and
+        Creates a `GCodeHost` object with the configured port and
         baudrate, and waits for the connection to be established.
 
         Returns:
