@@ -45,7 +45,7 @@ a.reference .py-meth:not(:has(code)) {
 .wy-side-nav-search div[role="search"]::before {
     content: "\f002";
     font-weight: 900;
-    font-family: "Font Awesome 6 Free";
+    font-family: "FontAwesome";
     position: absolute;
     left: 10px;
     top: 50%;
