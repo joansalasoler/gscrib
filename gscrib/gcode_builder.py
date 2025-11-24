@@ -711,6 +711,11 @@ class GCodeBuilder(GCodeCore):
     def halt(self, mode: HaltMode | str, **kwargs) -> None:
         """Pause or stop program execution.
 
+        For temperature waiting modes:
+
+        - S: Target temperature (heating only)
+        - R: Target temperature (heating and cooling)
+
         Args:
             mode (HaltMode | str): Type of halt to perform
             **kwargs: Arbitrary command parameters
@@ -730,7 +735,7 @@ class GCodeBuilder(GCodeCore):
 
         # Track temperatures if provided
 
-        keys = ["S", "R"]  # Wait when heating, or wait always
+        keys = ["S", "R"]  # S: Wait when heating, R: Wait always
         temperature = self._get_user_param(keys, kwargs)
 
         if temperature is not None:
@@ -797,6 +802,64 @@ class GCodeBuilder(GCodeCore):
             if reset is True else
             HaltMode.END_WITHOUT_RESET
         )
+
+    @typechecked
+    def wait_for_hotend(self, temperature: float, heating_only: bool = False) -> None:
+        """Wait for hotend to reach target temperature.
+
+        Invokes ``halt(HaltMode.WAIT_FOR_HOTEND)``.
+
+        Args:
+            temperature (float): Target temperature
+            heating_only (bool): Wait only when heating
+
+        >>> M109 S<temp>|R<temp>
+        """
+
+        param = "S" if heating_only else "R"
+        self.halt(HaltMode.WAIT_FOR_HOTEND, **{param: temperature})
+
+    @typechecked
+    def wait_for_bed(self, temperature: float, heating_only: bool = False) -> None:
+        """Wait for bed to reach target temperature.
+
+        Invokes ``halt(HaltMode.WAIT_FOR_BED)``.
+
+        Args:
+            temperature (float): Target temperature
+            heating_only (bool): Wait only when heating
+
+        >>> M190 S<temp>|R<temp>
+        """
+
+        param = "S" if heating_only else "R"
+        self.halt(HaltMode.WAIT_FOR_BED, **{param: temperature})
+
+    @typechecked
+    def wait_for_chamber(self, temperature: float, heating_only: bool = False) -> None:
+        """Wait for chamber to reach target temperature.
+
+        Invokes ``halt(HaltMode.WAIT_FOR_CHAMBER)``.
+
+        Args:
+            temperature (float): Target temperature
+            heating_only (bool): Wait only when heating
+
+        >>> M191 S<temp>|R<temp>
+        """
+
+        param = "S" if heating_only else "R"
+        self.halt(HaltMode.WAIT_FOR_CHAMBER, **{param: temperature})
+
+    def pallet_exchange(self) -> None:
+        """Execute pallet exchange operation.
+
+        Invokes ``halt(HaltMode.PALLET_EXCHANGE)``.
+
+        >>> M60
+        """
+
+        self.halt(HaltMode.PALLET_EXCHANGE)
 
     @typechecked
     def emergency_halt(self, message: str, reset: bool = False) -> None:

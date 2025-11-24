@@ -247,3 +247,57 @@ def test_auto_home_with_point(builder, mock_write):
     assert builder.position.y == None
     assert builder.position.z == None
     assert mock_write.last_statement.startswith("G28 X5 Y5 Z5 ;")
+
+# --------------------------------------------------------------------
+# Test cases for new alias methods
+# --------------------------------------------------------------------
+
+def test_wait_for_hotend_heating_only(builder, mock_write):
+    builder.wait_for_hotend(200, heating_only=True)
+    assert mock_write.last_statement.startswith('M109 S200')
+    assert builder.state.target_hotend_temperature == 200
+
+def test_wait_for_hotend_both_directions(builder, mock_write):
+    builder.wait_for_hotend(200, heating_only=False)
+    assert mock_write.last_statement.startswith('M109 R200')
+    assert builder.state.target_hotend_temperature == 200
+
+def test_wait_for_hotend_default(builder, mock_write):
+    builder.wait_for_hotend(200)
+    assert mock_write.last_statement.startswith('M109 R200')
+    assert builder.state.target_hotend_temperature == 200
+
+def test_wait_for_bed_heating_only(builder, mock_write):
+    builder.wait_for_bed(60, heating_only=True)
+    assert mock_write.last_statement.startswith('M190 S60')
+    assert builder.state.target_bed_temperature == 60
+
+def test_wait_for_bed_both_directions(builder, mock_write):
+    builder.wait_for_bed(60, heating_only=False)
+    assert mock_write.last_statement.startswith('M190 R60')
+    assert builder.state.target_bed_temperature == 60
+
+def test_wait_for_bed_default(builder, mock_write):
+    builder.wait_for_bed(60)
+    assert mock_write.last_statement.startswith('M190 R60')
+    assert builder.state.target_bed_temperature == 60
+
+def test_wait_for_chamber_heating_only(builder, mock_write):
+    builder.wait_for_chamber(40, heating_only=True)
+    assert mock_write.last_statement.startswith('M191 S40')
+    assert builder.state.target_chamber_temperature == 40
+
+def test_wait_for_chamber_both_directions(builder, mock_write):
+    builder.wait_for_chamber(40, heating_only=False)
+    assert mock_write.last_statement.startswith('M191 R40')
+    assert builder.state.target_chamber_temperature == 40
+
+def test_wait_for_chamber_default(builder, mock_write):
+    builder.wait_for_chamber(40)
+    assert mock_write.last_statement.startswith('M191 R40')
+    assert builder.state.target_chamber_temperature == 40
+
+def test_pallet_exchange(builder, mock_write):
+    builder.pallet_exchange()
+    assert mock_write.last_statement.startswith('M60')
+    assert builder.state.halt_mode == HaltMode.PALLET_EXCHANGE
