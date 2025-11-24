@@ -301,3 +301,31 @@ def test_pallet_exchange(builder, mock_write):
     builder.pallet_exchange()
     assert mock_write.last_statement.startswith('M60')
     assert builder.state.halt_mode == HaltMode.PALLET_EXCHANGE
+
+def test_probe_towards_no_error(builder, mock_write):
+    builder.probe_towards(x=10, y=20, error_on_miss=False)
+    assert mock_write.last_statement.startswith('G38.3')
+    assert builder.position == Point(None, None, 0)
+
+def test_probe_towards_with_error(builder, mock_write):
+    builder.probe_towards(x=10, y=20, error_on_miss=True)
+    assert mock_write.last_statement.startswith('G38.2')
+    assert builder.position == Point(None, None, 0)
+
+def test_probe_towards_default(builder, mock_write):
+    builder.probe_towards(x=10, y=20)
+    assert mock_write.last_statement.startswith('G38.3')
+
+def test_probe_away_no_error(builder, mock_write):
+    builder.probe_away(x=10, y=20, error_on_miss=False)
+    assert mock_write.last_statement.startswith('G38.5')
+    assert builder.position == Point(None, None, 0)
+
+def test_probe_away_with_error(builder, mock_write):
+    builder.probe_away(x=10, y=20, error_on_miss=True)
+    assert mock_write.last_statement.startswith('G38.4')
+    assert builder.position == Point(None, None, 0)
+
+def test_probe_away_default(builder, mock_write):
+    builder.probe_away(x=10, y=20)
+    assert mock_write.last_statement.startswith('G38.5')

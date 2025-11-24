@@ -932,6 +932,42 @@ class GCodeBuilder(GCodeCore):
         self.write(statement)
 
     @typechecked
+    def probe_towards(self,
+        point: PointLike = None, error_on_miss: bool = False, **kwargs) -> None:
+        """Probe towards the specified location.
+
+        Invokes ``probe(ProbingMode.TOWARDS)`` or ``probe(ProbingMode.TOWARDS_NO_ERROR)``.
+
+        Args:
+            point (Point): Target position as a point
+            error_on_miss (bool): Raise error if no contact
+            **kwargs: Additional probe parameters
+
+        >>> G38.2|G38.3 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
+        """
+
+        mode = ProbingMode.TOWARDS if error_on_miss else ProbingMode.TOWARDS_NO_ERROR
+        self.probe(mode, point, **kwargs)
+
+    @typechecked
+    def probe_away(self,
+        point: PointLike = None, error_on_miss: bool = False, **kwargs) -> None:
+        """Probe away from the specified location.
+
+        Invokes ``probe(ProbingMode.AWAY)`` or ``probe(ProbingMode.AWAY_NO_ERROR)``.
+
+        Args:
+            point (Point): Target position as a point
+            error_on_miss (bool): Raise error if no contact
+            **kwargs: Additional probe parameters
+
+        >>> G38.4|G38.5 [X<x>] [Y<y>] [Z<z>] [<param><value> ...]
+        """
+
+        mode = ProbingMode.AWAY if error_on_miss else ProbingMode.AWAY_NO_ERROR
+        self.probe(mode, point, **kwargs)
+
+    @typechecked
     def query(self, mode: QueryMode | str) -> None:
         """Query the machine for its current state.
 
