@@ -98,6 +98,7 @@ for generating G-code programs.
    Home <self>
    Quick-Start Guide <user-guide>
    Development Guide <dev-guide>
+   Quick Reference <quick-reference>
    G-Code Mappings Table <gcode-table>
    Module Index <modindex>
    General Index <genindex>
@@ -122,3 +123,10 @@ API Reference
    gscrib.hooks
    gscrib.types
    gscrib.writers
+
+.. image:: https://home.joansala.com/static/home/assets/logo.png
+   :target: https://home.joansala.com/
+   :alt: Gscrib is developed by Joan Sala
+   :width: 175px
+   :height: 24px
+   :align: left

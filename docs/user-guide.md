@@ -485,3 +485,6 @@ with g.move_hook(temporary_hook):
 Ready to go deeper? Explore the [full API reference](#gscrib) for more
 examples, tips, and best practices. Start with [GCodeCore](#GCodeCore)
 and [GCodeBuilder](#GCodeBuilder), they're the foundation of **Gscrib**.
+
+For a comprehensive reference of G-code to Gscrib method mappings, check
+out the [Quick Reference](quick-reference.md) guide.

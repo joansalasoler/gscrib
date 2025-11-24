@@ -74,11 +74,19 @@ class DefaultFormatter(BaseFormatter):
     def set_comment_symbols(self, value: str) -> None:
         """Set the comment symbols for G-code comments.
 
+        Supports single symbols (e.g., ';') or paired opening symbols
+        that automatically get matching closing symbols.
+
         Args:
-            value: Comment symbols to use (non-empty string)
+            value: Comment symbols to use.
 
         Raises:
             ValueError: If value is empty or not a string
+
+        Examples:
+            >>> format.set_comment_symbols(";")   # ; comment
+            >>> format.set_comment_symbols("(")   # ( comment )
+            >>> format.set_comment_symbols("/*")  # /* comment */
         """
 
         if not value.strip():
