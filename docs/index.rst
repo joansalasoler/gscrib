@@ -1,3 +1,10 @@
+.. admonition:: Support Gscrib
+   :class: tip
+
+   Love **Gscrib**? Maintaining it takes time and effort. If you find it
+   useful and want to help Gscrib and its docs grow and improve, consider
+   sponsoring on `GitHub <https://github.com/sponsors/joansalasoler>`_ ❤️
+
 Gscrib: Supercharge G-code with Python
 ======================================
 
