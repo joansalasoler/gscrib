@@ -1,6 +1,6 @@
 numpy~=2.2.0
 opencv-python~=4.11.0
-pydantic~=2.10.0
+pydantic~=2.12.5
 pyserial~=3.5.0
 scikit-image~=0.25.0
 scipy~=1.15.0
