@@ -22,7 +22,7 @@ typeguard = ">=4.3.0,<5.0"
 
 [tool.poetry.group.dev.dependencies]
 mock = "~5.2.0"
-pre-commit = "~4.2.0"
+pre-commit = "~4.5.0"
 pylint = "~3.3.7"
 pytest = "~8.4.1"
 tox = "~4.32.0"
