@@ -1,9 +1,12 @@
 import pytest
+from pytest import approx
 from unittest.mock import Mock, patch
 from gscrib.enums import DirectWrite
 from gscrib.excepts import DeviceConnectionError
 from gscrib.excepts import DeviceTimeoutError
 from gscrib.excepts import DeviceWriteError
+from gscrib.excepts import DeviceError
+from gscrib.excepts import GscribError
 from gscrib.writers import PrintrunWriter
 
 # --------------------------------------------------------------------
@@ -196,3 +199,116 @@ def test_connect_timeout(mock_printcore):
         serial_writer.connect()
 
     assert serial_writer._device_error is None
+
+# Test set_timeout
+
+def test_set_timeout_valid(serial_writer):
+    serial_writer.set_timeout(5.0)
+    assert serial_writer._timeout == approx(5.0)
+
+def test_set_timeout_invalid(serial_writer):
+    with pytest.raises(ValueError):
+        serial_writer.set_timeout(0)
+
+    with pytest.raises(ValueError):
+        serial_writer.set_timeout(-1)
+
+# Test _send_statement
+
+def test_send_statement(serial_writer, mock_printcore):
+    serial_writer.connect()
+    serial_writer._send_statement(b"G1 X10 Y20\n")
+    serial_writer._device.send.assert_called_once_with("G1 X10 Y20")
+    assert not serial_writer._ack_event.is_set()
+
+# Test _abort_on_device_error
+
+def test_abort_on_device_error_no_error(serial_writer, mock_printcore):
+    serial_writer.connect()
+    serial_writer._abort_on_device_error()  # Should not raise
+
+def test_abort_on_device_error_with_error(serial_writer, mock_printcore):
+    serial_writer.connect()
+    serial_writer._device_error = DeviceError("Test error")
+
+    with pytest.raises(DeviceError, match="Test error"):
+        serial_writer._abort_on_device_error()
+
+    assert serial_writer._device_error is None
+
+# Test _parse_message
+
+def test_parse_message_single_axis(serial_writer):
+    serial_writer._parse_message("X:10.5")
+    assert serial_writer._current_params["X"] == approx(10.5)
+
+def test_parse_message_multiple_axes(serial_writer):
+    serial_writer._parse_message("X:10.5 Y:20.3 Z:5.0")
+    assert serial_writer._current_params["X"] == approx(10.5)
+    assert serial_writer._current_params["Y"] == approx(20.3)
+    assert serial_writer._current_params["Z"] == approx(5.0)
+
+def test_parse_message_mpos(serial_writer):
+    serial_writer._parse_message("MPos:10.0,20.0,30.0")
+    assert serial_writer._current_params["X"] == approx(10.0)
+    assert serial_writer._current_params["Y"] == approx(20.0)
+    assert serial_writer._current_params["Z"] == approx(30.0)
+
+def test_parse_message_wpos(serial_writer):
+    serial_writer._parse_message("WPos:5.5,15.5,25.5")
+    assert serial_writer._current_params["X"] == approx(5.5)
+    assert serial_writer._current_params["Y"] == approx(15.5)
+    assert serial_writer._current_params["Z"] == approx(25.5)
+
+def test_parse_message_fs_grbl(serial_writer):
+    serial_writer._parse_message("<Idle|MPos:0,0,0|FS:1500,8000>")
+    assert serial_writer._current_params["F"] == approx(1500.0)
+    assert serial_writer._current_params["S"] == approx(8000.0)
+
+def test_parse_message_marlin_temp(serial_writer):
+    serial_writer._parse_message("ok T:200.0 /210.0 B:60.0 /60.0")
+    assert serial_writer._current_params["T"] == approx(200.0)
+    assert serial_writer._current_params["B"] == approx(60.0)
+
+def test_parse_message_multi_extruder(serial_writer):
+    serial_writer._parse_message("T0:200.0 T1:190.0 T2:185.0")
+    assert serial_writer._current_params["T0"] == approx(200.0)
+    assert serial_writer._current_params["T1"] == approx(190.0)
+    assert serial_writer._current_params["T2"] == approx(185.0)
+
+def test_parse_message_clears_reported_params(serial_writer):
+    serial_writer._parse_message("X:10.5")
+    assert "X" in serial_writer._reported_params
+
+    serial_writer._parse_message("Y:20.3")
+    assert "X" not in serial_writer._reported_params
+    assert "Y" in serial_writer._reported_params
+
+# Test _on_device_message
+
+def test_on_device_message_success(serial_writer):
+    serial_writer._on_device_message("ok")
+    assert serial_writer._ack_event.is_set()
+    assert serial_writer._device_error is None
+
+def test_on_device_message_error(serial_writer):
+    serial_writer._on_device_message("error: Invalid command")
+    assert serial_writer._ack_event.is_set()
+    assert isinstance(serial_writer._device_error, DeviceError)
+    assert "Invalid command" in str(serial_writer._device_error)
+
+def test_on_device_message_alarm(serial_writer):
+    serial_writer._on_device_message("ALARM: Hard limit")
+    assert serial_writer._ack_event.is_set()
+    assert isinstance(serial_writer._device_error, DeviceError)
+
+def test_on_device_message_data(serial_writer):
+    serial_writer._on_device_message("X:10.5 Y:20.3")
+    assert serial_writer._current_params["X"] == approx(10.5)
+    assert serial_writer._current_params["Y"] == approx(20.3)
+
+def test_on_device_message_exception(serial_writer):
+    with patch.object(serial_writer, '_parse_message', side_effect=Exception("Parse error")):
+        serial_writer._on_device_message("invalid data")
+        assert isinstance(serial_writer._device_error, GscribError)
+        assert "Internal error" in str(serial_writer._device_error)

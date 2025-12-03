@@ -36,7 +36,7 @@ POLLING_INTERVAL = 0.1  # seconds
 SUCCESS_PREFIXES = ('ok',)
 ERROR_PREFIXES = ('error', 'alarm', '!!')
 AXES = ("X", "Y", "Z", "A", "B", "C")
-VALUE_PATTERN = re.compile(r'([A-Za-z0-9]+):([-\d\.]+(?:,[-\d\.]+)*)')
+VALUE_PATTERN = re.compile(r'([A-Za-z0-9]+):([-\d\.,]+)')
 
 
 class PrintrunWriter(BaseWriter):
@@ -395,17 +395,16 @@ class PrintrunWriter(BaseWriter):
 
         for key, value in VALUE_PATTERN.findall(message):
             try:
-                if len(key) == 1 and key.isalnum():
-                    self._update_param(key, float(value))
-                elif key == "FS" and message.startswith("<"):
-                    feed, speed = value.split(",")
-                    self._update_param("F", float(feed))
-                    self._update_param("S", float(speed))
-                elif key in ("MPos", "WPos", "PRB"):
-                    coords = map(float, value.split(","))
+                parts = tuple(map(float, value.split(",")))
 
-                    for axis, coord in zip(AXES, coords):
+                if key in ("MPos", "WPos", "PRB"):
+                    for axis, coord in zip(AXES, parts):
                         self._update_param(axis, coord)
+                elif key == "FS" and message.startswith("<"):
+                    self._update_param("F", parts[0])
+                    self._update_param("S", parts[1])
+                elif key[0].isupper():
+                    self._update_param(key, parts[0])
             except Exception as e:
                 self._logger.exception("Error parsing value: %s", e)
 
