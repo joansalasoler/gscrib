@@ -27,7 +27,7 @@ from .gcode_state import GState
 from .params import ParamsDict
 from .geometry import Point, PathTracer
 from .types import Bound, PointLike
-from .enums import *
+from .enums import *  # pylint: disable=W0401,W0614
 
 
 # pylint: disable=protected-access

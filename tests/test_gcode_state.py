@@ -2,8 +2,7 @@ import pytest
 from pytest import approx
 from gscrib.excepts import ToolStateError, CoolantStateError
 from gscrib import GState
-from gscrib.enums import *
-from gscrib.enums import *
+from gscrib.enums import *  # pylint: disable=W0401,W0614
 
 
 # --------------------------------------------------------------------

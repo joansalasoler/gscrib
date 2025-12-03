@@ -3,7 +3,7 @@ from pytest import approx
 from unittest.mock import patch
 from gscrib import GCodeBuilder
 from gscrib.geometry import Point
-from gscrib.enums import *
+from gscrib.enums import *  # pylint: disable=W0401,W0614
 
 
 # --------------------------------------------------------------------

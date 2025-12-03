@@ -24,7 +24,7 @@ from gscrib.geometry.bounds import Bound, BoundManager
 from gscrib.geometry.point import Point
 from gscrib.params import ParamsDict
 from gscrib.excepts import CoolantStateError, ToolStateError
-from gscrib.enums import *
+from gscrib.enums import *  # pylint: disable=W0401,W0614
 
 
 class GState:

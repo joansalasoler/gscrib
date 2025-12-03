@@ -20,8 +20,8 @@
 Built-in enums to G-Code mappings.
 """
 
-from gscrib.enums.types import *
-from gscrib.enums.units import *
+from gscrib.enums.types import *  # pylint: disable=W0401,W0614
+from gscrib.enums.units import *  # pylint: disable=W0401,W0614
 from .gcode_table import GCodeEntry, GCodeTable
 
 
