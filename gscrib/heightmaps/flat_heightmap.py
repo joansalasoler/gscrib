@@ -35,8 +35,8 @@ class FlatHeightMap(BaseHeightMap):
         """Get the interpolated elevation value at specific coordinates.
 
         Args:
-            x (float): X-coordinate in the height map.
-            y (float): Y-coordinate in the height map.
+            x (Real): X-coordinate in the height map.
+            y (Real): Y-coordinate in the height map.
 
         Returns:
             float: Always returns zero.

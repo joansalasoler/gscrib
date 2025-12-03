@@ -149,17 +149,17 @@ class RasterHeightMap(BaseHeightMap):
         """Get the interpolated elevation value at specific coordinates.
 
         Args:
-            x (float): X-coordinate in the height map.
-            y (float): Y-coordinate in the height map.
+            x (Real): X-coordinate in the height map.
+            y (Real): Y-coordinate in the height map.
 
         Returns:
             float: Interpolated elevation scaled by the scale factor.
         """
 
-        if x < 0 or x >= self.get_width():
+        if x < 0 or x >= float(self.get_width()):
             return 0.0
 
-        if y < 0 or y >= self.get_height():
+        if y < 0 or y >= float(self.get_height()):
             return 0.0
 
         return self._scale_z * self._interpolator(y, x)[0, 0]

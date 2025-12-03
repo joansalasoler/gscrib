@@ -250,7 +250,7 @@ class GCodeCore(object):
             writer (BaseWriter): The writer to add
         """
 
-        if not writer in self._writers:
+        if writer not in self._writers:
             self._writers.append(writer)
 
     @typechecked

@@ -1,4 +1,5 @@
 import pytest
+from pytest import approx
 from gscrib.excepts import ToolStateError, CoolantStateError
 from gscrib import GState
 from gscrib.enums import *
@@ -34,7 +35,7 @@ def test_initial_state(state):
     assert state.temperature_units == TemperatureUnits.CELSIUS
     assert state.plane == Plane.XY
     assert state.direction == Direction.CLOCKWISE
-    assert state.resolution == 0.1
+    assert state.resolution == approx(0.1)
     assert not state.is_tool_active
     assert not state.is_coolant_active
 
@@ -56,7 +57,7 @@ def test_set_direction(state):
 
 def test_set_tool_power(state):
     state._set_tool_power(50.0)
-    assert state.tool_power == 50.0
+    assert state.tool_power == approx(50.0)
 
 def test_set_tool_power_invalid():
     state = GState()
@@ -116,7 +117,7 @@ def test_set_power_mode(state):
     state._set_power_mode(PowerMode.OFF)
     state._set_power_mode(PowerMode.CONSTANT, 75.0)
     assert state.power_mode == PowerMode.CONSTANT
-    assert state.tool_power == 75.0
+    assert state.tool_power == approx(75.0)
     assert state.is_tool_active
 
 def test_set_power_mode_off(state):

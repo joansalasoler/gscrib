@@ -1,4 +1,5 @@
 import pytest
+from pytest import approx
 from unittest.mock import patch
 from gscrib import GCodeBuilder
 from gscrib.geometry import Point
@@ -50,7 +51,7 @@ def test_set_direction(builder, mock_write):
 
 def test_set_resolution(builder):
     builder.set_resolution(0.5)
-    assert builder.state.resolution == 0.5
+    assert builder.state.resolution == approx(0.5)
 
 def test_set_axis(builder, mock_write):
     builder.set_axis(x=10, y=20, z=30)
@@ -76,7 +77,7 @@ def test_set_distance_mode_relative(builder, mock_write):
 
 def test_set_tool_power(builder, mock_write):
     builder.set_tool_power(1000.0)
-    assert builder.state.tool_power == 1000.0
+    assert builder.state.tool_power == approx(1000.0)
     assert mock_write.last_statement.startswith('S1000')
 
 def test_set_tool_power_invalid(builder):
@@ -85,7 +86,7 @@ def test_set_tool_power_invalid(builder):
 
 def test_set_feed_rate(builder, mock_write):
     builder.set_feed_rate(1000.0)
-    assert builder.state.feed_rate == 1000.0
+    assert builder.state.feed_rate == approx(1000.0)
     assert mock_write.last_statement.startswith('F1000')
 
 def test_set_feed_rate_invalid(builder):
@@ -108,7 +109,7 @@ def test_set_fan_speed_invalid(builder):
 def test_tool_on(builder, mock_write):
     builder.tool_on(SpinMode.CLOCKWISE, 1000.0)
     assert builder.state.spin_mode == SpinMode.CLOCKWISE
-    assert builder.state.tool_power == 1000.0
+    assert builder.state.tool_power == approx(1000.0)
     assert mock_write.last_statement.startswith('S1000 M03')
 
 def test_tool_on_invalid_mode(builder):
@@ -124,7 +125,7 @@ def test_tool_off(builder, mock_write):
 def test_power_on(builder, mock_write):
     builder.power_on(PowerMode.CONSTANT, 75.0)
     assert builder.state.power_mode == PowerMode.CONSTANT
-    assert builder.state.tool_power == 75.0
+    assert builder.state.tool_power == approx(75.0)
     assert mock_write.last_statement.startswith('S75')
 
 def test_power_off(builder):

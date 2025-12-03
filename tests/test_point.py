@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+from pytest import approx
 from gscrib.geometry import Point
 
 
@@ -17,9 +18,9 @@ def test_default_initialization():
 
 def test_initialization_with_values():
     point = Point(1.0, 2.0, 3.0)
-    assert point.x == 1.0
-    assert point.y == 2.0
-    assert point.z == 3.0
+    assert point.x == approx(1.0)
+    assert point.y == approx(2.0)
+    assert point.z == approx(3.0)
 
 # Test class methods
 

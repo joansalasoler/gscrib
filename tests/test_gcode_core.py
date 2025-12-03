@@ -275,7 +275,7 @@ def test_current_transform_context_manager(builder, mock_writer):
     t = builder.transform
     t.save_state()
 
-    state_copy, stack_copy = t._copy_state()
+    state_copy, _ = t._copy_state()
 
     with builder.current_transform():
         t.save_state()

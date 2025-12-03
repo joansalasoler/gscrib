@@ -359,10 +359,10 @@ def test_spline_points_close_to_targets(tracer, builder, mock_parametric):
     results = tracer._filter_segments(segments)
 
     for point in points:
-        assert any([
+        assert any(
             np.allclose(point, result, atol=resolution)
             for result in results
-        ])
+        )
 
 # Test resolution
 

@@ -1,5 +1,6 @@
 import numpy
 import pytest
+from pytest import approx
 from unittest.mock import patch
 from numpy import ndarray, float32
 from scipy.interpolate import RectBivariateSpline
@@ -50,8 +51,8 @@ def test_height_map_init(sample_uint8_image):
     assert isinstance(height_map._height_map, ndarray)
     assert isinstance(height_map._interpolator, RectBivariateSpline)
     assert height_map._height_map.dtype == float32
-    assert height_map._scale_z == 1.0
-    assert height_map._tolerance == 0.378
+    assert height_map._scale_z == approx(1.0)
+    assert height_map._tolerance == approx(0.378)
     assert height_map.get_width() == 20
     assert height_map.get_height() == 10
 
@@ -80,7 +81,7 @@ def test_create_from_path_success(mock_imread, sample_uint8_image):
     mock_imread.return_value = sample_uint8_image
     height_map = RasterHeightMap.from_path('test_image.png')
     assert isinstance(height_map, RasterHeightMap)
-    assert height_map._scale_z == 1.0
+    assert height_map._scale_z == approx(1.0)
 
 @patch('cv2.imread')
 def test_create_from_path_failure(mock_imread):
@@ -91,7 +92,7 @@ def test_create_from_path_failure(mock_imread):
 
 def test_set_scale(height_map):
     height_map.set_scale(2.0)
-    assert height_map._scale_z == 2.0
+    assert height_map._scale_z == approx(2.0)
 
     with pytest.raises(ValueError):
         height_map.set_scale(0)
@@ -101,7 +102,7 @@ def test_set_scale(height_map):
 
 def test_set_tolerance(height_map):
     height_map.set_tolerance(0.05)
-    assert height_map._tolerance == 0.05
+    assert height_map._tolerance == approx(0.05)
 
     with pytest.raises(ValueError):
         height_map.set_tolerance(-0.1)
@@ -130,10 +131,10 @@ def test_sample_path(height_map):
 
     assert isinstance(points, ndarray)
     assert points.shape[1] == 3
-    assert points[0][0] == 2.0
-    assert points[0][1] == 5.0
-    assert points[-1][0] == 8.0
-    assert points[-1][1] == 5.0
+    assert points[0][0] == approx(2.0)
+    assert points[0][1] == approx(5.0)
+    assert points[-1][0] == approx(8.0)
+    assert points[-1][1] == approx(5.0)
 
     height_map.set_tolerance(0.5)
     points_high = height_map.sample_path(line)

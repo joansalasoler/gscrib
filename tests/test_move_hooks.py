@@ -28,9 +28,6 @@ def test_add_hook(builder):
     assert len(builder._hooks) == 1
 
 def test_remove_hook(builder):
-    def hook(origin, target, params, state):
-        return params
-
     builder.remove_hook(noop_hook) # Should not raise exception
     assert len(builder._hooks) == 0
     builder.add_hook(noop_hook)
@@ -71,7 +68,6 @@ def test_prepare_move_with_hook(builder):
     point = Point(10, 20, 0)
     params = ParamsDict(F=2000)
     builder._prepare_move(point, params)
-    assert processed_params is not None
     assert processed_params.get('F') == 2000
 
 def test_multiple_hooks(builder):

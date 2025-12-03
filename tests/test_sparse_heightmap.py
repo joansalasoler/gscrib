@@ -1,6 +1,7 @@
 import os, tempfile
 import numpy
 import pytest
+from pytest import approx
 from numpy.testing import assert_array_almost_equal
 from scipy.interpolate import LinearNDInterpolator
 
@@ -33,8 +34,8 @@ def sample_data():
 def test_height_map_init(sample_data):
     height_map = SparseHeightMap(sample_data)
     assert isinstance(height_map._interpolator, LinearNDInterpolator)
-    assert height_map._scale_z == 1.0
-    assert height_map._tolerance == 0.378
+    assert height_map._scale_z == approx(1.0)
+    assert height_map._tolerance == approx(0.378)
 
 def test_create_from_path_success():
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
@@ -44,8 +45,8 @@ def test_create_from_path_success():
     try:
         height_map = SparseHeightMap.from_path(temp_path)
         assert isinstance(height_map, SparseHeightMap)
-        assert height_map._scale_z == 1.0
-        assert height_map._tolerance == 0.378
+        assert height_map._scale_z == approx(1.0)
+        assert height_map._tolerance == approx(0.378)
     finally:
         os.unlink(temp_path)
 
@@ -66,7 +67,7 @@ def test_create_from_path_invalid_file():
 
 def test_set_scale(height_map):
     height_map.set_scale(2.0)
-    assert height_map._scale_z == 2.0
+    assert height_map._scale_z == approx(2.0)
 
     with pytest.raises(ValueError):
         height_map.set_scale(0)
@@ -76,7 +77,7 @@ def test_set_scale(height_map):
 
 def test_set_tolerance(height_map):
     height_map.set_tolerance(0.05)
-    assert height_map._tolerance == 0.05
+    assert height_map._tolerance == approx(0.05)
 
     with pytest.raises(ValueError):
         height_map.set_tolerance(-0.1)

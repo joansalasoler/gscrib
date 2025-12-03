@@ -311,7 +311,7 @@ def test_scale_around_pivot(transformer):
     transformer.scale(2.0)
     result = transformer.apply_transform(point)
 
-    assert np.allclose(result.x, 5)  # 1 + (2 * 2) = 5
+    assert np.allclose(result.x, 5)
     assert np.allclose(result.y, 1)
     assert np.allclose(result.z, 0)
 
@@ -323,7 +323,7 @@ def test_mirror_with_pivot(transformer):
     p = Point(2, 1, 0)
     result = transformer.apply_transform(p)
 
-    assert np.allclose(result.x, 0)  # 1 - (2-1) = 0
+    assert np.allclose(result.x, 0)
     assert np.allclose(result.y, 1)
     assert np.allclose(result.z, 0)
 
@@ -356,7 +356,6 @@ def test_inverse_transformation_with_pivot(transformer):
     assert np.allclose(result.z, point.z)
 
 def test_multiple_transformations_with_pivot(transformer):
-    transformer = CoordinateTransformer()
     pivot = Point(1, 1, 0)
     transformer.set_pivot(pivot)
 

@@ -67,7 +67,7 @@ class LogWriter(BaseWriter):
         return self
 
     def disconnect(self, wait: bool = True) -> None:
-        pass
+        pass  # No actual connection to close
 
     def write(self, statement: bytes) -> None:
         """Write a G-code statement to the default logger.
