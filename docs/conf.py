@@ -56,7 +56,6 @@ html_theme_options = {
 # -- External Documentation Mappings -----------------------------------------
 
 intersphinx_mapping = {
-    "pydantic": ("https://docs.pydantic.dev/2.10/", None),
     "python": ("https://docs.python.org/3/", None),
 }
 
