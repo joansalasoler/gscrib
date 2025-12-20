@@ -28,7 +28,6 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
-    "sphinx_click",
     "myst_parser",
 ]
 

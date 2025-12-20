@@ -103,10 +103,10 @@ for generating G-code programs.
    :caption: Contents
 
    Home <self>
-   Quick-Start Guide <user-guide>
-   Development Guide <dev-guide>
-   Quick Reference <quick-reference>
-   G-Code Mappings Table <gcode-table>
+   Quick-Start Guide <guides/user-guide>
+   Development Guide <guides/dev-guide>
+   Quick Reference <guides/quick-reference>
+   G-Code Mappings Table <reference/gcode-table>
    Module Index <modindex>
    General Index <genindex>
    License <license>

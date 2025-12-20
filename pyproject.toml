@@ -21,39 +21,33 @@ typeguard = ">=4.3.0,<5.0"
 
 [tool.poetry.group.dev.dependencies]
 mock = "~5.2.0"
-pre-commit = "~4.2.0"
-pylint = "~3.3.7"
-pytest = "~8.4.1"
+pre-commit = "~4.5.1"
+pylint = "~4.0.4"
+pytest = "~9.0.2"
+pytest-cov = "~7.0.0"
 tox = "~4.32.0"
-mypy = "~1.11.0"
+mypy = "~1.19.1"
+deptry = "^0.24.0"
 
 [tool.poetry.group.docs.dependencies]
-vpython = "~7.6.0"
 Sphinx = "~8.1.0"
-sphinx-click = "~6.0.0"
-sphinx-copybutton = "~0.5.2"
-sphinx-rtd-theme = "~3.0.2"
-sphinxcontrib-applehelp = "~2.0.0"
-sphinxcontrib-devhelp = "~2.0.0"
-sphinxcontrib-htmlhelp = "~2.1.0"
-sphinxcontrib-jquery = "~4.1.0"
-sphinxcontrib-jsmath = "~1.0.1"
-sphinxcontrib-qthelp = "~2.0.0"
-sphinxcontrib-serializinghtml = "~2.0.0"
-myst-parser = "~4.0.1"
+sphinx-copybutton = "~0.5.0"
+sphinx-rtd-theme = "~3.0.0"
+myst-parser = "~4.0.0"
+docutils = "~0.21.0"
 
 [build-system]
 requires = ["poetry-core", "wheel"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
-line-length = 80
-target-version = ["py310", "py311", "py312", "py313"]
+[tool.coverage.run]
+source = ["gscrib"]
+branch = true
 
-[tool.isort]
-profile = "black"
-line_length = 80
-src_paths = ["gscrib"]
+[tool.coverage.report]
+exclude_also = ["pragma: no cover"]
+show_missing = true
+skip_empty = true
 
 [tool.pytest.ini_options]
 typeguard-packages = "gscrib"
@@ -66,3 +60,10 @@ output-format = "colorized"
 
 [tool.pylint.typecheck]
 generated-members = "cv.*"
+
+[tool.deptry]
+known_first_party = ["gscrib"]
+
+[tool.mypy]
+files = "gscrib"
+ignore_missing_imports = true

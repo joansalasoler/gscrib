@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import math
-from typing import Any, Callable, Tuple
+from typing import Any, Tuple
 from contextlib import contextmanager
 from typeguard import typechecked
 

@@ -81,8 +81,7 @@ generate the documentation in the `./docs/html` directory. Open `index.html`
 in a web browser to view it.
 
 ```bash
-cd docs
-poetry run python -m sphinx . ./html
+poetry run sphinx-build docs docs/_build/html
 ```
 
 ## Extending the Library
