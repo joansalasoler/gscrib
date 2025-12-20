@@ -156,13 +156,18 @@ class RasterHeightMap(BaseHeightMap):
             float: Interpolated elevation scaled by the scale factor.
         """
 
+        x, y = float(x), float(y)
+
+        if not numpy.isfinite(x) or not numpy.isfinite(y):
+            raise ValueError("Coordinates must be finite")
+
         if x < 0 or x >= float(self.get_width()):
             return 0.0
 
         if y < 0 or y >= float(self.get_height()):
             return 0.0
 
-        return self._scale_z * self._interpolator(y, x)[0, 0]
+        return float(self._scale_z * self._interpolator(y, x)[0, 0])
 
     @typechecked
     def sample_path(self, line: Union[Sequence[float], ArrayLike]) -> ndarray:

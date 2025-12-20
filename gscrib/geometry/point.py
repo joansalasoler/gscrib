@@ -199,7 +199,7 @@ class Point(NamedTuple):
             in_range(self.z, min_point.z, max_point.z)
         )
 
-    def __add__(self, other: 'Point') -> 'Point':
+    def __add__(self, other: object) -> 'Point':
         """Add two points.
 
         Args:
@@ -212,13 +212,16 @@ class Point(NamedTuple):
             A new point with the coordinates added
         """
 
+        if not isinstance(other, Point):
+            return NotImplemented
+
         return Point(
             self.x + other.x,
             self.y + other.y,
             self.z + other.z
         )
 
-    def __sub__(self, other: 'Point') -> 'Point':
+    def __sub__(self, other: object) -> 'Point':
         """Subtract two points.
 
         Args:
@@ -231,13 +234,16 @@ class Point(NamedTuple):
             A new point with the coordinates substracted
         """
 
+        if not isinstance(other, Point):
+            return NotImplemented
+
         return Point(
             self.x - other.x,
             self.y - other.y,
             self.z - other.z
         )
 
-    def __mul__(self, scalar: float) -> 'Point':
+    def __mul__(self, scalar: object) -> 'Point':
         """Multiply the point's coordinates by a scalar.
 
         Args:
@@ -250,13 +256,16 @@ class Point(NamedTuple):
             A new point with the coordinates multiplied by the scalar.
         """
 
+        if not isinstance(scalar, (int, float)):
+            return NotImplemented
+
         return Point(
             self.x * scalar,
             self.y * scalar,
             self.z * scalar
         )
 
-    def __rmul__(self, scalar: float) -> 'Point':
+    def __rmul__(self, scalar: object) -> 'Point':
         """Multiply the point's coordinates by a scalar.
 
         Args:
@@ -284,7 +293,7 @@ class Point(NamedTuple):
             None if self.z is None else -(self.z or 0)
         )
 
-    def __truediv__(self, scalar: float) -> 'Point':
+    def __truediv__(self, scalar: object) -> 'Point':
         """Divide the point's coordinates by a scalar.
 
         Args:
@@ -298,13 +307,16 @@ class Point(NamedTuple):
             ZeroDivisionError: If the scalar is zero.
         """
 
+        if not isinstance(scalar, (int, float)):
+            return NotImplemented
+
         return Point(
             self.x / scalar,
             self.y / scalar,
             self.z / scalar
         )
 
-    def __lt__(self, other: 'Point') -> bool:
+    def __lt__(self, other: object) -> bool:
         """Less than operator
 
         Args:
@@ -313,6 +325,9 @@ class Point(NamedTuple):
         Raises:
             TypeError: If any of the point coordinates are None.
         """
+
+        if not isinstance(other, Point):
+            return NotImplemented
 
         return bool(
             self.x <= other.x and
@@ -325,8 +340,11 @@ class Point(NamedTuple):
             )
         )
 
-    def __eq__(self, other: 'Point') -> bool:
+    def __eq__(self, other: object) -> bool:
         """Equal to operator"""
+
+        if not isinstance(other, Point):
+            return NotImplemented
 
         return bool(
             self.x == other.x and
@@ -334,22 +352,34 @@ class Point(NamedTuple):
             self.z == other.z
         )
 
-    def __ge__(self, other: 'Point') -> bool:
+    def __ge__(self, other: object) -> bool:
         """Greater than or equal operator."""
+
+        if not isinstance(other, Point):
+            return NotImplemented
 
         return not (self < other)
 
-    def __gt__(self, other: 'Point') -> bool:
+    def __gt__(self, other: object) -> bool:
         """Greater than operator."""
+
+        if not isinstance(other, Point):
+            return NotImplemented
 
         return not (self < other or self == other)
 
-    def __le__(self, other: 'Point') -> bool:
+    def __le__(self, other: object) -> bool:
         """Less than or equal operator."""
+
+        if not isinstance(other, Point):
+            return NotImplemented
 
         return self < other or self == other
 
-    def __ne__(self, other: 'Point') -> bool:
+    def __ne__(self, other: object) -> bool:
         """Not equal operator."""
+
+        if not isinstance(other, Point):
+            return NotImplemented
 
         return not (self == other)

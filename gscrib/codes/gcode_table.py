@@ -40,7 +40,7 @@ class GCodeTable:
             values: A tuple of `GCodeEntry` objects
         """
 
-        self._entries = {}
+        self._entries: dict = dict()
         self._init_entries(values)
 
     @typechecked

@@ -26,7 +26,7 @@ from .gcode_core import GCodeCore
 from .gcode_state import GState
 from .params import ParamsDict
 from .geometry import Point, PathTracer
-from .types import Bound, PointLike
+from .types import Bound, PointLike, MoveHook
 from .enums import *  # pylint: disable=W0401,W0614
 
 
@@ -105,7 +105,7 @@ class GCodeBuilder(GCodeCore):
         super().__init__(*args, **kwargs)
         self._state: GState = GState()
         self._tracer: PathTracer = PathTracer(self)
-        self._hooks = []
+        self._hooks: list[MoveHook] = []
 
     @property
     def state(self) -> GState:
@@ -120,7 +120,7 @@ class GCodeBuilder(GCodeCore):
         return self._tracer
 
     @typechecked
-    def add_hook(self, hook: Callable) -> None:
+    def add_hook(self, hook: MoveHook) -> None:
         """Add a permanent move parameter hook.
 
         Hooks are called before each move to process and modify movement
@@ -140,7 +140,7 @@ class GCodeBuilder(GCodeCore):
 
         Example:
             >>> def limit_feed(origin, target, params, state):
-            >>>     params.update(F=min(params.get('F'), 1000)
+            >>>     params.update(F=min(params.get('F'), 1000))
             >>>     return params
             >>>
             >>> g.add_hook(limit_feed)
@@ -150,7 +150,7 @@ class GCodeBuilder(GCodeCore):
             self._hooks.append(hook)
 
     @typechecked
-    def remove_hook(self, hook: Callable) -> None:
+    def remove_hook(self, hook: MoveHook) -> None:
         """Remove a previously added move parameter hook.
 
         Args:
@@ -1009,7 +1009,7 @@ class GCodeBuilder(GCodeCore):
         super().write(statement)
 
     @contextmanager
-    def move_hook(self, hook: Callable):
+    def move_hook(self, hook: MoveHook):
         """Temporarily enable a move parameter hook.
 
         Args:

@@ -18,7 +18,9 @@
 
 from pathlib import Path
 from typing import Union, TextIO, BinaryIO
+from typeguard import typechecked
 
+from gscrib.types import OptFile
 from .base_writer import BaseWriter
 
 
@@ -41,6 +43,7 @@ class FileWriter(BaseWriter):
         "_output"
     )
 
+    @typechecked
     def __init__(self, output: Union[str, TextIO, BinaryIO]):
         """Initialize the file writer.
 
@@ -50,8 +53,8 @@ class FileWriter(BaseWriter):
         """
 
         self._is_terminal = False
+        self._file: OptFile = None
         self._output = output
-        self._file = None
 
     def connect(self) -> "FileWriter":
         """Establish the connection to the output file."""
@@ -59,15 +62,17 @@ class FileWriter(BaseWriter):
         if self._file is not None:
             return self
 
-        self._file = self._output
-        self._is_terminal = False
-
         if isinstance(self._output, str):
             file_path = Path(self._output)
             file_path.parent.mkdir(parents=True, exist_ok=True)
             self._file = file_path.open("wb+")
+            self._is_terminal = False
         elif hasattr(self._output, "isatty"):
+            self._file = self._output
             self._is_terminal = self._file.isatty()
+        else:
+            self._file = self._output
+            self._is_terminal = False
 
         return self
 

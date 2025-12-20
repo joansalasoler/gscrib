@@ -135,7 +135,7 @@ class GCodeCore(object):
         config: GConfig = GConfig(**kwargs)
 
         self._logger = logging.getLogger(__name__)
-        self._formatter = DefaultFormatter()
+        self._formatter: BaseFormatter = DefaultFormatter()
         self._transformer = CoordinateTransformer()
         self._current_axes = Point.unknown()
         self._current_params = ParamsDict()
@@ -159,20 +159,20 @@ class GCodeCore(object):
         """Initialize output writers."""
 
         if config.print_lines is True:
-            writer = ConsoleWriter()
-            self.add_writer(writer)
+            console_writer = ConsoleWriter()
+            self.add_writer(console_writer)
 
         if config.output is not None:
-            writer = FileWriter(config.output)
-            self.add_writer(writer)
+            file_writer = FileWriter(config.output)
+            self.add_writer(file_writer)
 
         if config.direct_write == "socket":
-            writer = SocketWriter(config.host, int(config.port))
-            self.add_writer(writer)
+            socket_writer = SocketWriter(config.host, int(config.port))
+            self.add_writer(socket_writer)
 
         if config.direct_write == "serial":
-            writer = SerialWriter(str(config.port), config.baudrate)
-            self.add_writer(writer)
+            serial_writer = SerialWriter(str(config.port), config.baudrate)
+            self.add_writer(serial_writer)
 
     @property
     def transform(self) -> CoordinateTransformer:
@@ -504,6 +504,7 @@ class GCodeCore(object):
             Point: Coordinates matching current positioning mode
         """
 
+        point = Point(*point)
         origin = self._current_axes.resolve()
 
         return (

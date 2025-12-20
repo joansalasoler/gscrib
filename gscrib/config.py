@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass, field, fields
-from typing import BinaryIO, TextIO
+from typing import BinaryIO, TextIO, cast
 from .enums import DirectWrite
 
 
@@ -68,14 +68,14 @@ class GConfig():
         """
 
         if isinstance(config, dict):
-            return cls(**{
+            return cls(**cast(dict, {
                 field.name: config.get(field.name)
                 for field in fields(cls)
                 if field.name in config
-            })
+            }))
 
-        return cls(**{
+        return cls(**cast(dict, {
             field.name: getattr(config, field.name)
             for field in fields(cls)
             if hasattr(config, field.name)
-        })
+        }))

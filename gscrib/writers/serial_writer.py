@@ -54,11 +54,13 @@ class SerialWriter(BaseWriter):
     @property
     def is_connected(self) -> bool: # pragma: no cover
         """Check if device is currently connected."""
+
         return self._writer_delegate.is_connected
 
     @property
     def is_printing(self) -> bool: # pragma: no cover
         """Check if the device is currently printing."""
+
         return self._writer_delegate.is_printing
 
     def get_parameter(self, name: str) -> float: # pragma: no cover
@@ -100,7 +102,8 @@ class SerialWriter(BaseWriter):
             DeviceTimeoutError: If connection times out
         """
 
-        return self._writer_delegate.connect()
+        self._writer_delegate.connect()
+        return self
 
     def disconnect(self, wait: bool = True) -> None: # pragma: no cover
         """Close the serial connection if it exists.

@@ -17,15 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import math
-from typing import Callable
 from typeguard import typechecked
 
+from gscrib.types import MoveHook
 from gscrib.enums import ExtrusionMode
 
 
 @typechecked
 def extrusion_hook(layer_height: float, nozzle_diameter: float,
-                   filament_diameter: float) -> Callable:
+                   filament_diameter: float) -> MoveHook:
     """Creates a hook function to automatically extrude filament.
 
     Args:

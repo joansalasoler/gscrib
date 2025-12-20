@@ -67,7 +67,7 @@ class Transform:
         translated_matrix = self._to_pivot @ matrix @ self._from_pivot
         self._set_matrix(translated_matrix @ self._matrix)
 
-    def _tranlation_matrix(self, point: Point) -> np.array:
+    def _tranlation_matrix(self, point: Point) -> np.ndarray:
         """Create a translation matrix for the given point."""
 
         x, y, z = point
