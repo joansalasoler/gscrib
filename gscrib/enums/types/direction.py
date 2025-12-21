@@ -40,18 +40,30 @@ class Direction(BaseEnum):
     def enforce(self, angle: float) -> float:
         """Enforce the direction of an angular move.
 
-        For ``CLOCKWISE`` direction, ensures the angle is negative. For
-        ``COUNTER`` (counter-clockwise) direction, ensures the angle is
-        positive. If the angle already has the correct sign, it is
-        returned unchanged. Otherwise, adds or subtracts 2 * PI to flip
-        the direction while maintaining the same final position.
+        This method ensures that the angle has the correct sign according
+        to the direction:
+
+        - `CLOCKWISE` → strictly negative
+        - `COUNTER` → strictly positive
+
+        If the angle already has the correct sign, it is returned unchanged.
+        If the angle is zero, it is treated as having the wrong sign and
+        adjusted. Otherwise, the minimal number of full rotations (±2π) is
+        added or subtracted to flip the sign while preserving the final
+        angular position.
 
         Args:
-            angle: Rotation angle in radians
+            angle (float): Rotation angle in radians.
 
         Returns:
-            Enforced angle
+            float: The angle adjusted to enforce the correct direction.
+
+        Raises:
+            ValueError: If `angle` is not within (-2π, 2π).
         """
+
+        if not -2 * math.pi < angle < 2 * math.pi:
+            raise ValueError("Angle out of range (-2π, 2π).")
 
         if self is Direction.CLOCKWISE:
             if angle >= 0:
