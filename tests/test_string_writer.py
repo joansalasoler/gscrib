@@ -34,3 +34,11 @@ def test_write_multiple_statements():
     writer.write(b"G1 X30 Y30\n")
     expected = "G1 X10 Y10\nG1 X20 Y20\nG1 X30 Y30\n"
     assert writer.to_string() == expected
+
+def test_to_string_auto_reconnect():
+    writer = StringWriter()
+    writer.write(b"G1 X10 Y10\n")
+    writer.disconnect()
+    writer.write(b"M30\n")
+    writer.disconnect()
+    assert writer.to_string() == "G1 X10 Y10\nM30\n"

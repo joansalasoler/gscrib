@@ -16,7 +16,6 @@ def test_from_object_with_dict():
     }
 
     config = GConfig.from_object(config_dict)
-    print(config)
     assert config.output == "test.gcode"
     assert config.decimal_places == 3
     assert config.comment_symbols == "#"
