@@ -22,21 +22,37 @@ from abc import ABC, abstractmethod
 class BaseWriter(ABC):
     """Base class for all the G-code writing implementations.
 
-    This class defines the interface for writing G-code commands to various
-    outputs, such as files, serial connections, or network sockets.
+    This class defines the interface for writing G-code commands to
+    various outputs, such as files, serial connections, or network sockets.
+
+    Subclasses should implement connect(), disconnect(), and write()
+    methods. The flush() method has a default no-op implementation but
+    can be overridden for outputs that support buffering.
     """
 
     @abstractmethod
     def connect(self) -> "BaseWriter":
-        """Establish connection or open resource for writing"""
+        """Establish connection or open resource for writing.
+
+        Returns:
+            BaseWriter: Self for method chaining
+        """
 
     @abstractmethod
     def disconnect(self, wait: bool = True) -> None:
-        """Close connection or resource"""
+        """Close connection or resource.
+
+        Args:
+            wait (bool): If True, wait for pending operations to complete
+        """
 
     @abstractmethod
     def write(self, statement: bytes) -> None:
-        """Write G-code statement"""
+        """Write G-code statement.
+
+        Args:
+            statement (bytes): The G-code statement to write
+        """
 
     def flush(self) -> None:
-        """Flush the output buffer"""
+        """Flush the output buffer."""

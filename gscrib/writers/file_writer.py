@@ -57,7 +57,11 @@ class FileWriter(BaseWriter):
         self._output = output
 
     def connect(self) -> "FileWriter":
-        """Establish the connection to the output file."""
+        """Establish the connection to the output file.
+
+        Returns:
+            FileWriter: Self for method chaining
+        """
 
         if self._file is not None:
             return self
@@ -77,14 +81,19 @@ class FileWriter(BaseWriter):
         return self
 
     def disconnect(self, wait: bool = True) -> None:
-        """Close the file if it was opened by this writer."""
+        """Close the file if it was opened by this writer.
 
-        should_close = isinstance(self._output, str)
+        Args:
+            wait (bool): If True, flush the buffer before closing
+        """
 
-        if should_close and self._file is not None:
-            self._file.close()
+        if self._file is not None:
+            should_close = isinstance(self._output, str)
 
-        self._file = None
+            if wait: self.flush()
+            if should_close: self._file.close()
+
+            self._file = None
 
     def write(self, statement: bytes) -> None:
         """Write a G-code statement to the file.
@@ -115,7 +124,7 @@ class FileWriter(BaseWriter):
             self._file.flush()
 
     def flush(self) -> None:
-        """Flush the output buffer"""
+        """Flush the output buffer."""
 
         if self._file is not None:
             self._file.flush()

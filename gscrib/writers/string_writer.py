@@ -23,14 +23,14 @@ from .file_writer import FileWriter
 class StringWriter(FileWriter):
     """A writer that outputs G-code to an in-memory string buffer.
 
-    This class allows to generate G-code directly in memory and retrieve
-    it as a string. For more advanced string-buffer operations, `FileWriter`
-    can be instantiated directly with an `io.StringIO()` object.
+    This class allows generating G-code directly in memory and retrieving
+    it as a string. Useful for testing, generating G-code programmatically,
+    or processing G-code without writing to disk.
 
     Example:
         >>> writer = StringWriter()
         >>> writer.write(b"G1 X10 Y10\\n")
-        >>> print(writer.get_string())
+        >>> print(writer.to_string())
     """
 
     def __init__(self):
@@ -38,13 +38,19 @@ class StringWriter(FileWriter):
         self.connect()
 
     def __str__(self) -> str:
+        """Return the accumulated G-code as a string.
+
+        Returns:
+            str: The G-code content written so far
+        """
+
         return self.to_string()
 
     def to_string(self) -> str:
         """Return a string with the accumulated G-code content.
 
         Returns:
-            str: The G-code content written so far.
+            str: The G-code content written so far
         """
 
         if self._file is None:

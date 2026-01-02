@@ -36,7 +36,7 @@ class ConsoleWriter(FileWriter):
         """Initialize the console writer.
 
         Args:
-            stderr (bool): If True writes to sys.stderr
+            stderr (bool): If True, write to sys.stderr
         """
 
         super().__init__(
@@ -46,10 +46,15 @@ class ConsoleWriter(FileWriter):
         )
 
     def connect(self) -> "ConsoleWriter":
-        """Establish the connection to the console output."""
+        """Establish the connection to the console output.
+
+        Returns:
+            ConsoleWriter: Self for method chaining
+        """
 
         super().connect()
         self._is_terminal = True
+
         return self
 
     def _get_stdout_file(self) -> Any:
@@ -61,7 +66,7 @@ class ConsoleWriter(FileWriter):
         return sys.stdout
 
     def _get_stderr_file(self) -> Any:
-        """Get binary or text stdout file."""
+        """Get binary or text stderr file."""
 
         if hasattr(sys.stderr, 'buffer'):
             return sys.stderr.buffer
