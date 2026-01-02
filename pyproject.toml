@@ -51,6 +51,10 @@ skip_empty = true
 
 [tool.pytest.ini_options]
 typeguard-packages = "gscrib"
+pythonpath = ["."]
+
+[tool.pylint.main]
+ignore = ["gscrib/printrun"]
 
 [tool.pylint.messages_control]
 disable = ["C", "R"]

@@ -1,9 +1,8 @@
-import pytest
+import pytest, os
 from pytest import approx
 from unittest.mock import Mock, patch
 from gscrib.enums import DirectWrite
 from gscrib.excepts import DeviceConnectionError
-from gscrib.excepts import DeviceTimeoutError
 from gscrib.excepts import DeviceWriteError
 from gscrib.excepts import DeviceError
 from gscrib.excepts import GscribError
@@ -12,6 +11,8 @@ from gscrib.writers import PrintrunWriter
 # --------------------------------------------------------------------
 # Fixtures and helper classes
 # --------------------------------------------------------------------
+
+os.environ["UNIT_TESTING"] = "1"
 
 @pytest.fixture
 def mock_printcore():

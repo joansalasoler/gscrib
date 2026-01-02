@@ -16,8 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re, threading
+import os, re, threading
 import logging, time, signal
+import warnings
 
 from gscrib.enums import DirectWrite
 from gscrib.printrun import printcore, gcoder
@@ -44,6 +45,9 @@ class PrintrunWriter(BaseWriter):
 
     This class implements a G-code writer that connects to a device
     using `printrun` core.
+
+    .. deprecated:: 1.3.0
+        PrintrunWriter will be removed in a future version.
     """
 
     def __init__(self, mode: DirectWrite | str, host: str, port: str, baudrate: int):
@@ -55,6 +59,8 @@ class PrintrunWriter(BaseWriter):
             port (int): The TCP or serial port identifier
             baudrate (int): Communication speed in bauds
         """
+
+        self._show_deprecation_warning()
 
         if not isinstance(host, str) or host.strip() == "":
             raise ValueError("Host must be specified")
@@ -78,6 +84,15 @@ class PrintrunWriter(BaseWriter):
         self._logger = logging.getLogger(__name__)
         self._setup_device_events()
         self._setup_signal_handlers()
+
+
+    @staticmethod
+    def _show_deprecation_warning():
+        if not os.environ.get("UNIT_TESTING"):
+            warnings.warn(
+                "PrintrunWriter is deprecated and will be removed in a "
+                "future version.", DeprecationWarning, stacklevel=2
+            )
 
     def _setup_device_events(self):
         """Set up device synchronization events."""
