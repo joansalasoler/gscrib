@@ -153,6 +153,21 @@ def test_purge_send_queue(gcode_host):
     gcode_host._purge_send_queue()
     assert gcode_host._send_queue.empty()
 
+def test_is_busy_false_when_shutdown(gcode_host):
+    gcode_host._shutdown_signal.set()
+    assert gcode_host.is_busy is False
+
+def test_is_busy_true_with_queued_commands(gcode_host):
+    gcode_host.enqueue("G1 X10")
+    assert gcode_host.is_busy is True
+
+def test_is_busy_true_with_pending_quota(gcode_host):
+    gcode_host._send_quota.consume(50)
+    assert gcode_host.is_busy is True
+
+def test_is_busy_false_when_idle(gcode_host):
+    assert gcode_host.is_busy is False
+
 def test_handle_online_event(mock_parser, mock_dispatcher, gcode_host):
     gcode_host._online_signal.clear()
     gcode_host._clear_signal.clear()

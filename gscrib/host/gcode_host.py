@@ -102,6 +102,22 @@ class GCodeHost:
         self._was_started = False
 
     @property
+    def is_busy(self) -> bool:
+        """Check if the host is busy sending commands.
+
+        Returns:
+            bool: If there are pending commands to send or acknowledge.
+        """
+
+        if self._shutdown_signal.is_set():
+            return False
+
+        if not self._send_queue.empty():
+            return True
+
+        return self._send_quota.pending()
+
+    @property
     def is_online(self) -> bool:
         """Check if the device is online.
 
@@ -573,7 +589,7 @@ class GCodeHost:
            (M110 N0). Ensures the device starts counting lines from 1.
 
         3. Send a synchronization command (G4 P0). Most devices will
-           acknowledged this only after the action has completed.
+           acknowledge this only after the action has completed.
 
         4. Enter the main loop: dequeue commands, apply flow control,
            send them, and wait for acknowledgements.

@@ -41,7 +41,7 @@ class Command:
 
     Attributes:
         line_number (int): Line number for this command.
-        raw_gcode (str): The G-code instruction string.
+        instruction (str): The G-code instruction string.
         signed (bool): Whether to append line number and checksum.
     """
 

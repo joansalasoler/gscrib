@@ -49,6 +49,16 @@ class QuotaTracker:
         self._max_bytes = max_bytes
         self._free_bytes = max_bytes
 
+    def pending(self) -> bool:
+        """Checks if there is any unclaimed quota.
+
+        Returns:
+            bool: If there are in-flight writes awaiting.
+        """
+
+        with self._condition:
+            return bool(self._in_flight)
+
     def consume(self, size: int, timeout: float = 2.0) -> None:
         """Reserves memory for a write operation.
 

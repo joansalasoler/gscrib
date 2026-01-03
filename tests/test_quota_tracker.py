@@ -115,3 +115,28 @@ def test_consume_timeout(tracker):
 
     duration = time.monotonic() - start
     assert duration >= 0.1
+
+def test_pending_empty(tracker):
+    assert tracker.pending() is False
+
+def test_pending_with_in_flight(tracker):
+    tracker.consume(50)
+    assert tracker.pending() is True
+
+def test_pending_after_reclaim(tracker):
+    tracker.consume(50)
+    tracker.consume(30)
+    assert tracker.pending() is True
+
+    tracker.reclaim()
+    assert tracker.pending() is True
+
+    tracker.reclaim()
+    assert tracker.pending() is False
+
+def test_pending_after_flush(tracker):
+    tracker.consume(50)
+    assert tracker.pending() is True
+
+    tracker.flush()
+    assert tracker.pending() is False
