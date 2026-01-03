@@ -31,6 +31,12 @@ class SerialWriter(BaseWriter):
         >>> writer = SerialWriter("/dev/ttyUSB0", 115200)
         >>> writer.write(b"G1 X10 Y10\\n")
         >>> writer.disconnect()
+
+    .. deprecated:: 1.3.0
+        SerialWriter is deprecated and will be removed in a future version.
+        Use HostWriter instead, which provides asynchronous command queuing,
+        improved error handling, and a unified interface for serial and
+        network connections.
     """
 
     def __init__(self, port: str, baudrate: int):

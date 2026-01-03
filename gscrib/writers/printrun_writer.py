@@ -47,7 +47,9 @@ class PrintrunWriter(BaseWriter):
     using `printrun` core.
 
     .. deprecated:: 1.3.0
-        PrintrunWriter will be removed in a future version.
+        PrintrunWriter will be removed in a future version. Use HostWriter
+        instead, which provides asynchronous command queuing, improved error
+        handling, and a unified interface for serial and network connections.
     """
 
     def __init__(self, mode: DirectWrite | str, host: str, port: str, baudrate: int):
