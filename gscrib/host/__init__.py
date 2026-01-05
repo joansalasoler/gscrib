@@ -9,7 +9,7 @@ and response parsing with event-based notification.
 """
 
 from .connection import Connection
-from .gcode_host import GCodeHost
+from .gcode_host import GCodeHost, StreamingMode
 from .exceptions import HostConnectError, HostReadError, HostWriteError
 
 __all__ = [
@@ -17,5 +17,6 @@ __all__ = [
     'GCodeHost',
     'HostConnectError',
     'HostReadError',
-    'HostWriteError'
+    'HostWriteError',
+    'StreamingMode',
 ]

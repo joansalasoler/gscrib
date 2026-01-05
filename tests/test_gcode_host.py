@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, Mock, patch
 from gscrib.host.gcode_host import GCodeHost
 from gscrib.host.connection import Connection
 from gscrib.host.scheduler.task_priority import TaskPriority
+from gscrib.host.gcode_host import StreamingMode
 
 from gscrib.host.protocol.events import (
     DeviceOnlineEvent,
@@ -56,6 +57,7 @@ def test_initialization(mock_connection):
     assert not host._was_started
     assert not host._online_signal.is_set()
     assert not host._shutdown_signal.is_set()
+    assert host.streaming_mode == StreamingMode.AUTOMATIC
     assert host._connection is mock_connection
 
 def test_start_initializes_threads(mock_thread, gcode_host):
@@ -242,17 +244,21 @@ def test_handle_resend_event(mock_parser, mock_dispatcher, gcode_host):
     assert gcode_host._clear_signal.is_set()
     assert gcode_host.is_online
 
-def test_prepare_for_acknowledgment_non_streaming(mock_connection, gcode_host):
-    mock_connection.can_stream_commands.return_value = False
+@pytest.mark.parametrize("mode, can_stream, signal_cleared", [
+    (StreamingMode.ASYNCHRONOUS, True,  False),
+    (StreamingMode.ASYNCHRONOUS, False, False),
+    (StreamingMode.SYNCHRONOUS,  True,  True),
+    (StreamingMode.SYNCHRONOUS,  False, True),
+    (StreamingMode.AUTOMATIC,    True,  False),
+    (StreamingMode.AUTOMATIC,    False, True),
+])
+def test_prepare_for_acknowledgment(
+    mock_connection, gcode_host, mode, can_stream, signal_cleared):
     gcode_host._clear_signal.set()
+    gcode_host.streaming_mode = mode
+    mock_connection.can_stream_commands.return_value = can_stream
     gcode_host._prepare_for_acknowledgment()
-    assert not gcode_host._clear_signal.is_set()
-
-def test_prepare_for_acknowledgment_streaming(mock_connection, gcode_host):
-    mock_connection.can_stream_commands.return_value = True
-    gcode_host._clear_signal.set()
-    gcode_host._prepare_for_acknowledgment()
-    assert gcode_host._clear_signal.is_set()
+    assert gcode_host._clear_signal.is_set() is not signal_cleared
 
 def test_enqueue_handshake_without_signing(gcode_host):
     gcode_host.sign_commands = False
@@ -319,6 +325,15 @@ def test_unsubscribe(mock_dispatcher, gcode_host):
 def test_timeout_setters(gcode_host, property_name):
     setattr(gcode_host, property_name, 5.0)
     assert getattr(gcode_host, property_name) == 5.0
+
+@pytest.mark.parametrize("mode", [
+    StreamingMode.AUTOMATIC,
+    StreamingMode.ASYNCHRONOUS,
+    StreamingMode.SYNCHRONOUS
+])
+def test_streaming_mode_setters(gcode_host, mode):
+    setattr(gcode_host, "streaming_mode", mode)
+    assert gcode_host.streaming_mode == mode
 
 def test_stop_not_started_error(mock_connection):
     host = GCodeHost(mock_connection)

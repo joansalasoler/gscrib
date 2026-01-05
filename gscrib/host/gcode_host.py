@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging, threading, itertools
+from enum import Enum
 from queue import PriorityQueue, Empty
 from typing import Callable, Type
 
@@ -36,6 +37,14 @@ from .protocol.events import (
     DeviceReadyEvent,
     DeviceResendEvent
 )
+
+
+class StreamingMode(Enum):
+    """Command streaming mode."""
+
+    AUTOMATIC = "automatic"
+    SYNCHRONOUS = "synchronous"
+    ASYNCHRONOUS = "asynchronous"
 
 
 class GCodeHost:
@@ -98,6 +107,7 @@ class GCodeHost:
         self._write_timeout = self._WRITE_TIMEOUT
         self._online_timeout = self._ONLINE_TIMEOUT
         self._poll_timeout = self._POLL_TIMEOUT
+        self._streaming_mode = StreamingMode.AUTOMATIC
         self._sign_commands = False
         self._was_started = False
 
@@ -146,6 +156,30 @@ class GCodeHost:
         """
 
         self._sign_commands = enabled
+
+    @property
+    def streaming_mode(self) -> StreamingMode:
+        """Get the command streaming mode.
+
+        Returns:
+            StreamingMode: Current streaming mode
+        """
+
+        return self._streaming_mode
+
+    @streaming_mode.setter
+    def streaming_mode(self, mode: StreamingMode) -> None:
+        """Set the command streaming mode.
+
+        In synchronous mode, each command waits for acknowledgment before
+        the next command is sent. In automatic mode, acknowledgment waiting
+        is enforced only if the device does not support command streaming.
+
+        Args:
+            mode (StreamingMode): Desired streaming mode
+        """
+
+        self._streaming_mode = mode
 
     @property
     def write_timeout(self) -> float:
@@ -524,14 +558,19 @@ class GCodeHost:
         self._send_quota.flush()
 
     def _prepare_for_acknowledgment(self) -> None:
-        """Wait for acknowledgment only if required.
+        """Prepare acknowledgment synchronization.
 
-        If device doesn't support streaming, force the sender to wait
-        for the device to acknowledge the last sent command before
-        sending the next one.
+        Determines whether the sender must wait for the device to
+        acknowledge the previously sent command before sending the next
+        one, based on the streaming mode and the device's streaming
+        capabilities.
         """
 
-        if not self._connection.can_stream_commands():
+        if self._streaming_mode == StreamingMode.ASYNCHRONOUS:
+            pass  # Do not wait for acknowledgment
+        elif self._streaming_mode == StreamingMode.SYNCHRONOUS:
+            self._clear_signal.clear()
+        elif not self._connection.can_stream_commands():
             self._clear_signal.clear()
 
     def _wait_for_acknowledgment(self, poll_timeout: float) -> None:
