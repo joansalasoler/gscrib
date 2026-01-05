@@ -228,3 +228,57 @@ def test_write_invalid_utf8(host_writer):
 
     with pytest.raises(DeviceWriteError):
         host_writer.write(b"\xff\xfe")
+
+def test_on_device_error_prevents_write(host_writer):
+    host_writer.connect()
+    event = MagicMock(spec=DeviceErrorEvent)
+    event.message = "Error: something"
+    host_writer._on_device_error(event)
+
+    with pytest.raises(DeviceError):
+        host_writer.write(b"G1 X10")
+
+def test_on_device_fault_prevents_write(host_writer):
+    host_writer.connect()
+    event = MagicMock(spec=DeviceFaultEvent)
+    event.message = "ALARM: hard limit"
+    host_writer._on_device_fault(event)
+
+    with pytest.raises(DeviceError):
+        host_writer.write(b"G1 X10")
+
+def test_on_device_error_disconnects(host_writer):
+    host_writer.connect()
+    assert host_writer._connect_signal.is_set()
+    assert not host_writer._fault_signal.is_set()
+
+    gcode_host = host_writer._host
+    gcode_host.stop = MagicMock()
+
+    event = MagicMock(spec=DeviceErrorEvent)
+    event.message = "Error: something"
+    host_writer._on_device_error(event)
+
+    gcode_host.stop.assert_called_once()
+    host_writer._connection.close.assert_called_once()
+    assert not host_writer._connect_signal.is_set()
+    assert host_writer._fault_signal.is_set()
+    assert host_writer._host is None
+
+def test_on_device_fault_disconnects(host_writer):
+    host_writer.connect()
+    assert host_writer._connect_signal.is_set()
+    assert not host_writer._fault_signal.is_set()
+
+    gcode_host = host_writer._host
+    gcode_host.stop = MagicMock()
+
+    event = MagicMock(spec=DeviceFaultEvent)
+    event.message = "ALARM: hard limit"
+    host_writer._on_device_fault(event)
+
+    gcode_host.stop.assert_called_once()
+    host_writer._connection.close.assert_called_once()
+    assert not host_writer._connect_signal.is_set()
+    assert host_writer._fault_signal.is_set()
+    assert host_writer._host is None

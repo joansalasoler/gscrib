@@ -163,11 +163,7 @@ class HostWriter(BaseWriter):
         if wait and not self._fault_signal.is_set():
             self.sync()
 
-        self._host.stop()
-        self._unsubscribe_from_events(self._host)
-        self._connection.close()
-        self._connect_signal.clear()
-        self._host = None
+        self._stop_and_cleanup()
 
     def write(self, statement: bytes) -> None:
         """Send a G-code statement to the device.
@@ -245,13 +241,27 @@ class HostWriter(BaseWriter):
         """Handle device error event."""
 
         self._logger.error("Device error: %s", event.message)
+        self._fault_signal.set()
+        self._stop_and_cleanup()
 
     def _on_device_fault(self, event: DeviceFaultEvent) -> None:
         """Handle device fault event."""
 
         self._logger.critical("Device fault: %s", event.message)
         self._fault_signal.set()
-        self.disconnect(wait=False)
+        self._stop_and_cleanup()
+
+    def _stop_and_cleanup(self) -> None:
+        """Clean up connection resources."""
+
+        if self._host is None:
+            return
+
+        self._host.stop()
+        self._unsubscribe_from_events(self._host)
+        self._connection.close()
+        self._connect_signal.clear()
+        self._host = None
 
     def __enter__(self) -> "HostWriter":
         return self.connect()
