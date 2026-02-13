@@ -38,7 +38,7 @@ new to Python or Poetry, these links will help you get set up:
 Once you're set up, open your terminal and install **Gscrib** with:
 
 ```bash
-poetry init --no-interaction
+poetry init --python ">=3.10,<4.0" --no-interaction
 poetry add gscrib
 ```
 
