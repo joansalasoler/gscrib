@@ -17,10 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from typing import Union, TextIO, BinaryIO
-from typeguard import typechecked
+from typing import Any
 
-from gscrib.types import OptFile
 from .base_writer import BaseWriter
 
 
@@ -43,17 +41,15 @@ class FileWriter(BaseWriter):
         "_output"
     )
 
-    @typechecked
-    def __init__(self, output: Union[str, TextIO, BinaryIO]):
+    def __init__(self, output: Any):
         """Initialize the file writer.
 
         Args:
-            output (Union[str, TextIO, BinaryIO]): Either a file path
-                or a file-like object to write the G-code to.
+            output: Either a file path or a file-like object
         """
 
         self._is_terminal = False
-        self._file: OptFile = None
+        self._file = None
         self._output = output
 
     def connect(self) -> "FileWriter":
@@ -66,16 +62,17 @@ class FileWriter(BaseWriter):
         if self._file is not None:
             return self
 
-        if isinstance(self._output, str):
+        try:
             file_path = Path(self._output)
+        except TypeError:
+            self._file = self._output
+            self._is_terminal = False
+
+            if hasattr(self._file, "isatty"):
+                self._is_terminal = self._file.isatty()
+        else:
             file_path.parent.mkdir(parents=True, exist_ok=True)
             self._file = file_path.open("wb+")
-            self._is_terminal = False
-        elif hasattr(self._output, "isatty"):
-            self._file = self._output
-            self._is_terminal = self._file.isatty()
-        else:
-            self._file = self._output
             self._is_terminal = False
 
         return self

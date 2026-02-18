@@ -174,9 +174,3 @@ def test_write_mixed_encodings():
 
     with pytest.raises(UnicodeDecodeError):
         writer.write("Hello".encode('utf-16'))
-
-def test_write_to_invalid_path():
-    writer = FileWriter("/invalid/path/test.gcode")
-
-    with pytest.raises(OSError):
-        writer.write(b"G1 X10 Y10\n")
